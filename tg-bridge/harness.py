@@ -6,6 +6,7 @@ Code runs in a throwaway container: no network, workdir mounted read-only at
 """
 import json
 import os
+import shutil
 import subprocess
 import urllib.error
 
@@ -59,7 +60,8 @@ def files(chat):
 def clear(chat):
     d = os.path.join(WORK_ROOT, str(chat))
     for f in files(chat):
-        os.remove(os.path.join(d, f))
+        p = os.path.join(d, f)
+        shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)  # Drive copies are folders
 
 
 def run_python(chat, code, timeout=60):

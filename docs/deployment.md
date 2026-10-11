@@ -147,6 +147,40 @@ Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
 # expect 19,080,600 and ✅
 ```
 
+## Google Drive (optional)
+
+A user pastes a Drive folder or file link. The bot asks them to sign in with Google, copies
+only that link (with every subfolder, Google Sheets as `.xlsx`, Docs as `.md` or `.txt`,
+Slides as `.pdf`, plus `_drive_manifest.csv` saying where each file came from) into their
+files, and revokes the sign-in straight away. To refresh the copy, they send the link again.
+`tg-bridge/drive.py` is the only code that talks to Google; the agents read the copy and
+still have no network.
+
+One-time setup in [Google Cloud Console](https://console.cloud.google.com/):
+1. Create a project, and enable the **Google Drive API**.
+2. **OAuth consent screen:** choose External, leave it in Testing, and add each team member's
+   Google account as a test user. Add the scope `.../auth/drive.readonly`.
+   - Testing mode limits sign-in to those test users. Its 7-day token expiry doesn't matter,
+     because each sign-in is used once.
+   - On Google Workspace, Internal works too.
+3. **Credentials → Create OAuth client ID**, then do one of:
+   - **Desktop app** (paste-back mode, works anywhere). After sign-in, Google sends the
+     browser to `http://localhost:8791/oauth/callback?...`, a page that doesn't load on a
+     phone. The user copies that address into the chat, and the bot finishes the sign-in.
+   - **Web application** (automatic mode). Add the redirect URI
+     `https://<public host>/oauth/callback` and set `OAUTH_REDIRECT` to it. The bot then serves
+     the callback on `127.0.0.1:$OAUTH_PORT`, which has to be reachable at that URL.
+     On this box, Tailscale Funnel does it: enable HTTPS and Funnel for the node in the
+     Tailscale admin console, run `sudo tailscale funnel --bg 8791`, and use
+     `https://gx10-0a47.tail5ef239.ts.net/oauth/callback`.
+4. Download the client's JSON to `$SILO_CONFIG/google_oauth.json` and restart the bot.
+
+| variable | default | what it is |
+|---|---|---|
+| `OAUTH_REDIRECT` | `http://localhost:8791/oauth/callback` | where Google sends the browser after sign-in |
+| `OAUTH_PORT` | `8791` | the local callback server's port (automatic mode only) |
+| `DRIVE_MAX_MB` / `DRIVE_MAX_FILES` | `500` / `2000` | copy limits per link; anything beyond is listed as skipped |
+
 ## What runs where
 
 - **Uploads** go to `$WORK_ROOT/<chat id>/` on the host. `/reset` deletes them.

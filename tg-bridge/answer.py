@@ -223,8 +223,8 @@ def respond(chat, user, history, system, model, model_key):
 
     rec = audit_log.append(chat, {
         "type": "answer", "chat": chat, "user": user, "message": asked(question),
-        "files": [{"name": f, "bytes": os.path.getsize(p), "sha256": file_hash(p)}
-                  for f in harness.files(chat) for p in [os.path.join(harness.workdir(chat), f)]],
+        "files": [{"name": os.path.relpath(p, harness.workdir(chat)), "bytes": os.path.getsize(p),
+                   "sha256": file_hash(p)} for p in all_files(harness.workdir(chat))],
         "model": {"key": model_key, "label": model["label"], "kind": model["kind"],
                   "base": model["base"], "model": model["model"]},
         "versions": {"silo": SILO_VERSION, "codex": (primary or {}).get("codex_version")},
@@ -233,10 +233,20 @@ def respond(chat, user, history, system, model, model_key):
     if status == "late":
         fk.add_done_callback(lambda f: late_check(chat, rec["id"], f, question))
     reply = primary["text"] if primary else ""
+    pa = (primary or {}).get("answer")
+    if pa and not mentions(reply, pa):  # the value was only on the stripped ANSWER line
+        reply = (reply + "\n\n" if reply else "") + f"Answer: {pa}"
     sendable = {n: d for n, d in new_files.items()
                 if n.lower().endswith((".png", ".jpg", ".jpeg")) or
                 (n.lower().endswith(SEND_EXT) and n in reply)}
     return reply, text, sendable
+
+
+def mentions(text, value):
+    """Does the reply already state this value (as a number at its precision, or as a name)?"""
+    if receipt.numbers(value):
+        return any(agree(f"{v}", value) for v, _ in receipt.numbers(text))
+    return value.lower() in (text or "").lower()
 
 
 def asked(text):
@@ -250,6 +260,11 @@ def late_check(chat, of, fut, question):
         audit_log.append(chat, {"type": "late_check", "of": of, "checker": checker})
     except Exception as e:
         print(f"late check failed: {e!r}", flush=True)
+
+
+def all_files(root):
+    """Every file under root, folders (Drive copies) included."""
+    return sorted(os.path.join(d, f) for d, _, fs in os.walk(root) for f in fs)
 
 
 _hash_cache = {}

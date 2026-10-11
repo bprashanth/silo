@@ -25,6 +25,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 import uuid
 from collections import defaultdict, deque
@@ -32,6 +33,7 @@ from collections import defaultdict, deque
 import answer
 import audit_log
 import charts
+import drive
 import harness
 import speech
 import todos
@@ -374,6 +376,8 @@ def handle(msg):
         text = heard
         send(chat, f"🎙️ “{heard}”")  # at once, so a mishearing shows before the answer arrives
     prefix = ""
+    if text and drive_message(chat, user, text):
+        return
     if text and not msg.get("document") and "photo" not in msg:
         # Todos and reminders first: always the local model, never an external one.
         try:
@@ -437,6 +441,67 @@ def handle(msg):
         say(chat, full)
 
 
+DRIVE_NOTE = ("To copy it, sign in with Google. I'll download only this link: the folder, every "
+              "folder inside it, and a list of where each file came from. Google's screen will say "
+              "\"see and download all your Google Drive files\": that's the only read permission Google "
+              "offers for an existing folder, but I copy just this link, once, and sign out straight after. "
+              "Nothing that could read your Drive again is kept. The sign-in link works for 15 minutes.")
+
+
+def drive_message(chat, user, text):
+    """A Drive link starts a sign-in; a pasted Google redirect finishes one. True if handled."""
+    got = drive.parse_redirect(text)
+    if got:
+        threading.Thread(target=drive_copy, args=got, daemon=True).start()
+        return True
+    link = drive.find_link(text)
+    if not link:
+        return False
+    if not drive.client():
+        send(chat, "Google Drive isn't set up on this box yet, so I can't copy that link.")
+        return True
+    url = drive.sign_in_url(chat, user.get("id"), link[0])
+    note = DRIVE_NOTE
+    if not drive.REDIRECT.startswith("https://"):
+        note += ("\n\nAfter you sign in, your browser will show a page that doesn't load. "
+                 "That's expected: copy that page's address and paste it here.")
+    tg("sendMessage", chat_id=chat, text="📁 " + note,
+       reply_markup={"inline_keyboard": [[{"text": "Sign in with Google", "url": url}]]})
+    print(f"drive sign-in started for {chat}", flush=True)
+    return True
+
+
+def drive_copy(state, code):
+    """Finish a sign-in and copy the link into the chat's files, then revoke the token."""
+    p = drive.pending.get(state)
+    if not p:
+        return
+    chat = p["chat"]
+    try:
+        p, token = drive.finish(state, code)
+    except Exception as e:
+        send(chat, str(e) if isinstance(e, ValueError) else "Google didn't accept that sign-in. Send the link again.")
+        return
+    send(chat, "Signed in. Copying now…")
+    t0 = time.time()
+    try:
+        with locks[chat]:
+            s = drive.copy(token, p["file_id"], harness.workdir(chat), progress=lambda m: send(chat, m))
+        reply = drive.summary_text(s)
+        history[chat].append({"role": "user", "content": f"(I shared the Google Drive {'folder' if s['is_folder'] else 'file'} "
+                                                          f"“{s['name']}”; it is copied into the files.)"})
+        history[chat].append({"role": "assistant", "content": reply})
+        audit_log.append(chat, {"type": "drive", "chat": chat, "user": {"id": p["user"]}, "file_id": p["file_id"],
+                                "summary": s, "seconds": round(time.time() - t0, 1)})
+        print(f"drive copy {chat}: {s['files']} files {s['bytes']} bytes in {time.time() - t0:.0f}s", flush=True)
+    except urllib.error.HTTPError as e:
+        reply = ("I couldn't open that link with your Google account: it may not be shared with you, or it "
+                 f"was deleted (Google said {e.code}).")
+    finally:
+        drive.revoke(token)
+    send(chat, reply)
+
+
 def erase(chat, user):
     """/reset: everything the box keeps for this chat and user. Voice notes are never written
     to disk (they're transcribed in memory), so their transcripts in history and the audit
@@ -495,6 +560,8 @@ def safe_handle(update):
 
 def main():
     answer.cleanup_jobs()
+    if drive.client() and drive.REDIRECT.startswith("https://"):
+        drive.serve(drive_copy)
     todos.start_loop(lambda chat, text: send(chat, text, aloud=True))
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
