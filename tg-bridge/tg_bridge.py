@@ -177,6 +177,8 @@ def how(chat, full):
         send(chat, audit_log.how(rec))
 
 
+# Voice out (spoken replies and the Read aloud button) is off until voice in is solid.
+VOICE_REPLIES = os.environ.get("VOICE_REPLIES", "0") == "1"
 spoken = {}  # (chat, message_id) -> when it was read aloud
 READ_ALOUD = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
 # What a badge sounds like in a voice reply; the full badge stays in the text.
@@ -189,7 +191,7 @@ def send(chat, text, aloud=False):
     """Send text in Telegram-sized pieces; aloud=True puts a Read aloud button on the last."""
     chunks = [text[i:i + 4000] for i in range(0, len(text), 4000)] or [""]  # Telegram limit is 4096
     for i, c in enumerate(chunks):
-        extra = {"reply_markup": READ_ALOUD} if aloud and i == len(chunks) - 1 else {}
+        extra = {"reply_markup": READ_ALOUD} if aloud and VOICE_REPLIES and i == len(chunks) - 1 else {}
         tg("sendMessage", chat_id=chat, text=c, **extra)
 
 
@@ -376,7 +378,7 @@ def handle(msg):
             history[chat].append({"role": "assistant", "content": done["reply"]})
             print(f"-> {who} [{done['kind']}]: {done['reply']}", flush=True)
             send(chat, prefix + done["reply"], aloud=not voice)
-            if voice:
+            if voice and VOICE_REPLIES:
                 say(chat, done["reply"])
             return
     try:
@@ -419,7 +421,7 @@ def handle(msg):
         body += "\n\n(Couldn't draw a chart: " + "; ".join(errors) + ")"
     full = (body + "\n\n" if body else "") + badge + "  /how"
     send(chat, prefix + full, aloud=not voice)
-    if voice:
+    if voice and VOICE_REPLIES:
         say(chat, full)
 
 

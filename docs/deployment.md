@@ -72,6 +72,7 @@ All settings are environment variables. The two secrets can also live in files u
 | `TODO_DAILY` | `09:00` | default time (IST) for the morning todo list |
 | `MODELS_DIR` | `~/.local/share/idli-bridge/models` | speech weights: `kokoro/` and `whisper/` |
 | `WHISPER_MODEL` | `large-v3-turbo` | the speech-to-text model |
+| `VOICE_REPLIES` | `0` | `1` turns on voice out: spoken replies to voice notes, and a 🔊 Read aloud button. Off while voice in is being settled. |
 | `TTS_VOICE` / `TTS_SPEED` | `af_heart` / `1.0` | the Kokoro voice used for read aloud, e.g. `bf_emma`, `am_michael`, `bm_george` |
 
 Names Whisper keeps mishearing (organisations, villages, people) go one per line in
