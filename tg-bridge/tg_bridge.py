@@ -177,6 +177,7 @@ def how(chat, full):
         send(chat, audit_log.how(rec))
 
 
+spoken = {}  # (chat, message_id) -> when it was read aloud
 READ_ALOUD = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
 # What a badge sounds like in a voice reply; the full badge stays in the text.
 SPOKEN_BADGE = {"✅": "This answer was checked independently.",
@@ -357,7 +358,8 @@ def handle(msg):
         print(f"<- {who}: [voice {voice.get('duration')}s] {heard}", flush=True)
         msg = {**msg, "text": heard}
         text = heard
-    prefix = f"🎙️ “{heard}”\n\n" if heard else ""
+        send(chat, f"🎙️ “{heard}”")  # at once, so a mishearing shows before the answer arrives
+    prefix = ""
     if text and not msg.get("document") and "photo" not in msg:
         # Todos and reminders first: always the local model, never an external one.
         try:
@@ -372,7 +374,7 @@ def handle(msg):
                                     "reply": done["reply"]})
             history[chat].append({"role": "user", "content": text})
             history[chat].append({"role": "assistant", "content": done["reply"]})
-            print(f"-> {who} [todos]: {done['reply']}", flush=True)
+            print(f"-> {who} [{done['kind']}]: {done['reply']}", flush=True)
             send(chat, prefix + done["reply"], aloud=not voice)
             if voice:
                 say(chat, done["reply"])
@@ -384,6 +386,8 @@ def handle(msg):
         return
     kind = "photo" if "photo" in msg else (msg.get("document") or {}).get("file_name", "")
     print(f"<- {who}: {('[' + kind + '] ') if kind else ''}{msg.get('caption') or text}", flush=True)
+    send(chat, "⏳ Working on it. Every answer is computed and then checked independently, "
+               "which usually takes 30–90 seconds.")
     with locks[chat]:
         history[chat].append({"role": "user", "content": content})
         try:
@@ -424,8 +428,15 @@ def handle_callback(cb):
     if not allowed(user):
         return
     if cb.get("data") == "say":
-        tg("answerCallbackQuery", callback_query_id=cb["id"], text="Reading it aloud…")
-        say(chat, cb["message"].get("text", ""))
+        key = (chat, cb["message"]["message_id"])
+        repeat = time.time() - spoken.get(key, 0) < 120  # a second tap while the first is on its way
+        tg("answerCallbackQuery", callback_query_id=cb["id"],
+           text="Already sent, it may take a moment to arrive." if repeat else "Reading it aloud…")
+        if not repeat:
+            spoken[key] = time.time()
+            t0 = time.time()
+            say(chat, cb["message"].get("text", ""))
+            print(f"read aloud {key[1]} in {time.time() - t0:.1f}s", flush=True)
         return
     key = cb.get("data", "").removeprefix("model:")
     result = set_model(chat, key)

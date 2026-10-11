@@ -1,7 +1,7 @@
 """Personal todos and reminders, kept on the box.
 
 A message (typed, or a transcribed voice note) goes through one call to the local model
-with todo tools. The model only picks the operations ("add this", "mark 1 and 2 done",
+with todo tools. Small talk is answered in the same call, so "thanks" doesn't wait for Codex. The model only picks the operations ("add this", "mark 1 and 2 done",
 "remind me at 6"); the bot executes them and writes the confirmation itself, so what
 you read is the stored list, not the model's prose. If the model calls not_about_todos,
 handle() returns None and the message goes on to the data path (answer.py).
@@ -104,14 +104,17 @@ TOOLS = [
     fn("set_daily_time", "Change when the daily todo list is sent each morning (IST).",
        {"time": {"type": "string", "description": "HH:MM, 24-hour"}}, ["time"]),
     fn("cancel_reminders", "Cancel all pending one-off reminders."),
-    fn("not_about_todos", "The message is not about the user's todos or reminders: a question, "
-       "a data request, small talk, anything else."),
+    fn("small_talk", "Greetings, thanks, acknowledgements or chit-chat that need no data, files or "
+       "facts: reply briefly and warmly yourself.", {"reply": {"type": "string"}}, ["reply"]),
+    fn("not_about_todos", "Anything else: a question, a request about files or data, a task, "
+       "anything that needs facts or work."),
 ]
 
 SYSTEM = """You manage a personal todo list and reminders for someone at an Indian non-profit.
 Their message may be a transcribed voice note, so expect small transcription slips in names.
 Call the tools that carry out what they ask; several calls are fine ("add X and remind me at 6").
-If the message is not about their todos or reminders, call not_about_todos and nothing else.
+If it is only small talk (hi, thanks, ok), call small_talk. Otherwise, if it is not about their
+todos or reminders, call not_about_todos and nothing else.
 
 Now: {now} (IST, Asia/Kolkata). Times are IST. A bare hour without am/pm: 1-7 means pm
 (6 -> 18:00), 8-11 means am, 12 means noon. If that time has already passed today, use tomorrow.
@@ -169,6 +172,9 @@ def handle(chat, user, text, model):
             pass
     if not calls or any(n == "not_about_todos" for n, _ in calls):
         return None
+    chat_reply = next((a.get("reply") for n, a in calls if n == "small_talk" and a.get("reply")), None)
+    if chat_reply and all(n == "small_talk" for n, _ in calls):
+        return {"reply": chat_reply.strip(), "calls": [{"name": n, "args": a} for n, a in calls], "kind": "chat"}
 
     def pick(nums):
         return [rows[n - 1] for n in dict.fromkeys(nums or []) if isinstance(n, int) and 1 <= n <= len(rows)]
@@ -219,7 +225,7 @@ def handle(chat, user, text, model):
             out.append("Cancelled your pending reminders.")
     if show or not out:
         out.append("\n" + list_text(user))
-    return {"reply": "\n".join(out).strip(), "calls": [{"name": n, "args": a} for n, a in calls]}
+    return {"reply": "\n".join(out).strip(), "calls": [{"name": n, "args": a} for n, a in calls], "kind": "todo"}
 
 
 # ---- morning list and reminders ------------------------------------------------------------
