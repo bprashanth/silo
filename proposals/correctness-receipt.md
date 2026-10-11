@@ -1,6 +1,7 @@
 # Proposal: a correctness receipt on every data answer
 
-**Status:** proposed, 2026-10-11. **Evidence:** `benchmarks/harness-compare`
+**Status:** built 2026-10-11, with the roles swapped: Codex answers, the bridge's harness
+checks (`tg-bridge/answer.py`; `chronology/2026-10-11T2300-codex-answers-simple-checks.md`). **Evidence:** `benchmarks/harness-compare`
 (268 jobs) and `narrative/2026-10-11-which-harness-and-what-a-receipt-is.md`.
 
 ## Problem
@@ -10,7 +11,7 @@ person asking usually can't check it. They need a sign on the answer that tells 
 whether to trust it, and the sign should go red when the answer is wrong.
 
 The obvious receipt is provenance: every number in the reply must appear in some tool
-output. We built it (`benchmarks/harness-compare/receipt.py`), and it doesn't do this
+output. We built it (`tg-bridge/receipt.py`, moved from `benchmarks/harness-compare/`), and it doesn't do this
 job. In all 268 jobs local Muse computed its final answer and never typed it from
 memory. The wrong answers were computed faithfully from the wrong rows:
 - a blank separator row counted as a visit;

@@ -14,6 +14,8 @@ rm -f tg_bridge.pid
 docker image inspect idli-sandbox:1 >/dev/null 2>&1 || docker build -t idli-sandbox:1 sandbox
 base=${IDLI_BASE_URL:-http://127.0.0.1:8181/v1}
 curl -sf "$base/models" >/dev/null || echo "warning: no model server answering at $base" >&2
+[[ -f ${IO_APP:-../../io/app/io}/codex.js ]] ||
+  echo "warning: io not found at ${IO_APP:-../../io/app/io}; replies will come from the checker alone, unverified" >&2
 [[ -n ${TG_ALLOWED:-} ]] || echo "warning: TG_ALLOWED is empty, so anyone who finds the bot can use it" >&2
 
 setsid nohup .venv/bin/python tg_bridge.py >> tg_bridge.log 2>&1 &

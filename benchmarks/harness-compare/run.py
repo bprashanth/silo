@@ -7,7 +7,7 @@ fresh, with the case's files in a new workspace.
   simple  tg-bridge/harness.py: one `python` tool in a no-network container,
           files mounted read-only at /data. Prompt built by tg_bridge.file_content,
           exactly as a Telegram upload is.
-  codex   io's pinned Codex under io's own profile (io_config.js: bwrap wall,
+  codex   io's pinned Codex under io's own profile (tg-bridge/codex_engine.py and io_config.js: bwrap wall,
           offline network, escalation closed, io's AGENTS.md), via `codex exec --json`.
 
 usage: run.py <out_dir> [--cases a,b] [--harness simple,codex] [--trials N] [--par P]
@@ -18,7 +18,6 @@ import concurrent.futures as cf
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import threading
@@ -30,11 +29,11 @@ BENCH_HOME = os.path.expanduser("~/.local/share/idli-bench")  # Codex refuses CO
 os.environ.setdefault("WORK_ROOT", os.path.join(BENCH_HOME, "simple"))
 os.environ.setdefault("TG_ALLOWED", "")
 sys.path.insert(0, os.path.join(ROOT, "tg-bridge"))
+import codex_engine  # noqa: E402
 import harness  # noqa: E402
-import receipt  # noqa: E402  (benchmarks/harness-compare/receipt.py)
+import receipt  # noqa: E402  (tg-bridge/receipt.py)
 import tg_bridge as br  # noqa: E402
 
-IO_APP = os.path.abspath(os.path.join(ROOT, "../io/app/io"))
 CODEX_TIMEOUT = 1500
 PROMPT_TAIL = ("\nEnd your reply with a final line of the form ANSWER: <value> "
                "(a plain number without commas or units, or an exact name).")
@@ -127,58 +126,12 @@ def run_simple(case, q, job):
 # ---- io codex harness -----------------------------------------------------------------
 
 def run_codex(case, q, job):
-    root = os.path.join(BENCH_HOME, "codex", job)
-    shutil.rmtree(root, ignore_errors=True)
-    home, ws = os.path.join(root, "home"), os.path.join(root, "ws")
-    os.makedirs(home)
-    os.makedirs(ws)
-    for name in case["files"]:
-        shutil.copy(os.path.join(case["dir"], name), ws)
-    info = json.loads(subprocess.check_output(["node", os.path.join(HERE, "io_config.js"), home, ws],
-                                              env={**os.environ, "IO_APP": IO_APP}, text=True))
-    env = {k: v for k, v in os.environ.items()
-           if not (k.startswith("OPENAI_") or k.startswith("OPENROUTER_") or k == "CODEX_API_KEY")}
-    env["CODEX_HOME"] = home
-    env["PATH"] = os.path.join(info["libs"], "bin") + os.pathsep + env.get("PATH", "")
     prompt = (f"The files for this question are in this folder: {', '.join(case['files'])}.\n\n"
               + q["question"] + PROMPT_TAIL)
-    cmd = [info["bin"], "exec", "-p", info["profile"], "--json", "--skip-git-repo-check", "-C", ws, prompt]
-    try:
-        p = subprocess.run(cmd, env=env, cwd=ws, stdin=subprocess.DEVNULL, capture_output=True,
-                           text=True, timeout=CODEX_TIMEOUT)
-        stdout, stderr, finish = p.stdout, p.stderr, f"exit={p.returncode}"
-    except subprocess.TimeoutExpired as e:
-        stdout = e.stdout.decode() if isinstance(e.stdout, bytes) else (e.stdout or "")
-        stderr, finish = "", "timeout"
-    actions, texts, usage, errors = [], [], {"input": 0, "output": 0}, []
-    for line in stdout.splitlines():
-        try:
-            e = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        it = e.get("item") or {}
-        if e.get("type") == "item.completed":
-            if it.get("type") == "command_execution":
-                actions.append({"kind": "shell", "input": it.get("command", ""),
-                                "output": it.get("aggregated_output", ""), "exit_code": it.get("exit_code")})
-            elif it.get("type") == "agent_message":
-                texts.append(it.get("text", ""))
-            elif it.get("type") == "error":
-                errors.append(it.get("message", ""))
-            elif it.get("type") not in ("reasoning",):
-                actions.append({"kind": it.get("type"), "input": json.dumps(it)[:2000], "output": ""})
-        elif e.get("type") == "turn.completed":
-            u = e.get("usage") or {}
-            usage["input"] += u.get("input_tokens", 0)
-            usage["output"] += u.get("output_tokens", 0)
-        elif e.get("type") in ("error", "turn.failed"):
-            errors.append(json.dumps(e)[:500])
-    files_after = sorted(os.listdir(ws))
-    shutil.rmtree(root, ignore_errors=True)
-    return {"text": texts[-1] if texts else "", "finish": finish, "actions": actions, "usage": usage,
-            "errors": errors, "codex_version": info["version"], "workspace": ws,
-            "files_after": files_after, "stderr_tail": "\n".join(
-                l for l in stderr.splitlines()[-15:] if not l.startswith("WARNING: proceeding"))}
+    r = codex_engine.run([os.path.join(case["dir"], n) for n in case["files"]], prompt,
+                         os.path.join(BENCH_HOME, "codex", job), timeout=CODEX_TIMEOUT)
+    r["files_after"] = sorted(case["files"] + list(r.pop("new_files")))
+    return r
 
 
 HARNESSES = {"simple": run_simple, "codex": run_codex}

@@ -6,7 +6,7 @@
 // usage: io_config.js <codex_home> <workspace> [wall]   (wall: offline | tools, default offline)
 const fs = require('fs');
 const path = require('path');
-const IO = process.env.IO_APP || path.resolve(__dirname, '../../../io/app/io');
+const IO = process.env.IO_APP || path.resolve(__dirname, '../../io/app/io');
 const codex = require(path.join(IO, 'codex.js'));
 const runtime = require(path.join(IO, 'runtime.js')).resolve();
 

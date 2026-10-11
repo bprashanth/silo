@@ -41,8 +41,11 @@ reliably on the server, because the user base's Windows machines vary too much.
 - **A Telegram bot** (`tg-bridge/`) that the team can message, send spreadsheets, PDFs and
   images to, and get answers and charts back from.
   - It runs against a model served on this box: Muse Glimmer 30B.
-  - It computes with a single `python` tool in a Docker container with no network and
-    read-only files.
+  - io's Codex answers, behind io's offline bubblewrap profile.
+  - The bridge's own one-tool harness checks each answer independently, computing in a
+    Docker container with no network and read-only files.
+  - Every reply carries a badge (✅ verified, ⚠️ disagrees, ◻️ unverified, ➖ nothing to
+    check), and `/how` shows the audit record behind it.
 - **Measurements** (`benchmarks/`) of how we develop our understanding of useful and trustable. 
 - **Proposals** for the correctness receipt and the audit trail that the "trustable" goals need.
 
@@ -55,7 +58,7 @@ local model and start it.
 tg-bridge/     the Telegram bot, its python-tool harness and sandbox image, test and eval scripts
 wa-bridge/     the abandoned WhatsApp bridge (see chronology)
 docs/          how to deploy and operate
-proposals/     designs not yet built: correctness receipt, audit checker
+proposals/     designs: correctness receipt, audit checker (both now built in tg-bridge)
 chronology/    append-only log, one file per step, YYYY-MM-DDTHHMM-slug.md
 benchmarks/    reproducible experiments: cases, scripts, raw run output
 narrative/     longer notes drawn from several chronology entries and benchmark runs
@@ -63,7 +66,9 @@ narrative/     longer notes drawn from several chronology entries and benchmark 
 
 ## Relation to io
 
-The bridge doesn't depend on io. `benchmarks/harness-compare` drives io's pinned Codex
-binary under io's own sandbox profile, so a checkout of io next to this repo
-(`../io`) is needed only to re-run that benchmark. Those pieces are about 3.6 GB (the Codex
-binaries and the Python runtime) plus io's config code, so they're referenced rather than copied.
+The bridge's answers come from io's pinned Codex binary under io's own sandbox profile
+(`tg-bridge/io_config.js` calls io's `writeConfig`), and `benchmarks/harness-compare` uses the
+same code. So a checkout of io next to this repo (`../io`, or `IO_APP`) is needed. Those
+pieces are about 3.6 GB (the Codex binaries and the Python runtime) plus io's config code, so
+they're referenced rather than copied. Without io the bot still runs, and its replies come from
+the checker alone, marked unverified.

@@ -5,11 +5,20 @@ serving. The bot long-polls Telegram, so it needs outbound HTTPS to
 `api.telegram.org`, but no public URL, open port or tunnel.
 
 ```text
- Telegram app -> api.telegram.org <- long poll - tg_bridge.py -> local model (OpenAI-compatible)
-                                                         |
-                                                         |-> docker run --network none idli-sandbox:1
-                                                             (python over the chat's files, read-only)
+ Telegram app -> api.telegram.org <- long poll - tg_bridge.py
+                                                   |
+                                                   |-> answers: io's Codex, io's offline bwrap profile --+
+                                                   |                                                     |-> local model
+                                                   |-> checks:  python-tool harness,                   --+   (OpenAI-compatible)
+                                                   |            docker run --network none idli-sandbox:1
+                                                   |
+                                                   '-> audit record per reply (/how)
 ```
+
+Every message is answered twice, independently and in parallel. io's Codex writes the
+reply, and the bridge's own one-tool harness checks it. The reply carries a badge saying
+whether the two agreed (`proposals/correctness-receipt.md`), and `/how` shows the audit
+record behind it (`proposals/audit-checker.md`).
 
 ## What you need
 
@@ -19,7 +28,17 @@ serving. The bot long-polls Telegram, so it needs outbound HTTPS to
     `tg-bridge/serve_muse.sh` is how it's served on the DGX Spark: llama.cpp in Docker
     on `127.0.0.1:8181`, 4 slots of 64k, `--jinja`, and the DFlash drafter.
   - llama.cpp needs `--jinja`, or tool calls won't work.
-- **Docker.** The model's Python runs in a throwaway container.
+- **For Codex,** these must also hold on the server; the bot also runs if they don't (see below):
+  - The model server serves the Responses API (`POST /v1/responses`). Recent llama.cpp does.
+  - A checkout of [io](https://github.com/bprashanth/io) at `../io` next to this repo, or
+    `IO_APP` pointing at its `app/io`, with its pinned Codex binary and Python runtime fetched,
+    as io's own setup does. The bridge uses io's `codex.js` `writeConfig` to build the
+    sandbox profile (`tg-bridge/io_config.js`).
+  - Node.js, to run `io_config.js`.
+  - Bubblewrap working for the bot's user. On Ubuntu 24.04 and later that needs io's AppArmor
+    profile (`/etc/apparmor.d/io-bwrap`). io's sandbox conformance test should pass.
+  - Without io, every reply falls back to the checker's answer, marked ◻️ unverified.
+- **Docker.** The checker's Python runs in a throwaway container.
 - **[uv](https://docs.astral.sh/uv/)** to make the venv (any Python 3.12 venv also works).
 - **`pdftotext`** (poppler-utils) for PDFs. Optionally **`soffice`** (LibreOffice) for
   legacy `.xls`.
@@ -39,7 +58,13 @@ All settings are environment variables. The two secrets can also live in files u
 | `TG_ALLOWED` | empty, meaning **anyone** | comma-separated Telegram usernames or numeric user ids allowed to use the bot |
 | `OPENROUTER_API_KEY` | `api_key` in `$SILO_CONFIG/openrouter.json` | optional; adds external models to `/model`. Leave it unset to keep all data on the box. |
 | `WORK_ROOT` | `~/.local/share/idli-bridge/work` | where uploaded files are kept, one directory per chat |
-| `SYSTEM_PROMPT` | a short Telegram-assistant prompt | replaces the base system prompt |
+| `SYSTEM_PROMPT` | a short Telegram-assistant prompt | replaces the base system prompt (the checker's, and replies to external models) |
+| `IO_APP` | `../io/app/io` next to this repo | io's app folder, which holds `codex.js` and the pinned Codex |
+| `CHECK_GRACE` | `30` | seconds to wait for the checker after Codex has answered, before replying ◻️ unverified |
+| `CHECK_REASONING` | `low` | `reasoning_effort` for the checker's model calls; it has to keep up with Codex |
+| `CODEX_TIMEOUT` | `1500` | seconds before a Codex run is stopped |
+| `CODEX_ROOT` | `~/.local/share/idli-bridge/codex` | per-run Codex home and working folder, deleted after each run (must not be under `/tmp`) |
+| `AUDIT_ROOT` | `~/.local/share/idli-bridge/audit` | audit records, `<chat>/<date>.jsonl` |
 
 **Always set `TG_ALLOWED`.** A Telegram bot can be found and messaged by anyone.
 Allowing usernames is easiest; numeric ids survive a username change. A denied user's id
@@ -64,7 +89,7 @@ TG_ALLOWED=alice,bob,7196436554 ./start.sh
 `start.sh` does the following:
 - creates `.venv` from `requirements.txt` if it's missing;
 - builds the sandbox image `idli-sandbox:1` from `sandbox/Dockerfile` if it's missing;
-- warns if nothing answers at `$IDLI_BASE_URL/models`, or if `TG_ALLOWED` is empty;
+- warns if nothing answers at `$IDLI_BASE_URL/models`, if io isn't found, or if `TG_ALLOWED` is empty;
 - stops any bridge it started before, then starts a new one in the background, logging to
   `tg_bridge.log` with its pid in `tg_bridge.pid`.
 
@@ -82,11 +107,15 @@ systemd unit.
 In Telegram, open your bot and:
 1. Send `/start`. It replies "Hi! I'm Silo…" and names the current model.
 2. Send a spreadsheet with a question as the caption, e.g. "total spend by
-   category". Each step the model runs appears in `tg_bridge.log` as
-   `[tool step N] ... chars of code -> ...`, and the reply comes back with the number.
-3. Ask for a chart ("plot monthly spend"). It comes back as an image.
+   category". The reply comes back with the number and a badge, e.g.
+   `✅ Verified: an independent second computation also got 5238900.`
+3. Send `/how`. It lists the files (with hashes), every step each side ran with its key
+   output line, the model and code versions, and the badge. `/how full` sends all of it,
+   in full, as a `.txt` file.
+4. Ask for a chart ("plot monthly spend"). Codex saves a PNG, which comes back as a photo.
 
-`/model` shows the model menu, and `/reset` clears the chat's history and its files.
+`/model` shows the model menu, and `/reset` clears the chat's history and its files. It
+doesn't clear the audit records.
 
 To test without a phone, `tl_session.py` drives the bot as a Telegram user. It needs a
 Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
@@ -95,7 +124,7 @@ Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
 
 ```sh
 .venv/bin/python tl_session.py /reset "file:../benchmarks/ngo-workbook-correctness/cases/asha_ngo_finances_FY25-26.xlsx|What was our total actual expenditure from April through September 2025, in INR?"
-# expect 19,080,600
+# expect 19,080,600 and ✅
 ```
 
 ## What runs where
@@ -105,12 +134,38 @@ Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
     characters.
   - For spreadsheets it sees only the first 8 rows of each sheet and computes everything
     else with the tool.
-- **The `python` tool:** each call is
+- **The answer:** io's Codex 0.154.0 under io's own profile, one fresh run per message.
+  - The profile: bubblewrap, network off, writes only to the run's folder and `/tmp`, reads
+    only the platform, io's Python and Codex itself, `approval_policy = never`, and io's
+    `AGENTS.md`.
+  - The run's folder holds copies of the chat's files, and the conversation so far goes in
+    the prompt.
+  - New PNG or JPEG files Codex saves are sent back to the chat. Other new files (HTML, PDF,
+    xlsx, csv…) are sent only when the reply names them.
+  - The folder is deleted after the run.
+  - There's no masking proxy as in io, because the model is local.
+- **The check:** the bridge's own harness answers the same message from the same files and
+  history, with low reasoning effort. It never sees Codex's answer. Both end with an
+  `ANSWER:` line, which is stripped from the reply. Their values are compared at the precision
+  each was written, so 480 and 481 disagree, while 79.6 and 0.796 (as a fraction) agree.
+- **The badge:**
+  - ✅ the two agree;
+  - ⚠️ they disagree, and both values are shown;
+  - ◻️ unverified: the check didn't finish within `CHECK_GRACE` s of Codex or reached no
+    answer, both got 0, the answer doesn't appear in anything Codex computed, or Codex failed
+    and the checker answered alone;
+  - ➖ nothing to check: no single figure or name in the reply, an external model, or a picture,
+    which Codex here can't see and so has no second check.
+  - A check that finishes late is still written to the audit record, and `/how` shows it.
+- **The audit record:** one hash-chained JSON line per reply in `$AUDIT_ROOT/<chat>/<date>.jsonl`.
+  `.venv/bin/python audit_log.py verify <chat id>` checks the chain. Records hold code and
+  outputs, so they're as sensitive as the files themselves.
+- **The checker's `python` tool:** each call is
   `docker run --rm --network none --read-only --memory 2g --cpus 2 --pids-limit 128`,
   with the chat's folder mounted read-only at `/data` and 60 s to run. It can't write
-  to the host or reach any network. This is the attack surface of the bridge
+  to the host or reach any network. This is the attack surface of the checker
   (`tg-bridge/harness.py`).
-- **The model** gets up to 12 tool calls per message, then one final call with tools turned off,
+- **The checker** gets up to 12 tool calls per message, then one final call with tools turned off,
   so a reply always comes back. A llama.cpp HTTP 500 (a malformed tool call) is re-sampled
   up to 3 times.
 - **Chat history** is kept in memory, the last 20 turns per chat, and lost on restart.
@@ -120,7 +175,9 @@ Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
 
 ## Capacity
 
-One llama.cpp server with `-np 4` answers four chats at once. A fifth waits for a free slot.
-On the DGX Spark, Muse Glimmer Q4 with the drafter decodes at about 34 tok/s for a single
-stream. A spreadsheet question takes a median of about 4 minutes through this bridge
-(`benchmarks/harness-compare`).
+Each message takes two model streams, Codex and the checker, so one llama.cpp server with
+`-np 4` serves two chats at once; the next waits for a free slot. On the DGX Spark, Muse
+Glimmer Q4 with the drafter decodes at about 34 tok/s for a single stream.
+
+In the first live tests the spreadsheet questions took 30–85 s for Codex and 27–56 s for the
+checker. Small talk took about 20 s, because it goes through Codex too.
