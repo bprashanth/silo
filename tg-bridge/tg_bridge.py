@@ -29,6 +29,8 @@ import urllib.request
 import uuid
 from collections import defaultdict, deque
 
+import answer
+import audit_log
 import charts
 import harness
 
@@ -91,25 +93,14 @@ def tg(method, **params):
     return post_json(f"{API}/{method}", params, timeout=70)
 
 
-def llm(chat):
-    """Run the harness tool loop; returns the final text. Tool steps aren't kept in history."""
-    m = MODELS[chat_model[chat]]
-    files = ", ".join(harness.files(chat)) or "(none yet)"
-    msgs = [{"role": "system", "content": SYSTEM + harness.SYSTEM_HINT.format(files=files)}, *history[chat]]
-
-    def call(messages, tools):
-        r = post_json(f"{m['base']}/chat/completions",
-                      {"model": m["model"], "messages": messages, **({"tools": tools} if tools else {})},
-                      {"Authorization": f"Bearer {m['key']}"}, timeout=1800)
-        return r["choices"][0]
-
-    content, steps, finish = harness.chat_loop(chat, msgs, call, log=lambda s: print(s, flush=True))
-    if not content:
-        raise Unsupported(
-            "The model didn't produce an answer "
-            f"(finish_reason={finish}). Try a narrower question."
-        )
-    return content
+def llm(chat, user):
+    """Answer the chat's latest message: io's Codex answers, the bridge's harness checks
+    (answer.py). Returns (reply, badge, files to send back)."""
+    key = chat_model[chat]
+    reply, badge, files = answer.respond(chat, user, list(history[chat]), SYSTEM, MODELS[key], key)
+    if not reply.strip():
+        raise Unsupported("The model didn't produce an answer. Try a narrower question, or /how to see what it tried.")
+    return reply, badge, files
 
 
 class typing:
@@ -152,17 +143,36 @@ def set_model(chat, key):
     return f"Switched to {model_name(key)}."
 
 
-def send_photo(chat, png, caption=""):
+def send_file(chat, data, name, caption="", method="sendPhoto", field="photo", mime="image/png"):
     boundary = uuid.uuid4().hex
     parts = [f'--{boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n{chat}\r\n'.encode(),
              f'--{boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n{caption[:1000]}\r\n'.encode(),
-             f'--{boundary}\r\nContent-Disposition: form-data; name="photo"; filename="chart.png"\r\n'
-             f'Content-Type: image/png\r\n\r\n'.encode() + png + b"\r\n",
+             f'--{boundary}\r\nContent-Disposition: form-data; name="{field}"; filename="{name}"\r\n'
+             f'Content-Type: {mime}\r\n\r\n'.encode() + data + b"\r\n",
              f"--{boundary}--\r\n".encode()]
-    req = urllib.request.Request(f"{API}/sendPhoto", b"".join(parts),
+    req = urllib.request.Request(f"{API}/{method}", b"".join(parts),
                                  {"Content-Type": f"multipart/form-data; boundary={boundary}"})
     with urllib.request.urlopen(req, timeout=120) as r:
         return json.load(r)
+
+
+def send_photo(chat, png, caption=""):
+    return send_file(chat, png, "chart.png", caption)
+
+
+def send_document(chat, data, name, caption=""):
+    return send_file(chat, data, name, caption, "sendDocument", "document", "application/octet-stream")
+
+
+def how(chat, full):
+    rec = audit_log.last_answer(chat)
+    if not rec:
+        send(chat, "Nothing to show yet: ask a question first.")
+    elif full:
+        send_document(chat, audit_log.how(rec, full=True).encode(), f"how-{rec['id']}.txt",
+                      "Every step behind the last answer.")
+    else:
+        send(chat, audit_log.how(rec))
 
 
 def send(chat, text):
@@ -292,11 +302,15 @@ def handle(msg):
         else:
             model_menu(chat)
         return
+    if text.strip().lower().startswith("/how"):
+        how(chat, "full" in text.lower())
+        return
     if text.strip().lower() in ("/reset", "/start"):
         history[chat].clear()
         harness.clear(chat)
         send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /model to switch, /reset to start over.")
+                   f"You're on {model_name(chat_model[chat])}; /model to switch, /reset to start over. "
+                   "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
         return
     try:
         content = to_content(msg)
@@ -309,14 +323,22 @@ def handle(msg):
         history[chat].append({"role": "user", "content": content})
         try:
             with typing(chat):
-                reply = llm(chat)
+                reply, badge, files = llm(chat, {"id": user.get("id"), "username": user.get("username")})
         except Exception as e:
             print(f"LLM error: {e}", flush=True)
             history[chat].pop()
             send(chat, str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
             return
         history[chat].append({"role": "assistant", "content": reply})
-    print(f"-> {who} [{chat_model[chat]}]: {reply}", flush=True)
+    print(f"-> {who} [{chat_model[chat]}]: {reply}\n   {badge}", flush=True)
+    for name, data in files.items():
+        try:
+            if name.lower().endswith((".png", ".jpg", ".jpeg")):
+                send_file(chat, data, name, name, mime="image/png" if name.lower().endswith("png") else "image/jpeg")
+            else:
+                send_document(chat, data, name)
+        except Exception as e:
+            print(f"file send error {name}: {e}", flush=True)
     body, specs, errors = charts.extract(reply)
     for spec in specs:
         try:
@@ -326,8 +348,7 @@ def handle(msg):
     if errors:
         print(f"chart errors: {errors}", flush=True)
         body += "\n\n(Couldn't draw a chart: " + "; ".join(errors) + ")"
-    if body:
-        send(chat, body)
+    send(chat, (body + "\n\n" if body else "") + badge + "  /how")
 
 
 def handle_callback(cb):
@@ -352,10 +373,12 @@ def safe_handle(update):
 
 
 def main():
+    answer.cleanup_jobs()
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
     tg("setMyCommands", commands=[
         {"command": "model", "description": "Switch model (idli internal / external)"},
+        {"command": "how", "description": "Show the steps behind the last answer (/how full: everything)"},
         {"command": "reset", "description": "Start a fresh conversation"},
     ])
     offset = 0

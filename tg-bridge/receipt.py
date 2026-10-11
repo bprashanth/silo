@@ -7,6 +7,7 @@ final text and the list of tool outputs.
 
 Audit: what the agent's actions touched, flagged against what the harness promises.
 """
+import os
 import re
 
 UNITS = {"l": 1e5, "lakh": 1e5, "lakhs": 1e5, "lac": 1e5, "lacs": 1e5,
@@ -91,11 +92,14 @@ DENIED = re.compile(r"(Permission denied|Operation not permitted|Read-only file 
                     r"Network is unreachable|Temporary failure in name resolution|Could not resolve)", re.I)
 
 
+IO_APP = os.environ.get("IO_APP") or os.path.abspath(os.path.join(os.path.dirname(__file__), "../../io/app/io"))
+
+
 def audit(harness, actions, workspace):
     """Flags: network attempts, paths outside the workspace, sandbox refusals, odd tools."""
     flags = set()
-    allowed = [workspace, "/tmp", "/home/beeps/src/github.com/bprashanth/io/app/io/.venv",
-               "/home/beeps/src/github.com/bprashanth/io/app/io/codex-bin"]
+    # Besides the workspace, Codex may read io's python runtime and its own binary.
+    allowed = [workspace, "/tmp", os.path.join(IO_APP, ".venv"), os.path.join(IO_APP, "codex-bin")]
     for a in actions:
         src, out = a.get("input") or "", a.get("output") or ""
         if a.get("kind") not in ("python", "shell"):

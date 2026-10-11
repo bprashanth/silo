@@ -116,3 +116,21 @@ def chat_loop(chat, messages, call, log=print):
     new.append({"role": "user", "content": "Tool budget used up. Give your final answer now from the results above."})
     choice = call(messages + new, None)
     return (choice["message"].get("content") or "").strip(), new, "max_steps"
+
+
+def actions(steps):
+    """chat_loop's new messages -> [{kind, input, output}], one per python call."""
+    out, pending = [], {}
+    for s in steps:
+        if s["role"] == "assistant":
+            for tc in s.get("tool_calls") or []:
+                try:
+                    code = json.loads(tc["function"]["arguments"] or "{}").get("code", "")
+                except json.JSONDecodeError:
+                    code = tc["function"].get("arguments", "")
+                pending[tc["id"]] = {"kind": "python", "input": code}
+        elif s["role"] == "tool":
+            a = pending.pop(s["tool_call_id"], {"kind": "python", "input": ""})
+            a["output"] = s["content"]
+            out.append(a)
+    return out

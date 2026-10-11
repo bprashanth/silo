@@ -1,6 +1,6 @@
 # Proposal: an audit record and checker for every answer
 
-**Status:** proposed, 2026-10-11. **Evidence:** the `audit` field in
+**Status:** record and `/how` built 2026-10-11 (`tg-bridge/audit_log.py`). **Evidence:** the `audit` field in
 `benchmarks/harness-compare` (`receipt.py:audit`), 268 jobs.
 
 ## Problem

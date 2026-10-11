@@ -13,7 +13,7 @@ drafter, llama.cpp, 4 slots of 64k). Every job is one question in a fresh worksp
 | code | `tg-bridge/harness.py` | io's pinned Codex 0.154.0 (`../io/app/io/codex-bin`) |
 | prompt | built by `tg_bridge.file_content`, exactly as for a Telegram upload: an 8-row preview of each xlsx, full text of a csv | the question, plus the names of the files in the folder; io's `AGENTS.md` |
 | actions | one `python` tool | any shell command |
-| sandbox | Docker: `--network none`, files read-only at `/data`, 2 GB, 60 s | io's profile (`io_config.js` calls io's own `writeConfig`): bwrap, network off, writes only to the folder and temp, reads only the platform, io's python and Codex itself; `approval_policy = never` |
+| sandbox | Docker: `--network none`, files read-only at `/data`, 2 GB, 60 s | io's profile (`tg-bridge/codex_engine.py`; `tg-bridge/io_config.js` calls io's own `writeConfig`): bwrap, network off, writes only to the folder and temp, reads only the platform, io's python and Codex itself; `approval_policy = never` |
 
 The one deliberate difference from io: there's no masking proxy. Model traffic goes
 straight to the local server, because nothing leaves the machine.
@@ -28,7 +28,7 @@ messy files. `clean` is the tidy baseline workbook from `../ngo-workbook-correct
 
 - **verdict:** correct, wrong (a confident wrong answer) or missing (no answer).
 - **seconds** and **actions** (tool calls or shell commands).
-- **receipt** (`receipt.py`): is every number in the reply, and above all the `ANSWER`
+- **receipt** (`tg-bridge/receipt.py`): is every number in the reply, and above all the `ANSWER`
   value, present in some tool output, at the precision it was written? "Clean" means
   fully traced. It's scored by how many wrong answers it catches and how many correct
   answers it flags.
