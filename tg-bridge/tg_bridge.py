@@ -499,10 +499,10 @@ def main():
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
     tg("setMyCommands", commands=[
-        {"command": "todos", "description": "Your todo list (add, finish or get reminders by voice or text)"},
-        {"command": "model", "description": "Switch model (idli internal / external)"},
-        {"command": "how", "description": "Show the steps behind the last answer (/how full: everything)"},
-        {"command": "reset", "description": "Erase everything: conversation, files, todos, records"},
+        {"command": "todos", "description": "Your todo list"},
+        {"command": "model", "description": "Switch model"},
+        {"command": "how", "description": "How the last answer was made"},
+        {"command": "reset", "description": "Erase everything"},
     ])
     offset = 0
     while True:
