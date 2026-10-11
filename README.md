@@ -1,5 +1,8 @@
 # Silo
 
+<img width="687" height="714" alt="Screenshot from 2026-10-11 22-41-33" src="https://github.com/user-attachments/assets/155accd1-e514-4fa9-a18e-15fccdbd2fd9" />
+
+
 Silo is the first product prototype to come out of the event [io](https://github.com/bprashanth/io)
 was built for.
 
