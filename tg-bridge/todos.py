@@ -77,6 +77,14 @@ def list_text(user, title="Your todos:"):
     return f"{title}\n{numbered(rows)}" if rows else "You have no open todos."
 
 
+def erase(user):
+    """Delete everything stored for this user: todos, reminders, settings."""
+    for t in ("todos", "reminders", "users"):
+        q(f"DELETE FROM {t} WHERE user=?", str(user))
+    with _lock:
+        CONN.execute("VACUUM")  # so deleted rows don't linger in the file
+
+
 # ---- the model call -----------------------------------------------------------------------
 
 def fn(name, desc, props=None, required=()):

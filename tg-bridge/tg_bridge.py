@@ -180,6 +180,13 @@ def how(chat, full):
 # Voice out (spoken replies and the Read aloud button) is off until voice in is solid.
 VOICE_REPLIES = os.environ.get("VOICE_REPLIES", "0") == "1"
 spoken = {}  # (chat, message_id) -> when it was read aloud
+# The log holds who/what kind/how long, not what was said, unless LOG_CONTENT=1 (debugging):
+# otherwise /reset couldn't erase it.
+LOG_CONTENT = os.environ.get("LOG_CONTENT", "0") == "1"
+
+
+def shown(text):
+    return text if LOG_CONTENT else f"({len(text or '')} chars)"
 READ_ALOUD = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
 # What a badge sounds like in a voice reply; the full badge stays in the text.
 SPOKEN_BADGE = {"✅": "This answer was checked independently.",
@@ -336,11 +343,16 @@ def handle(msg):
     if text.strip().lower().startswith("/how"):
         how(chat, "full" in text.lower())
         return
-    if text.strip().lower() in ("/reset", "/start"):
-        history[chat].clear()
-        harness.clear(chat)
+    if text.strip().lower() == "/reset":
+        tg("sendMessage", chat_id=chat, text=(
+            "This erases everything I keep about you on this box: the conversation, your files, "
+            "your todos and reminders, and the record of past answers and voice notes. It can't be undone."),
+           reply_markup={"inline_keyboard": [[{"text": "Erase everything", "callback_data": "reset:yes"},
+                                              {"text": "Cancel", "callback_data": "reset:no"}]]})
+        return
+    if text.strip().lower() == "/start":
         send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /model to switch, /reset to start over. "
+                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /model to switch, /reset to erase everything. "
                    "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
         return
     voice = msg.get("voice") or msg.get("audio")
@@ -357,7 +369,7 @@ def handle(msg):
         if not heard:
             send(chat, "I couldn't hear any words in that voice note.")
             return
-        print(f"<- {who}: [voice {voice.get('duration')}s] {heard}", flush=True)
+        print(f"<- {who}: [voice {voice.get('duration')}s] {shown(heard)}", flush=True)
         msg = {**msg, "text": heard}
         text = heard
         send(chat, f"🎙️ “{heard}”")  # at once, so a mishearing shows before the answer arrives
@@ -376,7 +388,7 @@ def handle(msg):
                                     "reply": done["reply"]})
             history[chat].append({"role": "user", "content": text})
             history[chat].append({"role": "assistant", "content": done["reply"]})
-            print(f"-> {who} [{done['kind']}]: {done['reply']}", flush=True)
+            print(f"-> {who} [{done['kind']}]: {shown(done['reply'])}", flush=True)
             send(chat, prefix + done["reply"], aloud=not voice)
             if voice and VOICE_REPLIES:
                 say(chat, done["reply"])
@@ -387,7 +399,7 @@ def handle(msg):
         send(chat, str(e))
         return
     kind = "photo" if "photo" in msg else (msg.get("document") or {}).get("file_name", "")
-    print(f"<- {who}: {('[' + kind + '] ') if kind else ''}{msg.get('caption') or text}", flush=True)
+    print(f"<- {who}: {('[file] ' if 'document' in msg else '[photo] ') if kind else ''}{shown(msg.get('caption') or text)}", flush=True)
     send(chat, "⏳ Working on it. Every answer is computed and then checked independently, "
                "which usually takes 30–90 seconds.")
     with locks[chat]:
@@ -401,7 +413,7 @@ def handle(msg):
             send(chat, str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
             return
         history[chat].append({"role": "assistant", "content": reply})
-    print(f"-> {who} [{chat_model[chat]}]: {reply}\n   {badge}", flush=True)
+    print(f"-> {who} [{chat_model[chat]}]: {shown(reply)} {badge.split(':')[0]}", flush=True)
     for name, data in files.items():
         try:
             if name.lower().endswith((".png", ".jpg", ".jpeg")):
@@ -425,9 +437,33 @@ def handle(msg):
         say(chat, full)
 
 
+def erase(chat, user):
+    """/reset: everything the box keeps for this chat and user. Voice notes are never written
+    to disk (they're transcribed in memory), so their transcripts in history and the audit
+    records are what's left of them."""
+    with locks[chat]:
+        history[chat].clear()
+        harness.clear(chat)
+        todos.erase(user)
+        audit_log.erase(chat)
+        for k in [k for k in spoken if k[0] == chat]:
+            del spoken[k]
+
+
 def handle_callback(cb):
     chat, user = cb["message"]["chat"]["id"], cb.get("from", {})
     if not allowed(user):
+        return
+    if cb.get("data", "").startswith("reset:"):
+        if cb["data"] == "reset:yes":
+            erase(chat, user.get("id"))
+            result = ("Erased. Your conversation, files, todos, reminders and answer records are gone "
+                      "from this box. (Telegram keeps its own copy of this chat; you can clear it in Telegram.)")
+            print(f"reset {chat}", flush=True)
+        else:
+            result = "Cancelled; nothing was erased."
+        tg("answerCallbackQuery", callback_query_id=cb["id"])
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=result)
         return
     if cb.get("data") == "say":
         key = (chat, cb["message"]["message_id"])
@@ -463,10 +499,10 @@ def main():
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
     tg("setMyCommands", commands=[
-        {"command": "model", "description": "Switch model (idli internal / external)"},
         {"command": "todos", "description": "Your todo list (add, finish or get reminders by voice or text)"},
+        {"command": "model", "description": "Switch model (idli internal / external)"},
         {"command": "how", "description": "Show the steps behind the last answer (/how full: everything)"},
-        {"command": "reset", "description": "Start a fresh conversation"},
+        {"command": "reset", "description": "Erase everything: conversation, files, todos, records"},
     ])
     offset = 0
     while True:

@@ -72,6 +72,7 @@ All settings are environment variables. The two secrets can also live in files u
 | `TODO_DAILY` | `09:00` | default time (IST) for the morning todo list |
 | `MODELS_DIR` | `~/.local/share/idli-bridge/models` | speech weights: `kokoro/` and `whisper/` |
 | `WHISPER_MODEL` | `large-v3-turbo` | the speech-to-text model |
+| `LOG_CONTENT` | `0` | `1` writes message and reply text to `tg_bridge.log`, for debugging. Off, the log holds only who, what kind and how long, so `/reset` leaves nothing behind. |
 | `VOICE_REPLIES` | `0` | `1` turns on voice out: spoken replies to voice notes, and a 🔊 Read aloud button. Off while voice in is being settled. |
 | `TTS_VOICE` / `TTS_SPEED` | `af_heart` / `1.0` | the Kokoro voice used for read aloud, e.g. `bf_emma`, `am_michael`, `bm_george` |
 
@@ -130,8 +131,10 @@ In Telegram, open your bot and:
    what it heard (🎙️ “…”), the updated list, and comes back as a voice note too. Then try
    "what are my todos?", "I already did 1", and "send me a reminder at 6".
 
-`/todos` shows the list, and every text reply has a 🔊 Read aloud button. `/model` shows the
-model menu, and `/reset` clears the chat's history and its files. It
+`/todos` shows the list and `/model` shows the model menu. `/reset` asks for confirmation, then
+erases everything the box keeps for that person: the conversation, uploaded files, todos,
+reminders and the audit records, which hold voice-note transcripts. Voice notes themselves are
+transcribed in memory and never written to disk. Telegram keeps its own copy of the chat. It
 doesn't clear the audit records.
 
 To test without a phone, `tl_session.py` drives the bot as a Telegram user. It needs a

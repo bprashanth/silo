@@ -62,6 +62,13 @@ def append(chat, rec):
         return rec
 
 
+def erase(chat):
+    """Delete this chat's records (on /reset). The chain starts again from nothing."""
+    import shutil
+    with _lock:
+        shutil.rmtree(os.path.join(ROOT, str(chat)), ignore_errors=True)
+
+
 def records(chat):
     return [json.loads(l) for p in _files(chat) for l in open(p) if l.strip()]
 
