@@ -40,6 +40,9 @@ record behind it (`proposals/audit-checker.md`).
   - Without io, every reply falls back to the checker's answer, marked ◻️ unverified.
 - **Docker.** The checker's Python runs in a throwaway container.
 - **[uv](https://docs.astral.sh/uv/)** to make the venv (any Python 3.12 venv also works).
+- **`ffmpeg`** for voice notes and read aloud.
+- **About 2 GB of disk for the speech models**, which run on the CPU: Whisper large-v3-turbo
+  is fetched from Hugging Face on the first voice note, and `start.sh` fetches Kokoro v1.0.
 - **`pdftotext`** (poppler-utils) for PDFs. Optionally **`soffice`** (LibreOffice) for
   legacy `.xls`.
 - **A Telegram bot token:** message @BotFather, `/newbot`, and copy the token.
@@ -65,6 +68,14 @@ All settings are environment variables. The two secrets can also live in files u
 | `CODEX_TIMEOUT` | `1500` | seconds before a Codex run is stopped |
 | `CODEX_ROOT` | `~/.local/share/idli-bridge/codex` | per-run Codex home and working folder, deleted after each run (must not be under `/tmp`) |
 | `AUDIT_ROOT` | `~/.local/share/idli-bridge/audit` | audit records, `<chat>/<date>.jsonl` |
+| `SILO_DB` | `~/.local/share/idli-bridge/silo.db` | todos, reminders and each user's morning-list time (SQLite) |
+| `TODO_DAILY` | `09:00` | default time (IST) for the morning todo list |
+| `MODELS_DIR` | `~/.local/share/idli-bridge/models` | speech weights: `kokoro/` and `whisper/` |
+| `WHISPER_MODEL` | `large-v3-turbo` | the speech-to-text model |
+| `TTS_VOICE` / `TTS_SPEED` | `af_heart` / `1.0` | the Kokoro voice used for read aloud, e.g. `bf_emma`, `am_michael`, `bm_george` |
+
+Names Whisper keeps mishearing (organisations, villages, people) go one per line in
+`$SILO_CONFIG/glossary.txt`. They, and the user's open todos, are given to Whisper as hints.
 
 **Always set `TG_ALLOWED`.** A Telegram bot can be found and messaged by anyone.
 Allowing usernames is easiest; numeric ids survive a username change. A denied user's id
@@ -114,7 +125,12 @@ In Telegram, open your bot and:
    in full, as a `.txt` file.
 4. Ask for a chart ("plot monthly spend"). Codex saves a PNG, which comes back as a photo.
 
-`/model` shows the model menu, and `/reset` clears the chat's history and its files. It
+5. Send a voice note: "add to my todos: call Meena about the April budget". The reply shows
+   what it heard (🎙️ “…”), the updated list, and comes back as a voice note too. Then try
+   "what are my todos?", "I already did 1", and "send me a reminder at 6".
+
+`/todos` shows the list, and every text reply has a 🔊 Read aloud button. `/model` shows the
+model menu, and `/reset` clears the chat's history and its files. It
 doesn't clear the audit records.
 
 To test without a phone, `tl_session.py` drives the bot as a Telegram user. It needs a
@@ -157,6 +173,20 @@ Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
   - ➖ nothing to check: no single figure or name in the reply, an external model, or a picture,
     which Codex here can't see and so has no second check.
   - A check that finishes late is still written to the audit record, and `/how` shows it.
+- **Voice notes:** Whisper (faster-whisper, int8, CPU) transcribes them on the box, and the
+  transcript is then handled exactly like typed text. A voice note gets a voice reply as well
+  as the text; typed messages get a 🔊 button. Kokoro speaks on the CPU, about 6× faster
+  than real time. Before speaking, the bot drops emoji and markdown, says large amounts the
+  Indian way ("1 crore 90 lakh"), and turns the badge into one short sentence.
+- **Todos and reminders:** a typed or spoken message first goes to one local-model call with
+  todo tools: add, complete, delete, edit, show, remind at a time, morning time.
+  - Anything else goes on to Codex and the checker.
+  - The bot carries out the chosen operations in SQLite and writes the confirmation from storage,
+    so the list you see is the stored one.
+  - A bare hour means IST and 1–7 means pm, so "remind me at 6" is 6 pm; a time already past
+    rolls to tomorrow.
+  - A background loop sends each person's open todos every morning and fires reminders.
+  - Todos are per Telegram user and never go to an external model.
 - **The audit record:** one hash-chained JSON line per reply in `$AUDIT_ROOT/<chat>/<date>.jsonl`.
   `.venv/bin/python audit_log.py verify <chat id>` checks the chain. Records hold code and
   outputs, so they're as sensitive as the files themselves.

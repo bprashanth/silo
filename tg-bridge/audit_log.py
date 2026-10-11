@@ -67,10 +67,10 @@ def records(chat):
 
 
 def last_answer(chat):
-    """The latest answer record, with any late check folded in as rec["late_check"]."""
+    """The latest answer or todo record, with any late check folded in as rec["late_check"]."""
     ans, late = None, {}
     for r in records(chat):
-        if r["type"] == "answer":
+        if r["type"] in ("answer", "todo"):
             ans = r
         elif r["type"] == "late_check":
             late[r["of"]] = r
@@ -125,6 +125,14 @@ def _run_summary(title, run, full):
 
 def how(rec, full=False):
     """A readable account of one answer record; full=True includes all code and outputs."""
+    if rec["type"] == "todo":
+        return "\n".join([
+            "How the last reply was made", "",
+            f"Message{' (voice note, transcribed on this box)' if rec.get('voice') else ''}: {rec['message']}",
+            "The local model chose these todo operations, and the bot carried them out:",
+            *[f" - {c['name']}({json.dumps(c['args'], ensure_ascii=False)})" for c in rec["calls"]],
+            "", "The list in the reply is read back from storage on this box, not written by the model.",
+            f"Record {rec['id']}, hash {rec['hash'][:16]}…"])
     m, v = rec["model"], rec["versions"]
     out = ["How the last answer was made", "",
            f"Message: {_short(rec['message'], 300)}",

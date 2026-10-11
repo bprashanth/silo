@@ -1,6 +1,6 @@
 """Scripted session with the bot as the logged-in user.
 
-Steps (args): text | file:<path>|<caption> | click:<button substring>
+Steps (args): text | file:<path>|<caption> | voice:<path.ogg> | click:<button substring>
 Waits for bot replies after each step, prints text, saves photos to $OUT.
 """
 import asyncio, json, os, sys
@@ -17,7 +17,10 @@ async def collect(c, after_id, wait=2400, quiet=10):
         new = [m async for m in c.iter_messages(BOT, min_id=after_id) if not m.out and m.id not in seen]
         for m in sorted(new, key=lambda m: m.id):
             seen[m.id] = m
-            if m.photo:
+            if m.voice:
+                path = await m.download_media(file=f"{OUT}/bot_{m.id}.ogg")
+                print(f"<< [voice {m.voice.attributes[0].duration}s saved {path}]")
+            elif m.photo:
                 path = await m.download_media(file=f"{OUT}/bot_{m.id}.png")
                 print(f"<< [photo saved {path}] {m.text or ''}")
             else:
@@ -46,6 +49,8 @@ async def main():
             if step.startswith("file:"):
                 path, _, caption = step[5:].partition("|")
                 sent = await c.send_file(BOT, path, caption=caption, force_document=True)
+            elif step.startswith("voice:"):
+                sent = await c.send_file(BOT, step[6:], voice_note=True)
             else:
                 sent = await c.send_message(BOT, step)
             last = await collect(c, sent.id)

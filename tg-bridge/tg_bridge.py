@@ -33,6 +33,8 @@ import answer
 import audit_log
 import charts
 import harness
+import speech
+import todos
 
 CFG = os.path.expanduser(os.environ.get("SILO_CONFIG", "~/.config/silo"))
 
@@ -175,9 +177,32 @@ def how(chat, full):
         send(chat, audit_log.how(rec))
 
 
-def send(chat, text):
-    for i in range(0, len(text), 4000):  # Telegram limit is 4096
-        tg("sendMessage", chat_id=chat, text=text[i:i + 4000])
+READ_ALOUD = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
+# What a badge sounds like in a voice reply; the full badge stays in the text.
+SPOKEN_BADGE = {"✅": "This answer was checked independently.",
+                "⚠️": "Careful: an independent check got a different answer.",
+                "◻️": "This answer isn't verified."}
+
+
+def send(chat, text, aloud=False):
+    """Send text in Telegram-sized pieces; aloud=True puts a Read aloud button on the last."""
+    chunks = [text[i:i + 4000] for i in range(0, len(text), 4000)] or [""]  # Telegram limit is 4096
+    for i, c in enumerate(chunks):
+        extra = {"reply_markup": READ_ALOUD} if aloud and i == len(chunks) - 1 else {}
+        tg("sendMessage", chat_id=chat, text=c, **extra)
+
+
+def say(chat, text):
+    """Read a reply aloud as a voice note. The badge line becomes a short spoken note."""
+    body, note = [], ""
+    for line in text.splitlines():
+        mark = next((b for b in SPOKEN_BADGE if line.startswith(b)), None)
+        if mark:
+            note = SPOKEN_BADGE[mark]
+        elif not line.startswith(("➖", "🎙️")):
+            body.append(line.replace("/how", ""))
+    send_file(chat, speech.speak("\n".join(body) + ("\n\n" + note if note else "")), "reply.ogg",
+              method="sendVoice", field="voice", mime="audio/ogg")
 
 
 def download(file_id):
@@ -248,7 +273,7 @@ def to_content(msg):
         name, mime = doc.get("file_name", "file"), doc.get("mime_type", "")
         return file_content(msg["chat"]["id"], name, mime, download(doc["file_id"]), caption)
     if not caption:
-        raise Unsupported("Sorry, I can read text messages, photos, and PDF, Excel, PNG/JPG, TXT and MD files.")
+        raise Unsupported("Sorry, I can read text and voice messages, photos, and PDF, Excel, PNG/JPG, TXT and MD files.")
     return caption
 
 
@@ -302,6 +327,9 @@ def handle(msg):
         else:
             model_menu(chat)
         return
+    if text.strip().lower().startswith("/todos"):
+        send(chat, todos.list_text(user.get("id")), aloud=True)
+        return
     if text.strip().lower().startswith("/how"):
         how(chat, "full" in text.lower())
         return
@@ -312,6 +340,43 @@ def handle(msg):
                    f"You're on {model_name(chat_model[chat])}; /model to switch, /reset to start over. "
                    "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
         return
+    voice = msg.get("voice") or msg.get("audio")
+    heard = ""
+    if voice:
+        try:
+            with typing(chat):
+                hints = [r["text"] for r in todos.open_todos(user.get("id"))]
+                heard = speech.transcribe(download(voice["file_id"]), hints)
+        except Exception as e:
+            print(f"transcribe error: {e!r}", flush=True)
+            send(chat, "Sorry, I couldn't make out that voice note. Try again, or type it.")
+            return
+        if not heard:
+            send(chat, "I couldn't hear any words in that voice note.")
+            return
+        print(f"<- {who}: [voice {voice.get('duration')}s] {heard}", flush=True)
+        msg = {**msg, "text": heard}
+        text = heard
+    prefix = f"🎙️ “{heard}”\n\n" if heard else ""
+    if text and not msg.get("document") and "photo" not in msg:
+        # Todos and reminders first: always the local model, never an external one.
+        try:
+            with typing(chat):
+                done = todos.handle(chat, user.get("id"), text, MODELS["idli"])
+        except Exception as e:
+            print(f"todo error: {e!r}", flush=True)
+            done = None
+        if done:
+            audit_log.append(chat, {"type": "todo", "chat": chat, "user": {"id": user.get("id")},
+                                    "message": text, "voice": bool(voice), "calls": done["calls"],
+                                    "reply": done["reply"]})
+            history[chat].append({"role": "user", "content": text})
+            history[chat].append({"role": "assistant", "content": done["reply"]})
+            print(f"-> {who} [todos]: {done['reply']}", flush=True)
+            send(chat, prefix + done["reply"], aloud=not voice)
+            if voice:
+                say(chat, done["reply"])
+            return
     try:
         content = to_content(msg)
     except Unsupported as e:
@@ -348,12 +413,19 @@ def handle(msg):
     if errors:
         print(f"chart errors: {errors}", flush=True)
         body += "\n\n(Couldn't draw a chart: " + "; ".join(errors) + ")"
-    send(chat, (body + "\n\n" if body else "") + badge + "  /how")
+    full = (body + "\n\n" if body else "") + badge + "  /how"
+    send(chat, prefix + full, aloud=not voice)
+    if voice:
+        say(chat, full)
 
 
 def handle_callback(cb):
     chat, user = cb["message"]["chat"]["id"], cb.get("from", {})
     if not allowed(user):
+        return
+    if cb.get("data") == "say":
+        tg("answerCallbackQuery", callback_query_id=cb["id"], text="Reading it aloud…")
+        say(chat, cb["message"].get("text", ""))
         return
     key = cb.get("data", "").removeprefix("model:")
     result = set_model(chat, key)
@@ -374,10 +446,12 @@ def safe_handle(update):
 
 def main():
     answer.cleanup_jobs()
+    todos.start_loop(lambda chat, text: send(chat, text, aloud=True))
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
     tg("setMyCommands", commands=[
         {"command": "model", "description": "Switch model (idli internal / external)"},
+        {"command": "todos", "description": "Your todo list (add, finish or get reminders by voice or text)"},
         {"command": "how", "description": "Show the steps behind the last answer (/how full: everything)"},
         {"command": "reset", "description": "Start a fresh conversation"},
     ])

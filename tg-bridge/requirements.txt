@@ -1,5 +1,9 @@
 # The bot itself (tg_bridge.py, charts.py, harness.py)
 openpyxl==3.1.5
 matplotlib==3.11.2
+# Speech, on the CPU (speech.py): Whisper to listen, Kokoro to speak. Also needs ffmpeg.
+faster-whisper==1.2.1
+kokoro-onnx==0.6.1
+soundfile==0.14.0
 # Only for the tl_*.py scripts that drive the bot as a Telegram user, for testing
 Telethon==1.45.0
