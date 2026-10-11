@@ -36,7 +36,7 @@ That same power lets it pursue a goal at any cost, even when the cost turns out 
 guarantee privacy. The failproof one is to block network access. That can only be done
 reliably on the server, because the user base's Windows machines vary too much.
 
-## What works today
+## Current state
 
 - **A Telegram bot** (`tg-bridge/`) that the team can message, send spreadsheets, PDFs and
   images to, and get answers and charts back from.
@@ -44,7 +44,7 @@ reliably on the server, because the user base's Windows machines vary too much.
   - io's Codex answers, behind io's offline bubblewrap profile.
   - The bridge's own one-tool harness checks each answer independently, computing in a
     Docker container with no network and read-only files.
-  - Every reply carries a badge (✅ verified, ⚠️ disagrees, ◻️ unverified, ➖ nothing to
+  - Every reply carries a badge (verified, disagrees, unverified, nothing to
     check), and `/how` shows the audit record behind it.
 - **Measurements** (`benchmarks/`) of how we develop our understanding of useful and trustable. 
 - **Proposals** for the correctness receipt and the audit trail that the "trustable" goals need.
