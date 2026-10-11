@@ -1,0 +1,54 @@
+{
+ "job": "clean.usaid_spend.simple.0",
+ "case": "clean",
+ "q": "usaid_spend",
+ "harness": "simple",
+ "trial": 0,
+ "want": 4806600,
+ "got": "4806600",
+ "verdict": "correct",
+ "seconds": 157.7,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Load Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Ensure column names\nprint(df.columns.tolist())\n# Filter for USAID sub-grant\nmask = df['Funding source'] == 'USAID sub-grant'\nfiltered = df[mask]\ntotal = filtered['Amount (INR)'].sum()\nprint('Count:', len(filtered))\nprint('Total:', total)\n",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nCount: 40\nTotal: 4806600\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\nprint(df['Funding source'].unique())\n# check for exact match case\nprint(df[df['Funding source'].str.contains('USAID')])\n",
+   "output": "['USAID sub-grant' 'Tata Trusts (CSR)' 'Infosys Foundation (CSR)'\n 'State Govt - NHM' 'Azim Premji Foundation' 'Individual donors'\n 'Unrestricted']\n     Txn ID       Date     Month  ...       Region   Funding source Amount (INR)\n0    TX0001 2025-04-02  Apr 2025  ...    Karnataka  USAID sub-grant       160300\n11   TX0012 2025-04-10  Apr 2025  ...  Maharashtra  USAID sub-grant        69700\n14   TX0015 2025-04-18  Apr 2025  ...        Bihar  USAID sub-grant        27100\n17   TX0018 2025-04-10  Apr 2025  ...  Maharashtra  USAID sub-grant        57800\n27   TX0028 2025-05-19  May 2025  ...        Bihar  USAID sub-grant       224300\n33   TX0034 2025-05-05  May 2025  ...    Karnataka  USAID sub-grant        52300\n36   TX0037 2025-05-15  May 2025  ...  Maharashtra  USAID sub-grant       173900\n64   TX0065 2025-06-20  Jun 2025  ...    Karnataka  USAID sub-grant        83700\n83   TX0084 2025-07-04  Jul 2025  ...        Bihar  USAID sub-grant       232300\n91   TX0092 2025-07-08  Jul 2025  ...       Odisha  USAID sub-grant       110200\n93   TX0094 2025-07-10  Jul 2025  ...       Odisha  USAID sub-grant       135200\n105  TX0106 2025-08-15  Aug 2025  ...        Bihar  USAID sub-grant       124100\n106  TX0107 2025-08-02  Aug 2025  ...       Odisha  USAID sub-grant       170500\n110  TX0111 2025-08-02  Aug 2025  ...    Karnataka  USAID sub-grant       186200\n111  TX0112 2025-08-17  Aug 2025  ...  Maharashtra  USAID sub-grant        64800\n130  TX0131 2025-09-25  Sep 2025  ...       Odisha  USAID sub-grant       146000\n131  TX0132 2025-09-15  Sep 2025  ...  Maharashtra  USAID sub-grant       107800\n136  TX0137 2025-09-16  Sep 2025  ...  Maharashtra  USAID sub-grant        57600\n137  TX0138 2025-09-14  Sep 2025  ...  Maharashtra  USAID sub-grant       140300\n138  TX0139 2025-09-11  Sep 2025  ...        Bihar  USAID sub-grant        71000\n139  TX0140 2025-09-07  Sep 2025  ...        Bihar  USAID sub-grant       182700\n140  TX0141 2025-09-13  Sep 2025  ...    Karnataka  USAID sub-grant       110600\n141  TX0142 2025-09-25  Sep 2025  ...    Karnataka  USAID sub-grant       180800\n155  TX0156 2025-10-08  Oct 2025  ...       Odisha  USAID sub-grant       164300\n156  TX0157 2025-10-11  Oct 2025  ...        Bihar  USAID sub-grant       165500\n173  TX0174 2025-10-09  Oct 2025  ...  Maharashtra  USAID sub-grant        52800\n174  TX0175 2025-10-02  Oct 2025  ...  Maharashtra  USAID sub-grant        41700\n186  TX0187 2025-11-24  Nov 2025  ...    Karnataka  USAID sub-grant       307100\n191  TX0192 2025-11-18  Nov 2025  ...       Odisha  USAID sub-grant        67200\n195  TX0196 2025-11-09  Nov 2025  ...    Karnataka  USAID sub-grant       102500\n196  TX0197 2025-11-23  Nov 2025  ...        Bihar  USAID sub-grant       152300\n200  TX0201 2025-11-23  Nov 2025  ...       Odisha  USAID sub-grant        33400\n246  TX0247 2026-01-21  Jan 2026  ...  Maharashtra  USAID sub-grant       121500\n271  TX0272 2026-02-02  Feb 2026  ...       Odisha  USAID sub-grant       105000\n290  TX0291 2026-03-24  Mar 2026  ...    Karnataka  USAID sub-grant       159400\n291  TX0292 2026-03-22  Mar 2026  ...        Bihar  USAID sub-grant       216600\n292  TX0293 2026-03-17  Mar 2026  ...       Odisha  USAID sub-grant       106400\n299  TX0300 2026-03-04  Mar 2026  ...       Odisha  USAID sub-grant        57100\n305  TX0306 2026-03-21  Mar 2026  ...        Bihar  USAID sub-grant        51400\n306  TX0307 2026-03-09  Mar 2026  ...        Bihar  USAID sub-grant        33200\n\n[40 rows x 9 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\nprint(df['Category'].unique())\nprint(df[df['Funding source']=='USAID sub-grant']['Category'].value_counts())\n",
+   "output": "['Program' 'Admin' 'Fundraising']\nCategory\nProgram    40\nName: count, dtype: int64\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\ntotal = df.loc[df['Funding source'] == 'USAID sub-grant', 'Amount (INR)'].sum()\nprint(total)\n# also check if any trailing spaces\nprint(df['Funding source'].str.strip().unique())\n",
+   "output": "4806600\n['USAID sub-grant' 'Tata Trusts (CSR)' 'Infosys Foundation (CSR)'\n 'State Govt - NHM' 'Azim Premji Foundation' 'Individual donors'\n 'Unrestricted']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\n# Ensure Amount is numeric\ndf['Amount (INR)'] = pd.to_numeric(df['Amount (INR)'], errors='coerce')\ntotal = df.query(\"`Funding source` == 'USAID sub-grant'\")['Amount (INR)'].sum()\nprint(total)\n# also sum of all funding sources for sanity\nprint(df.groupby('Funding source')['Amount (INR)'].sum().sort_values(ascending=False))\n",
+   "output": "4806600\nFunding source\nUnrestricted                8132800\nTata Trusts (CSR)           6535400\nInfosys Foundation (CSR)    6157400\nAzim Premji Foundation      5451800\nIndividual donors           4838000\nUSAID sub-grant             4806600\nState Govt - NHM            3872400\nName: Amount (INR), dtype: int64\n"
+  }
+ ],
+ "usage": {
+  "input": 16958,
+  "output": 2013
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total spend funded by 'USAID sub-grant' (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 40 entries funded by USAID sub-grant, all in the Program category. Summing Amount (INR) for those rows gives a total spend of 4,806,600 INR.\n\nANSWER: 4806600",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.usaid_spend.simple.0"
+}

@@ -1,0 +1,84 @@
+{
+ "job": "field_log.q1.simple.0",
+ "case": "field_log",
+ "q": "q1",
+ "harness": "simple",
+ "trial": 0,
+ "want": 24717,
+ "got": "24717",
+ "verdict": "correct",
+ "seconds": 324.7,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\n# Load all sheet names to see\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\n# Read the Field Visit Log sheet\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log')\nprint(df.head())\nprint(df.columns.tolist())\n\n# Deduplicate Visit ID keeping first occurrence\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Rows before:\", len(df), \"after dedup:\", len(df_dedup))\n\n# Ensure numeric columns\nfor col in ['Women Reached','Men Reached','Children Reached']:\n    df_dedup[col] = pd.to_numeric(df_dedup[col], errors='coerce').fillna(0)\n\ntotal_people = (df_dedup['Women Reached'] + df_dedup['Men Reached'] + df_dedup['Children Reached']).sum()\nprint(\"Total people reached:\", total_people)\n",
+   "output": "Sheets: ['Field Visit Log']\n  Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log  ...                 Unnamed: 11\n0  Data note: village spelling/case/spacing varie...      ...                         NaN\n1  Reporting period: April\u2013September 2025 | Amoun...      ...                         NaN\n2                                                NaN      ...                         NaN\n3                                           Visit ID      ...  Travel Reimbursement (INR)\n4                                       FL-2025-0001      ...                         500\n\n[5 rows x 12 columns]\n['Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n\n[stderr]\nTraceback (most recent call last):\n  File \"<stdin>\", line 15, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 6818, in drop_duplicates\n    result = self[-self.duplicated(subset, keep=keep)]\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 6950, in duplicated\n    raise KeyError(Index(diff))\nKeyError: Index(['Visit ID'], dtype='object')\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\n# Read sheet without header to find header row\ndf_raw = pd.read_excel(file_path, sheet_name='Field Visit Log', header=None)\nprint(df_raw.head(10))\n",
+   "output": "                                                  0   ...                          11\n0  Sahyog Rural Initiatives \u2014 Beneficiary Field V...  ...                         NaN\n1  Data note: village spelling/case/spacing varie...  ...                         NaN\n2  Reporting period: April\u2013September 2025 | Amoun...  ...                         NaN\n3                                                NaN  ...                         NaN\n4                                           Visit ID  ...  Travel Reimbursement (INR)\n5                                       FL-2025-0001  ...                         500\n6                                       FL-2025-0001  ...                         500\n7                                       FL-2025-0002  ...                        3250\n8                                       FL-2025-0003  ...                        3350\n9                                       FL-2025-0004  ...                      \u20b92,400\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\nprint(df.head())\nprint(df.columns.tolist())\nprint(len(df))\n",
+   "output": "       Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0  FL-2025-0001 2025-05-10  ...                 No                        500\n1  FL-2025-0001 2025-05-10  ...                 No                        500\n2  FL-2025-0002 2025-07-21  ...                 No                       3250\n3  FL-2025-0003 2025-08-14  ...                 No                       3350\n4  FL-2025-0004 2025-09-09  ...                 No                     \u20b92,400\n\n[5 rows x 12 columns]\n['Visit ID', 'Visit Date', 'Field Worker', 'State', 'District', 'Village', 'Programme', 'Women Reached', 'Men Reached', 'Children Reached', 'Follow-up Required', 'Travel Reimbursement (INR)']\n543\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\n\n# Drop rows where Visit ID is NaN\ndf = df.dropna(subset=['Visit ID'])\n\n# Normalize village names: trim outer whitespace, collapse internal whitespace, case-insensitive\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    v_str = str(v).strip()\n    v_str = re.sub(r'\\s+', ' ', v_str)\n    return v_str.lower()\n\ndf['Village_norm'] = df['Village'].apply(normalize_village)\n\n# Deduplicate Visit ID by keeping first spreadsheet occurrence\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Rows before dedup:\", len(df), \"after dedup:\", len(df_dedup))\n\n# Ensure numeric columns\nfor col in ['Women Reached','Men Reached','Children Reached']:\n    df_dedup[col] = pd.to_numeric(df_dedup[col], errors='coerce').fillna(0)\n\ntotal_people = (df_dedup['Women Reached'] + df_dedup['Men Reached'] + df_dedup['Children Reached']).sum()\nprint(\"Total people reached:\", total_people)\n",
+   "output": "Rows before dedup: 538 after dedup: 480\nTotal people reached: 24717.0\n\n[stderr]\n<stdin>:27: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf = df.dropna(subset=['Visit ID']).copy()\n\n# Normalize village just in case\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    return re.sub(r'\\s+', ' ', str(v).strip()).lower()\n\ndf['Village_norm'] = df['Village'].apply(normalize_village)\n\n# Deduplicate\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\n\n# Convert numeric\ncols = ['Women Reached','Men Reached','Children Reached']\nfor c in cols:\n    df_dedup[c] = pd.to_numeric(df_dedup[c], errors='coerce').fillna(0).astype(int)\n\ntotal = df_dedup[cols].sum().sum()\nprint(total)\nprint(df_dedup.shape)\n",
+   "output": "24717\n(480, 13)\n\n[stderr]\n<stdin>:23: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n<stdin>:23: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n<stdin>:23: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf = df.dropna(subset=['Visit ID'])\nprint(df['Visit ID'].nunique())\nprint(len(df))\nprint(len(df.drop_duplicates(subset=['Visit ID'])))\n",
+   "output": "480\n538\n480\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\nprint(df.tail(20))\nprint(df.isnull().sum())\n",
+   "output": "         Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n523  FL-2025-0464 2025-04-02  ...                 No                       2300\n524  FL-2025-0465 2025-07-15  ...                 No                     \u20b94,200\n525  FL-2025-0466 2025-06-08  ...                 No                       4100\n526  FL-2025-0467 2025-08-31  ...                Yes                        650\n527  FL-2025-0468 2025-09-21  ...                 No                        850\n528  FL-2025-0469 2025-06-19  ...                 No                       2400\n529  FL-2025-0470 2025-09-13  ...                Yes                     \u20b93,650\n530  FL-2025-0470 2025-09-13  ...                Yes                       3650\n531  FL-2025-0471 2025-08-20  ...                Yes                       2050\n532  FL-2025-0471 2025-08-20  ...               YES                        2050\n533  FL-2025-0472 2025-08-27  ...                 No                       1850\n534  FL-2025-0473 2025-09-11  ...                Yes                     \u20b91,150\n535  FL-2025-0474 2025-08-08  ...                 No                       3900\n536  FL-2025-0475 2025-08-01  ...                 No                     2,200 \n537  FL-2025-0475 2025-08-01  ...                 No                       2200\n538  FL-2025-0476 2025-05-25  ...                Yes                       4350\n539  FL-2025-0477 2025-04-16  ...                 No                     \u20b92,000\n540  FL-2025-0478 2025-07-27  ...               YES                        2150\n541  FL-2025-0479 2025-05-07  ...                 No                       3550\n542  FL-2025-0480 2025-05-03  ...                Yes                       1150\n\n[20 rows x 12 columns]\nVisit ID                      5\nVisit Date                    5\nField Worker                  5\nState                         5\nDistrict                      5\nVillage                       5\nProgramme                     5\nWomen Reached                 5\nMen Reached                   5\nChildren Reached              5\nFollow-up Required            5\nTravel Reimbursement (INR)    5\ndtype: int64\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\nprint(df.iloc[0:10])\n",
+   "output": "       Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0  FL-2025-0001 2025-05-10  ...                 No                        500\n1  FL-2025-0001 2025-05-10  ...                 No                        500\n2  FL-2025-0002 2025-07-21  ...                 No                       3250\n3  FL-2025-0003 2025-08-14  ...                 No                       3350\n4  FL-2025-0004 2025-09-09  ...                 No                     \u20b92,400\n5  FL-2025-0005 2025-04-21  ...                no                        2300\n6  FL-2025-0006 2025-05-16  ...                Yes                     3,200 \n7  FL-2025-0007 2025-05-06  ...                 No                       3700\n8  FL-2025-0007 2025-05-06  ...                 No                       3700\n9  FL-2025-0008 2025-05-27  ...                 No                     \u20b91,700\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf = df.dropna(subset=['Visit ID'])\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\n\n# Check unique values for reached columns\nfor col in ['Women Reached','Men Reached','Children Reached']:\n    non_numeric = df_dedup[~df_dedup[col].apply(lambda x: isinstance(x,(int,float)) or (isinstance(x,str) and x.replace('.','',1).isdigit()))][col].unique()\n    print(col, non_numeric[:10])\n\nprint(df_dedup[['Women Reached','Men Reached','Children Reached']].dtypes)\n",
+   "output": "Women Reached []\nMen Reached []\nChildren Reached []\nWomen Reached       float64\nMen Reached         float64\nChildren Reached    float64\ndtype: object\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf = df.dropna(subset=['Visit ID'])\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(df_dedup[['Visit ID','Women Reached','Men Reached','Children Reached']].head(20))\nprint(df_dedup[['Women Reached','Men Reached','Children Reached']].sum())\n",
+   "output": "        Visit ID  Women Reached  Men Reached  Children Reached\n0   FL-2025-0001           34.0         12.0              27.0\n2   FL-2025-0002           18.0          5.0               4.0\n3   FL-2025-0003           19.0          7.0              31.0\n4   FL-2025-0004           23.0         14.0              19.0\n5   FL-2025-0005           17.0          9.0               0.0\n6   FL-2025-0006           35.0         11.0               2.0\n7   FL-2025-0007           15.0         10.0              22.0\n9   FL-2025-0008           29.0         26.0              24.0\n10  FL-2025-0009           13.0         21.0               7.0\n11  FL-2025-0010           11.0         14.0               5.0\n12  FL-2025-0011           25.0         25.0              21.0\n13  FL-2025-0012           35.0          3.0              29.0\n14  FL-2025-0013           35.0         11.0              10.0\n15  FL-2025-0014           15.0          9.0              16.0\n16  FL-2025-0015           13.0          4.0              25.0\n17  FL-2025-0016           13.0         16.0              24.0\n18  FL-2025-0017           28.0         27.0               6.0\n19  FL-2025-0018           18.0         25.0              14.0\n20  FL-2025-0019           16.0         11.0               8.0\n21  FL-2025-0020           22.0          5.0              19.0\nWomen Reached       10094.0\nMen Reached          7198.0\nChildren Reached     7425.0\ndtype: float64\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf = df.dropna(subset=['Visit ID'])\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\ntotal = int(df_dedup['Women Reached'].sum() + df_dedup['Men Reached'].sum() + df_dedup['Children Reached'].sum())\nprint(total)\n",
+   "output": "24717\n"
+  }
+ ],
+ "usage": {
+  "input": 41381,
+  "output": 5239
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 7,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. What is the total number of people reached (women + men + children)?",
+ "trap": "Counting duplicate Visit IDs inflates the total reached.",
+ "text": "After loading the *Field Visit Log* sheet (header row 4), dropping the 5 rows with missing Visit ID and de-duplicating by Visit ID keeping the first spreadsheet occurrence, the numeric reached columns sum to:\n\n* Women Reached: 10,094\n* Men Reached: 7,198\n* Children Reached: 7,425\n\nTotal people reached = 10,094 + 7,198 + 7,425 = 24,717\n\nANSWER: 24717",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/field_log.q1.simple.0"
+}

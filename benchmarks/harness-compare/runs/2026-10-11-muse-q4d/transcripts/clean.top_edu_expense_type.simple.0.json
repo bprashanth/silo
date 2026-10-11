@@ -1,0 +1,49 @@
+{
+ "job": "clean.top_edu_expense_type.simple.0",
+ "case": "clean",
+ "q": "top_edu_expense_type",
+ "harness": "simple",
+ "trial": 0,
+ "want": "Supplies & materials",
+ "got": "Supplies & materials",
+ "verdict": "correct",
+ "seconds": 135.7,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n\n# Ensure column names are correct\nprint(df.columns.tolist())\n# Filter for Education (Shiksha)\nedu = df[df['Program'] == 'Education (Shiksha)']\n# Group by Expense type\ngrouped = edu.groupby('Expense type')['Amount (INR)'].sum().sort_values(ascending=False)\nprint(grouped)\n# Also print total\nprint('Total Education spend:', edu['Amount (INR)'].sum())\n",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nExpense type\nSupplies & materials    2473400\nStaff salaries          2157300\nPartner grants          1414500\nField travel            1392900\nTraining & workshops     932700\nName: Amount (INR), dtype: int64\nTotal Education spend: 8370800\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nedu = df[df['Program'] == 'Education (Shiksha)']\nprint(edu['Category'].unique())\n# Check if any non-Program\nnon_program = edu[edu['Category'] != 'Program']\nprint('Non-program count:', len(non_program))\nif len(non_program) > 0:\n    print(non_program[['Category','Expense type','Amount (INR)']].head())\n",
+   "output": "['Program']\nNon-program count: 0\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nprint(df['Program'].unique())\n",
+   "output": "['Education (Shiksha)' 'Maternal & Child Health'\n 'Water & Sanitation (WASH)' \"Women's Livelihoods\" 'Disaster Relief'\n 'Organisation-wide']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nedu = df[df['Program'] == 'Education (Shiksha)']\nprint(edu['Expense type'].unique())\n",
+   "output": "['Staff salaries' 'Supplies & materials' 'Field travel'\n 'Training & workshops' 'Partner grants']\n"
+  }
+ ],
+ "usage": {
+  "input": 9584,
+  "output": 2201
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 5,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Expense type with the highest spend within 'Education (Shiksha)' (exact name)",
+ "trap": "",
+ "text": "From the Transactions sheet, filtering for `Program = 'Education (Shiksha)'` and summing `Amount (INR)` by `Expense type`:\n\n* Supplies & materials: 2,473,400\n* Staff salaries: 2,157,300\n* Partner grants: 1,414,500\n* Field travel: 1,392,900\n* Training & workshops: 932,700\n\nThe largest expense type for Education (Shiksha) is Supplies & materials.\n\nANSWER: Supplies & materials",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.top_edu_expense_type.simple.0"
+}

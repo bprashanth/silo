@@ -1,0 +1,82 @@
+{
+ "job": "mixed_units.q3.codex.0",
+ "case": "mixed_units",
+ "q": "q3",
+ "harness": "codex",
+ "trial": 0,
+ "want": 34,
+ "got": "34",
+ "verdict": "correct",
+ "seconds": 115.0,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 16\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 16:12 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='mixed_units_register.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Disbursement Register']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  Sahyog Foundation \u2014 FY 2025-26 Disbursement Register  ... Unnamed: 6\n0                                       Amount note:    ...        NaN\n1                                         Date note:    ...        NaN\n2                                      Prepared for:    ...        NaN\n3                                                NaN    ...        NaN\n4                                          Record ID    ...    Purpose\n\n[5 rows x 7 columns]\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[0:15,0:7].to_string())\\\"\"",
+   "output": "                                                       0                                                                                                          1                        2          3                                      4          5                       6\n0   Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n1                                           Amount note:  Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                      NaN        NaN                                    NaN        NaN                     NaN\n2                                             Date note:                                               Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                      NaN        NaN                                    NaN        NaN                     NaN\n3                                          Prepared for:                                                                Programme management review \u2014 31 March 2026                      NaN        NaN                                    NaN        NaN                     NaN\n4                                                    NaN                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n5                                              Record ID                                                                                          Disbursement Date                Programme      State                         Donor / Scheme     Amount                 Purpose\n6                                                MU-0001                                                                                                 2025-04-03  Maternal & Child Health  Karnataka  Azim Premji Philanthropic Initiatives     340000      Field team support\n7                                                MU-0002                                                                                                 03/04/2025        Rural Livelihoods  Rajasthan                National Health Mission  \u20b91,20,000  Community mobilisation\n8                                                MU-0003                                                                                                 3 Apr 2025  Maternal & Child Health  Jharkhand                         Tata CSR Trust      1.2 L   Equipment procurement\n9                                                MU-0004                                                                                                 2025-08-01  Maternal & Child Health  Rajasthan            Global Community Foundation   2.5 lakh  Training and workshops\n10                                               MU-0005                                                                                                 28/02/2026         Tribal Education  Rajasthan  Azim Premji Philanthropic Initiatives       1 Cr   Equipment procurement\n11                                               MU-0006                                                                                                18 Jul 2025  Maternal & Child Health  Jharkhand            Global Community Foundation        45k  Direct programme grant\n12                                               MU-0007                                                                                                 2026-02-26        Rural Livelihoods  Karnataka  Azim Premji Philanthropic Initiatives        NaN      Field team support\n13                                               MU-0008                                                                                                 27/02/2026       Water & Sanitation  Karnataka                National Health Mission          -  Direct programme grant\n14                                               MU-0009                                                                                                13 Jul 2025       Water & Sanitation  Rajasthan                National Health Mission        NaN   Equipment procurement\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); data=df.iloc[5:]; cols=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']; df2=pd.DataFrame(data.iloc[:,0:7].values, columns=cols); print(df2['State'].unique()); print(df2[df2['State']=='Odisha'].shape)\\\"\"",
+   "output": "<StringArray>\n['State', 'Karnataka', 'Rajasthan', 'Jharkhand', 'Odisha', nan]\nLength: 6, dtype: str\n(50, 7)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\ndata=df.iloc[5:]\ncols=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']\ndf2=pd.DataFrame(data.iloc[:,0:7].values, columns=cols)\n# clean\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0\n    # remove \u20b9 and commas\n    s=s.replace('\u20b9','').replace(',','').strip()\n    # match number with optional unit\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*([a-zA-Z]*)', s)\n    if not m:\n        return 0\n    num=float(m.group(1))\n    unit=m.group(2).lower()\n    if unit in ('l','lakh'):\n        num*=100000\n    elif unit in ('cr','crore'):\n        num*=10000000\n    elif unit=='k':\n        num*=1000\n    # also handle 'lakh' spelled\n    if 'lakh' in unit:\n        num*=100000\n    return num\ndf2['amount_num']=df2['Amount'].apply(parse_amount)\nodisha=df2[df2['State']=='Odisha']\nnonzero=odisha[odisha['amount_num']\"'!=0]\nprint('\"'total odisha', len(odisha))\nprint('nonzero', len(nonzero))\nprint(nonzero[['Record ID','Amount','amount_num']].head(20))\n\\\"\"",
+   "output": "total odisha 50\nnonzero 34\n   Record ID     Amount    amount_num\n10   MU-0010      78000  7.800000e+04\n20   MU-0020  \u20b91,20,000  1.200000e+05\n21   MU-0021      1.2 L  1.200000e+05\n23   MU-0023       1 Cr  1.000000e+07\n28   MU-0028      78000  7.800000e+04\n32   MU-0032       1 Cr  1.000000e+07\n40   MU-0040   2.5 lakh  2.500000e+10\n41   MU-0041       1 Cr  1.000000e+07\n47   MU-0046     875000  8.750000e+05\n48   MU-0047  \u20b91,20,000  1.200000e+05\n49   MU-0048      1.2 L  1.200000e+05\n56   MU-0055     875000  8.750000e+05\n66   MU-0064     875000  8.750000e+05\n68   MU-0066      1.2 L  1.200000e+05\n71   MU-0069        45k  4.500000e+04\n76   MU-0074  \u20b91,20,000  1.200000e+05\n77   MU-0075      1.2 L  1.200000e+05\n79   MU-0077       1 Cr  1.000000e+07\n80   MU-0078        45k  4.500000e+04\n99   MU-0096        45k  4.500000e+04\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\ndata=df.iloc[5:]\ncols=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']\ndf2=pd.DataFrame(data.iloc[:,0:7].values, columns=cols)\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0\n    s=s.replace('\u20b9','').replace(',','').strip().lower()\n    # handle lakh / l\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*(lakh|l|cr|crore|k)?\"'$'\"', s)\n    if not m:\n        # try without unit\n        try:\n            return float(s)\n        except:\n            return 0\n    num=float(m.group(1))\n    unit=m.group(2)\n    if not unit:\n        return num\n    if unit in ('l','lakh'):\n        return num*100000\n    if unit in ('cr','crore'):\n        return num*10000000\n    if unit=='k':\n        return num*1000\n    return num\ndf2['amount_num']=df2['Amount'].apply(parse_amount)\nodisha=df2[df2['State']=='Odisha']\nnonzero=odisha[odisha['amount_num']\"'!=0]\nprint(len(odisha), len(nonzero))\n# list zero rows\nzeros=odisha[odisha['\"'amount_num']==0]\nprint(zeros[['Record ID','Amount']].to_string(index=False))\n\\\"\"",
+   "output": "50 34\nRecord ID Amount\n  MU-0017      -\n  MU-0025    NaN\n  MU-0036    NaN\n  MU-0044      -\n  MU-0054    NaN\n  MU-0063    NaN\n  MU-0081    NaN\n  MU-0089      -\n  MU-0107      -\n  MU-0116      -\n  MU-0124    NaN\n  MU-0125      -\n  MU-0143      -\n  MU-0151    NaN\n  MU-0162    NaN\n  MU-0178    NaN\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 109045,
+  "output": 2239
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 3,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How many Odisha records have a non-zero amount? Treat blank, '-' and NA as zero and count records, not distinct amounts.",
+ "trap": "Counting missing-value markers as non-zero text entries.",
+ "text": "The register has 50 Odisha records. 16 of them are blank, \u201c-\u201d or NA. The remaining 34 have a non-zero amount.\n\nANSWER: 34",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q3.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:42:38.602607Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

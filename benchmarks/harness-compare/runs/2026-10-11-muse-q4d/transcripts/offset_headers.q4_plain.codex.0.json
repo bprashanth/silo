@@ -1,0 +1,76 @@
+{
+ "job": "offset_headers.q4_plain.codex.0",
+ "case": "offset_headers",
+ "q": "q4_plain",
+ "harness": "codex",
+ "trial": 0,
+ "want": "Jal Jeevan Saathi",
+ "got": "Jal Jeevan Saathi",
+ "verdict": "correct",
+ "seconds": 66.4,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 8\n-rw-rw-r-- 1 beeps beeps 7004 Oct 11 16:42 programme_monthly_spend.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='programme_monthly_spend.xlsx'; df=pd.read_excel(f); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "      JanSahyog Collective \u2014 Programme Monthly Spend  ...            Unnamed: 10\n0  Prepared by: Grants & Finance Team | Internal ...  ...                    NaN\n1  Reporting period: 01-Apr-2025 to 30-Sep-2025 |...  ...                    NaN\n2                                     Programme Code  ...  Six-month Total (INR)\n3                                                NaN  ...                    NaN\n4                                             PRG-01  ...                7172500\n\n[5 rows x 11 columns]\n['JanSahyog Collective \u2014 Programme Monthly Spend', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('programme_monthly_spend.xlsx', header=None); print(df.iloc[0:10,0:11].to_string())\\\"\"",
+   "output": "                                                                                                            0                  1            2                          3              4         5         6              7         8         9                      10\n0                                                               JanSahyog Collective \u2014 Programme Monthly Spend                NaN          NaN                        NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n1                                           Prepared by: Grants & Finance Team | Internal management statement                NaN          NaN                        NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n2  Reporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero                NaN          NaN                        NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n3                                                                                               Programme Code          Programme   Lead State            Funding Partner  Q1 FY 2025\u201326       NaN       NaN  Q2 FY 2025\u201326       NaN       NaN  Six-month Total (INR)\n4                                                                                                          NaN                NaN          NaN                        NaN       Apr 2025  May 2025  Jun 2025       Jul 2025  Aug 2025  Sep 2025                    NaN\n5                                                                                                       PRG-01  Jal Jeevan Saathi  Maharashtra         Jal Jeevan Mission         812500   1628000   1427000         964000   1273000   1068000                7172500\n6                                                                                                       PRG-02      Poshan Shakti  Maharashtra            Tata Trusts CSR         840000   1134000   1081000         511000       NaN    758000                4324000\n7                                                                                                       PRG-03      Shiksha Udaan    Rajasthan     Azim Premji Foundation         577000    770500    529500         928500    470000    683500                3959000\n8                                                                                                       PRG-04     Swasthya Sathi       Odisha  Global Health Access Fund         722500         \u2013    719000        1118000   1487000    877000                4923500\n9                                                                                                       PRG-05    Mahila Ajeevika        Bihar       HDFC Bank Parivartan         849000    930000    624500         544000    591500         -                3539000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'python3 -c \"vals=[812500,1628000,1427000,964000,1273000,1068000]; print(sum(vals))\"'",
+   "output": "7172500\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('programme_monthly_spend.xlsx', header=None); rows=df.iloc[5:]; # rows from data\n# extract programme name col1, total col10\ndata=[]\nfor i in range(len(rows)):\n    code=rows.iloc[i,0]\n    prog=rows.iloc[i,1]\n    total=rows.iloc[i,10]\n    if pd.isna(code): continue\n    data.append((code,prog,total))\nfor d in data:\n    print(d)\n# find max\nmax_item=max(data, key=lambda x: (x[2] if pd.notna(x[2]) else -1))\nprint('max',max_item)\n\\\"\"",
+   "output": "('PRG-01', 'Jal Jeevan Saathi', 7172500)\n('PRG-02', 'Poshan Shakti', 4324000)\n('PRG-03', 'Shiksha Udaan', 3959000)\n('PRG-04', 'Swasthya Sathi', 4923500)\n('PRG-05', 'Mahila Ajeevika', 3539000)\n('PRG-06', 'Krishi Pragati', 5512000)\n('PRG-07', 'Bal Suraksha', 3471000)\n('PRG-08', 'Digital Sakhi', 4501000)\n('PRG-09', 'Gram Urja', 4997500)\n('PRG-10', 'Adivasi Adhikar', 3433000)\n('PRG-11', 'Nayi Disha Skills', 3588000)\n('PRG-12', 'Maa aur Shishu', 4593500)\n('PORTFOLIO TOTAL', nan, 54014000)\nmax ('PORTFOLIO TOTAL', nan, 54014000)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('programme_monthly_spend.xlsx', header=None); rows=df.iloc[5:]; data=[]; \nfor i in range(len(rows)):\n    code=rows.iloc[i,0]\n    prog=rows.iloc[i,1]\n    total=rows.iloc[i,10]\n    if pd.isna(code) or code=='PORTFOLIO TOTAL': continue\n    try:\n        total_val=float(total)\n    except:\n        total_val=None\n    data.append((code,prog,total_val))\ndata_sorted=sorted(data,key=lambda x:x[2],reverse=True)\nfor d in data_sorted[:5]:\n    print(d)\nprint('max programme',data_sorted[0])\n\\\"\"",
+   "output": "('PRG-01', 'Jal Jeevan Saathi', 7172500.0)\n('PRG-06', 'Krishi Pragati', 5512000.0)\n('PRG-09', 'Gram Urja', 4997500.0)\n('PRG-04', 'Swasthya Sathi', 4923500.0)\n('PRG-12', 'Maa aur Shishu', 4593500.0)\nmax programme ('PRG-01', 'Jal Jeevan Saathi', 7172500.0)\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 93955,
+  "output": 1253
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 5,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Which programme spent the most from April through September 2025?",
+ "trap": "plain variant of q4",
+ "text": "The spreadsheet shows monthly spend for April to September 2025. The six-month totals are:\n\n- Jal Jeevan Saathi \u2013 7,172,500 INR\n- Krishi Pragati \u2013 5,512,000 INR\n- Gram Urja \u2013 4,997,500 INR\n- Swasthya Sathi \u2013 4,923,500 INR\n- Maa aur Shishu \u2013 4,593,500 INR\n\nJal Jeevan Saathi has the highest total in the period.\n\nANSWER: Jal Jeevan Saathi",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/offset_headers.q4_plain.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "programme_monthly_spend.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:13:00.003911Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

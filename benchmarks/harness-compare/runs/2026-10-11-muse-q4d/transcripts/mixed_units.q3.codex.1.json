@@ -1,0 +1,70 @@
+{
+ "job": "mixed_units.q3.codex.1",
+ "case": "mixed_units",
+ "q": "q3",
+ "harness": "codex",
+ "trial": 1,
+ "want": 34,
+ "got": "34",
+ "verdict": "correct",
+ "seconds": 74.6,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 16\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 17:57 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q3.codex.1/ws/mixed_units_register.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names); df=pd.read_excel(f, sheet_name=0); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "['Disbursement Register']\n  Sahyog Foundation \u2014 FY 2025-26 Disbursement Register  ... Unnamed: 6\n0                                       Amount note:    ...        NaN\n1                                         Date note:    ...        NaN\n2                                      Prepared for:    ...        NaN\n3                                                NaN    ...        NaN\n4                                          Record ID    ...    Purpose\n\n[5 rows x 7 columns]\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q3.codex.1/ws/mixed_units_register.xlsx'; df=pd.read_excel(f, sheet_name=0, header=None); print(df.iloc[0:10,0:7].to_string())\\\"\"",
+   "output": "                                                      0                                                                                                          1                        2          3                                      4          5                       6\n0  Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n1                                          Amount note:  Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                      NaN        NaN                                    NaN        NaN                     NaN\n2                                            Date note:                                               Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                      NaN        NaN                                    NaN        NaN                     NaN\n3                                         Prepared for:                                                                Programme management review \u2014 31 March 2026                      NaN        NaN                                    NaN        NaN                     NaN\n4                                                   NaN                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n5                                             Record ID                                                                                          Disbursement Date                Programme      State                         Donor / Scheme     Amount                 Purpose\n6                                               MU-0001                                                                                                 2025-04-03  Maternal & Child Health  Karnataka  Azim Premji Philanthropic Initiatives     340000      Field team support\n7                                               MU-0002                                                                                                 03/04/2025        Rural Livelihoods  Rajasthan                National Health Mission  \u20b91,20,000  Community mobilisation\n8                                               MU-0003                                                                                                 3 Apr 2025  Maternal & Child Health  Jharkhand                         Tata CSR Trust      1.2 L   Equipment procurement\n9                                               MU-0004                                                                                                 2025-08-01  Maternal & Child Health  Rajasthan            Global Community Foundation   2.5 lakh  Training and workshops\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/mixed_units.q3.codex.1/ws/mixed_units_register.xlsx'\ndf_raw=pd.read_excel(f, sheet_name=0, header=None)\nheader=df_raw.iloc[5].tolist()\ndata=df_raw.iloc[6:].copy()\ndata.columns=header\nprint(data.columns.tolist())\nprint(data.head(20))\n# clean amount\ndef parse_amt(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0\n    # remove \u20b9 , commas\n    s=s.replace('\u20b9','').replace(',','').strip()\n    # handle L lakh, Cr, k\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)\\\\s*L', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)\\\\s*lakh', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)\\\\s*Cr', s, re.I)\n    if m:\n        return float(m.group(1))*10000000\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)\\\\s*k', s, re.I)\n    if m:\n        return float(m.group(1))*1000\n    # try numeric\n    try:\n        return float(s)\n    except:\n        return 0\ndata['amount_num']=data['Amount'].apply(parse_amt)\nodisha=data[data['State'].astype(str).str.strip().str.lower()=='odisha']\nnonzero=odisha[odisha['amount_num']\"'!=0]\nprint('\"'total odisha rows', len(odisha))\nprint('nonzero', len(nonzero))\nprint(nonzero[['Record ID','State','Amount','amount_num']])\n\\\"\n\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n   Record ID Disbursement Date  ...     Amount                 Purpose\n6    MU-0001        2025-04-03  ...     340000      Field team support\n7    MU-0002        03/04/2025  ...  \u20b91,20,000  Community mobilisation\n8    MU-0003        3 Apr 2025  ...      1.2 L   Equipment procurement\n9    MU-0004        2025-08-01  ...   2.5 lakh  Training and workshops\n10   MU-0005        28/02/2026  ...       1 Cr   Equipment procurement\n11   MU-0006       18 Jul 2025  ...        45k  Direct programme grant\n12   MU-0007        2026-02-26  ...        NaN      Field team support\n13   MU-0008        27/02/2026  ...          -  Direct programme grant\n14   MU-0009       13 Jul 2025  ...        NaN   Equipment procurement\n15   MU-0010        2025-07-22  ...      78000   Equipment procurement\n16   MU-0011        25/04/2025  ...  \u20b91,20,000      Field team support\n17   MU-0012       14 Dec 2025  ...      1.2 L      Field team support\n18   MU-0013        2025-11-29  ...   2.5 lakh   Equipment procurement\n19   MU-0014        10/07/2025  ...       1 Cr  Community mobilisation\n20   MU-0015       12 Aug 2025  ...        45k      Field team support\n21   MU-0016        2025-10-07  ...        NaN  Training and workshops\n22   MU-0017        18/10/2025  ...          -  Training and workshops\n23   MU-0018       11 Nov 2025  ...        NaN  Training and workshops\n24   MU-0019        2025-10-24  ...      78000   Equipment procurement\n25   MU-0020        18/03/2026  ...  \u20b91,20,000   Equipment procurement\n\n[20 rows x 7 columns]\ntotal odisha rows 50\nnonzero 34\n    Record ID   State     Amount  amount_num\n15    MU-0010  Odisha      78000     78000.0\n25    MU-0020  Odisha  \u20b91,20,000    120000.0\n26    MU-0021  Odisha      1.2 L    120000.0\n28    MU-0023  Odisha       1 Cr  10000000.0\n33    MU-0028  Odisha      78000     78000.0\n37    MU-0032  Odisha       1 Cr  10000000.0\n45    MU-0040  Odisha   2.5 lakh    250000.0\n46    MU-0041  Odisha       1 Cr  10000000.0\n52    MU-0046  Odisha     875000    875000.0\n53    MU-0047  Odisha  \u20b91,20,000    120000.0\n54    MU-0048  Odisha      1.2 L    120000.0\n61    MU-0055  Odisha     875000    875000.0\n71    MU-0064  Odisha     875000    875000.0\n73    MU-0066  Odisha      1.2 L    120000.0\n76    MU-0069  Odisha        45k     45000.0\n81    MU-0074  Odisha  \u20b91,20,000    120000.0\n82    MU-0075  Odisha      1.2 L    120000.0\n84    MU-0077  Odisha       1 Cr  10000000.0\n85    MU-0078  Odisha        45k     45000.0\n104   MU-0096  Odisha        45k     45000.0\n109   MU-0101  Odisha  \u20b91,20,000    120000.0\n126   MU-0118  Odisha     875000    875000.0\n130   MU-0121  Odisha   2.5 lakh    250000.0\n138   MU-0129  Odisha      1.2 L    120000.0\n139   MU-0130  Odisha   2.5 lakh    250000.0\n146   MU-0136  Odisha     165000    165000.0\n150   MU-0140  Odisha       1 Cr  10000000.0\n155   MU-0145  Odisha      32500     32500.0\n160   MU-0150  Odisha        45k     45000.0\n164   MU-0154  Odisha     340000    340000.0\n173   MU-0163  Odisha     340000    340000.0\n174   MU-0164  Odisha  \u20b91,20,000    120000.0\n182   MU-0172  Odisha      78000     78000.0\n187   MU-0177  Odisha        45k     45000.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/mixed_units.q3.codex.1/ws/mixed_units_register.xlsx'\ndf_raw=pd.read_excel(f, sheet_name=0, header=None)\nheader=df_raw.iloc[5].tolist()\ndata=df_raw.iloc[6:].copy()\ndata.columns=header\nodisha=data[data['State'].astype(str).str.strip().str.lower()=='odisha']\nprint(len(odisha))\nprint(odisha['Record ID'].tolist())\n\\\"\n\"",
+   "output": "50\n['MU-0010', 'MU-0017', 'MU-0020', 'MU-0021', 'MU-0023', 'MU-0025', 'MU-0028', 'MU-0032', 'MU-0036', 'MU-0040', 'MU-0041', 'MU-0044', 'MU-0046', 'MU-0047', 'MU-0048', 'MU-0054', 'MU-0055', 'MU-0063', 'MU-0064', 'MU-0066', 'MU-0069', 'MU-0074', 'MU-0075', 'MU-0077', 'MU-0078', 'MU-0081', 'MU-0089', 'MU-0096', 'MU-0101', 'MU-0107', 'MU-0116', 'MU-0118', 'MU-0121', 'MU-0124', 'MU-0125', 'MU-0129', 'MU-0130', 'MU-0136', 'MU-0140', 'MU-0143', 'MU-0145', 'MU-0150', 'MU-0151', 'MU-0154', 'MU-0162', 'MU-0163', 'MU-0164', 'MU-0172', 'MU-0177', 'MU-0178']\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 82278,
+  "output": 1374
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How many Odisha records have a non-zero amount? Treat blank, '-' and NA as zero and count records, not distinct amounts.",
+ "trap": "Counting missing-value markers as non-zero text entries.",
+ "text": "There are 50 Odisha records in the register. After treating blank, '-' and NA as zero, 34 of them have a non-zero amount.\n\nANSWER: 34",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q3.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:27:32.522742Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

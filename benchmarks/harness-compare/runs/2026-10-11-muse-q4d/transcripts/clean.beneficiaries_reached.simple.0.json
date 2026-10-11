@@ -1,0 +1,34 @@
+{
+ "job": "clean.beneficiaries_reached.simple.0",
+ "case": "clean",
+ "q": "beneficiaries_reached",
+ "harness": "simple",
+ "trial": 0,
+ "want": 21107,
+ "got": "21107",
+ "verdict": "correct",
+ "seconds": 47.0,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Read Budget vs Actual sheet\ndf = pd.read_excel(file_path, sheet_name='Budget vs Actual')\nprint(df.head())\nprint(df.columns.tolist())\n\n# Sum beneficiaries reached, ignoring NaN\ntotal = df['Beneficiaries reached'].sum(skipna=True)\nprint('Total beneficiaries reached:', total)\n",
+   "output": "                     Program  ...  Beneficiaries reached\n0        Education (Shiksha)  ...                 4025.0\n1    Maternal & Child Health  ...                 2570.0\n2  Water & Sanitation (WASH)  ...                10754.0\n3        Women's Livelihoods  ...                 1684.0\n4            Disaster Relief  ...                 2074.0\n\n[5 rows x 4 columns]\n['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\nTotal beneficiaries reached: 21107.0\n"
+  }
+ ],
+ "usage": {
+  "input": 3239,
+  "output": 858
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 4,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total beneficiaries reached across all programs",
+ "trap": "",
+ "text": "The Budget vs Actual sheet lists beneficiaries reached per program. Summing the program rows (Education Shiksha 4,025; Maternal & Child Health 2,570; Water & Sanitation WASH 10,754; Women's Livelihoods 1,684; Disaster Relief 2,074) gives the total across all programs. Admin and Fundraising have no beneficiary targets.\n\nANSWER: 21107",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.beneficiaries_reached.simple.0"
+}

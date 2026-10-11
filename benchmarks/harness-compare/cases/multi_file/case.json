@@ -1,0 +1,58 @@
+{
+  "id": "multi_file",
+  "description": "A beneficiary roster CSV and a separately formatted payment workbook requiring an ID join, paid-status filtering and orphan exclusion.",
+  "files": [
+    "beneficiaries.csv",
+    "payments.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. Treat numeric and ₹/comma-formatted amounts as INR. What is the total paid amount?",
+      "answer": 11075500,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Orphan and failed payments inflate the total if not excluded."
+    },
+    {
+      "id": "q2",
+      "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. What total amount was paid to Girls' Education beneficiaries in Odisha?",
+      "answer": 684000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Programme and state live in the CSV, so filtering payments alone cannot answer this."
+    },
+    {
+      "id": "q3",
+      "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. How many distinct beneficiaries received at least one such paid payment?",
+      "answer": 588,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Counting payment rows counts multi-tranche beneficiaries more than once."
+    },
+    {
+      "id": "q4",
+      "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. Which programme received the highest total paid amount?",
+      "answer": "Health & Nutrition",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "Ranking requires the beneficiary join and exclusion of orphan and failed rows."
+    },
+    {
+      "id": "q5",
+      "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. What percentage of all beneficiaries listed in the CSV received at least one such paid payment? Round to two decimal places.",
+      "answer": 77.37,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "The denominator is all CSV beneficiaries, not payment rows or only recipients."
+    },
+    {
+      "id": "q6",
+      "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. What total amount did Azim Premji Foundation pay to beneficiaries whose CSV gender is Woman?",
+      "answer": 1205000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Donor is in the workbook while gender is in the CSV; orphan and failed rows still must be removed."
+    }
+  ]
+}

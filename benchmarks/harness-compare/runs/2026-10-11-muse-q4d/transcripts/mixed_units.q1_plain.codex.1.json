@@ -1,0 +1,148 @@
+{
+ "job": "mixed_units.q1_plain.codex.1",
+ "case": "mixed_units",
+ "q": "q1_plain",
+ "harness": "codex",
+ "trial": 1,
+ "want": 217508500,
+ "got": "217508500",
+ "verdict": "correct",
+ "seconds": 241.5,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 16\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 18:05 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'; xl=pd.ExcelFile(f); print(xl.sheet_names)\\\"\"",
+   "output": "['Disbursement Register']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx', sheet_name='Disbursement Register'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  Sahyog Foundation \u2014 FY 2025-26 Disbursement Register  ... Unnamed: 6\n0                                       Amount note:    ...        NaN\n1                                         Date note:    ...        NaN\n2                                      Prepared for:    ...        NaN\n3                                                NaN    ...        NaN\n4                                          Record ID    ...    Purpose\n\n[5 rows x 7 columns]\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[0:15,0:7].to_string(header=False,index=False))\\\"\"",
+   "output": "Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                       NaN                     NaN       NaN                                   NaN       NaN                    NaN\n                                        Amount note: Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                     NaN       NaN                                   NaN       NaN                    NaN\n                                          Date note:                                              Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                     NaN       NaN                                   NaN       NaN                    NaN\n                                       Prepared for:                                                               Programme management review \u2014 31 March 2026                     NaN       NaN                                   NaN       NaN                    NaN\n                                                 NaN                                                                                                       NaN                     NaN       NaN                                   NaN       NaN                    NaN\n                                           Record ID                                                                                         Disbursement Date               Programme     State                        Donor / Scheme    Amount                Purpose\n                                             MU-0001                                                                                                2025-04-03 Maternal & Child Health Karnataka Azim Premji Philanthropic Initiatives    340000     Field team support\n                                             MU-0002                                                                                                03/04/2025       Rural Livelihoods Rajasthan               National Health Mission \u20b91,20,000 Community mobilisation\n                                             MU-0003                                                                                                3 Apr 2025 Maternal & Child Health Jharkhand                        Tata CSR Trust     1.2 L  Equipment procurement\n                                             MU-0004                                                                                                2025-08-01 Maternal & Child Health Rajasthan           Global Community Foundation  2.5 lakh Training and workshops\n                                             MU-0005                                                                                                28/02/2026        Tribal Education Rajasthan Azim Premji Philanthropic Initiatives      1 Cr  Equipment procurement\n                                             MU-0006                                                                                               18 Jul 2025 Maternal & Child Health Jharkhand           Global Community Foundation       45k Direct programme grant\n                                             MU-0007                                                                                                2026-02-26       Rural Livelihoods Karnataka Azim Premji Philanthropic Initiatives       NaN     Field team support\n                                             MU-0008                                                                                                27/02/2026      Water & Sanitation Karnataka               National Health Mission         - Direct programme grant\n                                             MU-0009                                                                                               13 Jul 2025      Water & Sanitation Rajasthan               National Health Mission       NaN  Equipment procurement\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\n# header row is at index 4\nheader=df.iloc[4].tolist()\ndata=df.iloc[5:].reset_index(drop=True)\n# find column indices\ncols=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']\n# map\ncol_map={}\nfor i,c in enumerate(header):\n    if c in cols:\n        col_map[c]=i\nprint('col_map',col_map)\namount_idx=col_map['Amount']\namounts=data.iloc[:,amount_idx]\nprint(amounts.head(20).tolist())\n\\\"\n\"",
+   "output": "col_map {}\nTraceback (most recent call last):\n  File \"<string>\", line 16, in <module>\nKeyError: 'Amount'\n",
+   "exit_code": 1
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nprint(repr(df.iloc[4].tolist()))\n\\\"\n\"",
+   "output": "[nan, nan, nan, nan, nan, nan, nan]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nfor i in range(0,15):\n    print(i, repr(df.iloc[i,0]), repr(df.iloc[i,4]), repr(df.iloc[i,5]))\n\\\"\n\"",
+   "output": "0 'Sahyog Foundation \u2014 FY 2025-26 Disbursement Register' nan nan\n1 'Amount note:' nan nan\n2 'Date note:' nan nan\n3 'Prepared for:' nan nan\n4 nan nan nan\n5 'Record ID' 'Donor / Scheme' 'Amount'\n6 'MU-0001' 'Azim Premji Philanthropic Initiatives' 340000\n7 'MU-0002' 'National Health Mission' '\u20b91,20,000'\n8 'MU-0003' 'Tata CSR Trust' '1.2 L'\n9 'MU-0004' 'Global Community Foundation' '2.5 lakh'\n10 'MU-0005' 'Azim Premji Philanthropic Initiatives' '1 Cr'\n11 'MU-0006' 'Global Community Foundation' '45k'\n12 'MU-0007' 'Azim Premji Philanthropic Initiatives' nan\n13 'MU-0008' 'National Health Mission' '-'\n14 'MU-0009' 'National Health Mission' nan\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nrow=df.iloc[5]\nprint([repr(v) for v in row.tolist()])\n\\\"\n\"",
+   "output": "[\"'Record ID'\", \"'Disbursement Date'\", \"'Programme'\", \"'State'\", \"'Donor / Scheme'\", \"'Amount'\", \"'Purpose'\"]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\n# map column names to index\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\nprint(col_idx)\namount_idx=col_idx['Amount']\namount_series=data.iloc[:,amount_idx]\nprint('num rows', len(amount_series))\nprint(amount_series.head(20).tolist())\n\\\"\n\"",
+   "output": "{'Record ID': 0, 'Disbursement Date': 1, 'Programme': 2, 'State': 3, 'Donor / Scheme': 4, 'Amount': 5, 'Purpose': 6}\nnum rows 185\n[340000, '\u20b91,20,000', '1.2 L', '2.5 lakh', '1 Cr', '45k', nan, '-', nan, 78000, '\u20b91,20,000', '1.2 L', '2.5 lakh', '1 Cr', '45k', nan, '-', nan, 78000, '\u20b91,20,000']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nprint(df.shape)\nprint(df.tail(10).iloc[:,0:6].to_string(header=False,index=False))\n\\\"\n\"",
+   "output": "(191, 7)\nMU-0171 10 Jun 2025      Water & Sanitation Karnataka Azim Premji Philanthropic Initiatives       NaN\nMU-0172  2025-08-29      Water & Sanitation    Odisha           Global Community Foundation     78000\nMU-0173  27/08/2025 Maternal & Child Health Karnataka Azim Premji Philanthropic Initiatives \u20b91,20,000\nMU-0174 25 Feb 2026        Tribal Education Rajasthan           Global Community Foundation     1.2 L\nMU-0175  2025-06-22 Maternal & Child Health Karnataka                        Tata CSR Trust  2.5 lakh\nMU-0176  02/11/2025      Water & Sanitation Jharkhand                        Tata CSR Trust      1 Cr\nMU-0177  3 Jun 2025       Rural Livelihoods    Odisha           Global Community Foundation       45k\nMU-0178  2025-08-23       Rural Livelihoods    Odisha               National Health Mission       NaN\nMU-0179  06/06/2025       Rural Livelihoods Jharkhand           Global Community Foundation         -\nMU-0180  4 Feb 2026 Maternal & Child Health Jharkhand               National Health Mission       NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\namount_idx=col_idx['Amount']\namounts=data.iloc[:,amount_idx]\n\ndef parse_amount(val):\n    if pd.isna(val):\n        return 0\n    s=str(val).strip()\n    if s=='' or s=='-' or s.upper()=='NA' or s.upper()=='NAN':\n        return 0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    # handle cases like '1.2 L' already removed commas\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*([a-zA-Z]+)?\"'$'\"', s, re.I)\n    if m:\n        num=float(m.group(1))\n        unit=(m.group(2) or '').lower()\n        if unit in ('l','lakh'):\n            return num*100000\n        elif unit in ('cr','crore'):\n            return num*10000000\n        elif unit in ('k','thousand'):\n            return num*1000\n        else:\n            return num\n    # fallback\n    try:\n        return float(s)\n    except:\n        return 0\n\nvals=amounts.apply(parse_amount)\ntotal=vals.sum()\nprint('total', total)\nprint('rows', len(vals))\n# check unique values\nprint(vals.describe())\n\\\"\n\"",
+   "output": "total 217508500.0\nrows 185\ncount    1.850000e+02\nmean     1.175722e+06\nstd      3.084457e+06\nmin      0.000000e+00\n25%      0.000000e+00\n50%      7.800000e+04\n75%      2.500000e+05\nmax      1.000000e+07\nName: 5, dtype: float64\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\namount_idx=col_idx['Amount']\namounts=data.iloc[:,amount_idx]\ndef parse_amount(val):\n    if pd.isna(val): return 0\n    s=str(val).strip()\n    if s=='' or s=='-' or s.upper() in ('NA','NAN'): return 0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*([a-zA-Z]+)?\"'$'\"', s, re.I)\n    if m:\n        num=float(m.group(1)); unit=(m.group(2) or '').lower()\n        if unit in ('l','lakh'): return num*100000\n        if unit in ('cr','crore'): return num*10000000\n        if unit in ('k','thousand'): return num*1000\n        return num\n    try: return float(s)\n    except: return 0\nparsed=amounts.apply(parse_amount)\nfor i in range(20):\n    print(i, amounts.iloc[i], '->', parsed.iloc[i])\n\\\"\n\"",
+   "output": "0 340000 -> 340000.0\n1 \u20b91,20,000 -> 120000.0\n2 1.2 L -> 120000.0\n3 2.5 lakh -> 250000.0\n4 1 Cr -> 10000000.0\n5 45k -> 45000.0\n6 nan -> 0.0\n7 - -> 0.0\n8 nan -> 0.0\n9 78000 -> 78000.0\n10 \u20b91,20,000 -> 120000.0\n11 1.2 L -> 120000.0\n12 2.5 lakh -> 250000.0\n13 1 Cr -> 10000000.0\n14 45k -> 45000.0\n15 nan -> 0.0\n16 - -> 0.0\n17 nan -> 0.0\n18 78000 -> 78000.0\n19 \u20b91,20,000 -> 120000.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\nrid_idx=col_idx['Record ID']\nprint(data.iloc[0:10, rid_idx].tolist())\nprint(data.iloc[10:20, rid_idx].tolist())\n\\\"\n\"",
+   "output": "['MU-0001', 'MU-0002', 'MU-0003', 'MU-0004', 'MU-0005', 'MU-0006', 'MU-0007', 'MU-0008', 'MU-0009', 'MU-0010']\n['MU-0011', 'MU-0012', 'MU-0013', 'MU-0014', 'MU-0015', 'MU-0016', 'MU-0017', 'MU-0018', 'MU-0019', 'MU-0020']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\nrid_idx=col_idx['Record ID']\nids=data.iloc[:,rid_idx].tolist()\nprint(len(ids), ids[0], ids[-1])\nprint([i for i in ids if pd.isna(i) or i=='' ])\n\\\"\n\"",
+   "output": "185 MU-0001 MU-0180\n[nan, nan, nan]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nprint(df.iloc[190:191].to_string())\n\\\"\n\"",
+   "output": "           0           1                        2          3                        4    5                       6\n190  MU-0180  4 Feb 2026  Maternal & Child Health  Jharkhand  National Health Mission  NaN  Training and workshops\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\nrid_idx=col_idx['Record ID']\nids=data.iloc[:,rid_idx]\nnonnull=ids.dropna()\nprint(len(nonnull))\nprint(nonnull.iloc[0], nonnull.iloc[-1])\n\\\"\n\"",
+   "output": "182\nMU-0001 MU-0180\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\nrid_idx=col_idx['Record ID']\namt_idx=col_idx['Amount']\nfor i in range(len(data)):\n    if pd.isna(data.iloc[i,rid_idx]):\n        print(i, data.iloc[i].tolist())\n\\\"\n\"",
+   "output": "45 [nan, nan, nan, nan, nan, nan, nan]\n92 [nan, nan, nan, nan, nan, nan, nan]\n139 [nan, nan, nan, nan, nan, nan, nan]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\npath='/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(path, sheet_name='Disbursement Register', header=None)\nheader=df.iloc[5].tolist()\ndata=df.iloc[6:].reset_index(drop=True)\ncol_idx={name:i for i,name in enumerate(header) if pd.notna(name)}\nrid_idx=col_idx['Record ID']\namt_idx=col_idx['Amount']\ndef parse_amount(val):\n    if pd.isna(val): return 0\n    s=str(val).strip()\n    if s=='' or s=='-' or s.upper() in ('NA','NAN'): return 0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*([a-zA-Z]+)?\"'$'\"', s, re.I)\n    if m:\n        num=float(m.group(1)); unit=(m.group(2) or '').lower()\n        if unit in ('l','lakh'): return num*100000\n        if unit in ('cr','crore'): return num*10000000\n        if unit in ('k','thousand'): return num*1000\n        return num\n    try: return float(s)\n    except: return 0\n\nmask=data.iloc[:,rid_idx].notna()\nvals=data.iloc[mask, amt_idx].apply(parse_amount)\nprint('sum filtered', vals.sum())\n\\\"\n\"",
+   "output": "sum filtered 217508500.0\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 302215,
+  "output": 4639
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "What is the total disbursed amount, in INR?",
+ "trap": "plain variant of q1",
+ "text": "The file `mixed_units_register.xlsx` contains 182 disbursement records. After converting L/lakh, Cr and k to rupees, the sum of the Amount column is 217,508,500 INR.\n\nANSWER: 217508500",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q1_plain.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:35:19.292702Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

@@ -1,0 +1,10 @@
+Q8+dfQ4 n=8    prose    719 tok    14.6 tok/s draft 448/2160
+Q8+dfQ4 n=8    code    1073 tok    21.7 tok/s draft 801/2168
+Q8+dfQ4 n=8    data    1038 tok    22.2 tok/s draft 782/2040
+Q8+dfQ4 n=8    ALL     2830 tok    19.4 tok/s
+Q8+dfQ4 n=16   prose    709 tok    15.2 tok/s draft 458/3765
+Q8+dfQ4 n=16   code    1097 tok    24.8 tok/s draft 860/3555
+Q8+dfQ4 n=16   data    1064 tok    24.9 tok/s draft 836/3420
+Q8+dfQ4 n=16   ALL     2870 tok    21.5 tok/s
+
+[exited with code 0]

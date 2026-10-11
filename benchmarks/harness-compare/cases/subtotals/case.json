@@ -1,0 +1,57 @@
+{
+  "id": "subtotals",
+  "description": "A six-month NGO expense ledger with monthly subtotal rows, blank separators, and a grand total designed to tempt double counting.",
+  "files": [
+    "monthly_expense_ledger.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Excluding every monthly subtotal and the grand total row, what was total actual expenditure from April through September 2025, in INR?",
+      "answer": 16039900,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Adding subtotal or grand-total rows double or triple counts the same expenses."
+    },
+    {
+      "id": "q2",
+      "question": "Excluding subtotal and grand-total rows, how much was spent on Jal Jeevan Saathi in Maharashtra from April through September 2025, in INR?",
+      "answer": 2670500,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "The ledger's summary rows have blank programme and state fields and must not enter the filter."
+    },
+    {
+      "id": "q3",
+      "question": "How many underlying expense transactions (rows with an EXP- transaction ID, not subtotal rows) were recorded for Poshan Shakti?",
+      "answer": 20,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Counting visual month blocks or summary rows instead of transaction rows gives the wrong count."
+    },
+    {
+      "id": "q4",
+      "question": "After excluding all subtotal and grand-total rows, which district had the highest total actual expenditure?",
+      "answer": "Koraput",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "Summing the precomputed totals alongside detail rows corrupts district rankings."
+    },
+    {
+      "id": "q5",
+      "question": "What percentage of total underlying expenditure was funded by Azim Premji Foundation? Exclude all subtotal and grand-total rows and report the percentage to two decimal places.",
+      "answer": 13.22,
+      "kind": "number",
+      "tol_pct": 0.01,
+      "trap": "Using a denominator that includes monthly or grand totals understates the donor share."
+    },
+    {
+      "id": "q6",
+      "question": "After excluding monthly subtotal and grand-total rows, which programme had the highest total actual expenditure?",
+      "answer": "Swasthya Sathi",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "The bold totals are not programme records and must not be grouped as if they were."
+    }
+  ]
+}

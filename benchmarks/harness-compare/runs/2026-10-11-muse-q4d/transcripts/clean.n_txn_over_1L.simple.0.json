@@ -1,0 +1,39 @@
+{
+ "job": "clean.n_txn_over_1L.simple.0",
+ "case": "clean",
+ "q": "n_txn_over_1L",
+ "harness": "simple",
+ "trial": 0,
+ "want": 200,
+ "got": "200",
+ "verdict": "correct",
+ "seconds": 31.3,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Ensure column name matches\nprint(df.columns.tolist())\n# Count transactions where Amount (INR) > 100000\ncount = (df['Amount (INR)'] > 100000).sum()\nprint('Count:', count)\n",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nCount: 200\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\nprint('Total rows:', len(df))\nprint('Min amount:', df['Amount (INR)'].min())\nprint('Max amount:', df['Amount (INR)'].max())\n",
+   "output": "Total rows: 314\nMin amount: 19500\nMax amount: 332500\n"
+  }
+ ],
+ "usage": {
+  "input": 4966,
+  "output": 642
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Number of transactions with amount greater than 100000",
+ "trap": "",
+ "text": "The Transactions sheet contains 314 rows. Filtering for `Amount (INR) > 100000` gives 200 matching transactions.\n\nANSWER: 200",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.n_txn_over_1L.simple.0"
+}

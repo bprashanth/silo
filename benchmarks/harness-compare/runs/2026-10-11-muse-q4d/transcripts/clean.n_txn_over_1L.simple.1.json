@@ -1,0 +1,44 @@
+{
+ "job": "clean.n_txn_over_1L.simple.1",
+ "case": "clean",
+ "q": "n_txn_over_1L",
+ "harness": "simple",
+ "trial": 1,
+ "want": 200,
+ "got": "200",
+ "verdict": "correct",
+ "seconds": 41.9,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Load Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Ensure column name matches\nprint(df.columns.tolist())\n# Count rows where Amount (INR) > 100000\ncount = (df['Amount (INR)'] > 100000).sum()\nprint('Count:', count)\n",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nCount: 200\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nprint('Total rows:', len(df))\nprint('Amount stats:', df['Amount (INR)'].describe())\n",
+   "output": "Total rows: 314\nAmount stats: count       314.000000\nmean     126733.757962\nstd       62417.241366\nmin       19500.000000\n25%       76075.000000\n50%      126450.000000\n75%      160375.000000\nmax      332500.000000\nName: Amount (INR), dtype: float64\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nexact = df[df['Amount (INR)'] == 100000]\nprint('Exact 100000 rows:', len(exact))\n# Also check >100000 vs >=100001\nprint('>100000:', (df['Amount (INR)'] > 100000).sum())\nprint('>=100000:', (df['Amount (INR)'] >= 100000).sum())\n",
+   "output": "Exact 100000 rows: 0\n>100000: 200\n>=100000: 200\n"
+  }
+ ],
+ "usage": {
+  "input": 7123,
+  "output": 920
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Number of transactions with amount greater than 100000",
+ "trap": "",
+ "text": "The Transactions sheet contains 314 rows. Filtering for `Amount (INR) > 100000` returns 200 transactions.\n\nANSWER: 200",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.n_txn_over_1L.simple.1"
+}

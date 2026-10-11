@@ -1,0 +1,106 @@
+{
+ "job": "mixed_units.q6.codex.1",
+ "case": "mixed_units",
+ "q": "q6",
+ "harness": "codex",
+ "trial": 1,
+ "want": "Tribal Education",
+ "got": "Tribal Education",
+ "verdict": "correct",
+ "seconds": 153.8,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 20\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 18:03 .\ndrwx------ 4 beeps beeps    80 Oct 11 18:03 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 18:03 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 18:03 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 18:03 .git\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 18:03 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names); df=pd.read_excel(f, sheet_name=0); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "['Disbursement Register']\n  Sahyog Foundation \u2014 FY 2025-26 Disbursement Register  ... Unnamed: 6\n0                                       Amount note:    ...        NaN\n1                                         Date note:    ...        NaN\n2                                      Prepared for:    ...        NaN\n3                                                NaN    ...        NaN\n4                                          Record ID    ...    Purpose\n\n[5 rows x 7 columns]\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'; df=pd.read_excel(f, sheet_name=0, header=None); print(df.head(15).to_string())\\\"\"",
+   "output": "                                                       0                                                                                                          1                        2          3                                      4          5                       6\n0   Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n1                                           Amount note:  Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                      NaN        NaN                                    NaN        NaN                     NaN\n2                                             Date note:                                               Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                      NaN        NaN                                    NaN        NaN                     NaN\n3                                          Prepared for:                                                                Programme management review \u2014 31 March 2026                      NaN        NaN                                    NaN        NaN                     NaN\n4                                                    NaN                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n5                                              Record ID                                                                                          Disbursement Date                Programme      State                         Donor / Scheme     Amount                 Purpose\n6                                                MU-0001                                                                                                 2025-04-03  Maternal & Child Health  Karnataka  Azim Premji Philanthropic Initiatives     340000      Field team support\n7                                                MU-0002                                                                                                 03/04/2025        Rural Livelihoods  Rajasthan                National Health Mission  \u20b91,20,000  Community mobilisation\n8                                                MU-0003                                                                                                 3 Apr 2025  Maternal & Child Health  Jharkhand                         Tata CSR Trust      1.2 L   Equipment procurement\n9                                                MU-0004                                                                                                 2025-08-01  Maternal & Child Health  Rajasthan            Global Community Foundation   2.5 lakh  Training and workshops\n10                                               MU-0005                                                                                                 28/02/2026         Tribal Education  Rajasthan  Azim Premji Philanthropic Initiatives       1 Cr   Equipment procurement\n11                                               MU-0006                                                                                                18 Jul 2025  Maternal & Child Health  Jharkhand            Global Community Foundation        45k  Direct programme grant\n12                                               MU-0007                                                                                                 2026-02-26        Rural Livelihoods  Karnataka  Azim Premji Philanthropic Initiatives        NaN      Field team support\n13                                               MU-0008                                                                                                 27/02/2026       Water & Sanitation  Karnataka                National Health Mission          -  Direct programme grant\n14                                               MU-0009                                                                                                13 Jul 2025       Water & Sanitation  Rajasthan                National Health Mission        NaN   Equipment procurement\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'; df=pd.read_excel(f, sheet_name=0, header=5); print(df.columns.tolist()); print(df.head(10))\\\"\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n  Record ID Disbursement Date  ...     Amount                 Purpose\n0   MU-0001        2025-04-03  ...     340000      Field team support\n1   MU-0002        03/04/2025  ...  \u20b91,20,000  Community mobilisation\n2   MU-0003        3 Apr 2025  ...      1.2 L   Equipment procurement\n3   MU-0004        2025-08-01  ...   2.5 lakh  Training and workshops\n4   MU-0005        28/02/2026  ...       1 Cr   Equipment procurement\n5   MU-0006       18 Jul 2025  ...        45k  Direct programme grant\n6   MU-0007        2026-02-26  ...        NaN      Field team support\n7   MU-0008        27/02/2026  ...          -  Direct programme grant\n8   MU-0009       13 Jul 2025  ...        NaN   Equipment procurement\n9   MU-0010        2025-07-22  ...      78000   Equipment procurement\n\n[10 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(f, sheet_name=0, header=5)\ndef parse_amt(v):\n    if pd.isna(v):\n        return 0.0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0.0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    s_low=s.lower()\n    # extract number\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)', s_low)\n    if not m:\n        return 0.0\n    num=float(m.group(1))\n    if 'cr' in s_low:\n        return num*10000000\n    if 'lakh' in s_low or (s_low.endswith('l') and not s_low.endswith('ml')):\n        # careful: 'l' alone\n        # if it's just 'l' or 'lakh'\n        return num*100000\n    if 'k' in s_low:\n        return num*1000\n    return num\ndf['Amount_num']=df['Amount'].apply(parse_amt)\ntotals=df.groupby('Programme')['Amount_num'].sum()\nprint(totals)\nprint('Highest:', totals.idxmax(), totals.max())\n\\\"\n\"",
+   "output": "Programme\nMaternal & Child Health    46079000.0\nProgramme                         0.0\nRural Livelihoods          54325500.0\nTribal Education           63143000.0\nWater & Sanitation         53961000.0\nName: Amount_num, dtype: float64\nHighest: Tribal Education 63143000.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'; df=pd.read_excel(f, sheet_name=0, header=5); print(df.shape); print(df['Programme'].unique())\\\"\"",
+   "output": "(185, 7)\n<StringArray>\n['Maternal & Child Health',       'Rural Livelihoods',\n        'Tribal Education',      'Water & Sanitation',\n                       nan,               'Programme']\nLength: 6, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'; df=pd.read_excel(f, sheet_name=0, header=5); print(df.tail(20).to_string())\\\"\"",
+   "output": "    Record ID Disbursement Date                Programme      State                         Donor / Scheme     Amount                 Purpose\n165   MU-0161        12/07/2025  Maternal & Child Health  Jharkhand                National Health Mission          -   Equipment procurement\n166   MU-0162       23 Aug 2025       Water & Sanitation     Odisha  Azim Premji Philanthropic Initiatives        NaN  Direct programme grant\n167   MU-0163        2025-10-04         Tribal Education     Odisha                         Tata CSR Trust     340000      Field team support\n168   MU-0164        28/03/2026       Water & Sanitation     Odisha                National Health Mission  \u20b91,20,000  Community mobilisation\n169   MU-0165        8 Feb 2026         Tribal Education  Karnataka                         Tata CSR Trust      1.2 L   Equipment procurement\n170   MU-0166        2025-07-22        Rural Livelihoods  Jharkhand                         Tata CSR Trust   2.5 lakh   Equipment procurement\n171   MU-0167        28/11/2025        Rural Livelihoods  Karnataka  Azim Premji Philanthropic Initiatives       1 Cr  Direct programme grant\n172   MU-0168       27 Jan 2026        Rural Livelihoods  Jharkhand  Azim Premji Philanthropic Initiatives        45k  Direct programme grant\n173   MU-0169        2025-04-03         Tribal Education  Karnataka            Global Community Foundation        NaN  Community mobilisation\n174   MU-0170        01/03/2026  Maternal & Child Health  Karnataka            Global Community Foundation          -  Community mobilisation\n175   MU-0171       10 Jun 2025       Water & Sanitation  Karnataka  Azim Premji Philanthropic Initiatives        NaN  Community mobilisation\n176   MU-0172        2025-08-29       Water & Sanitation     Odisha            Global Community Foundation      78000  Direct programme grant\n177   MU-0173        27/08/2025  Maternal & Child Health  Karnataka  Azim Premji Philanthropic Initiatives  \u20b91,20,000   Equipment procurement\n178   MU-0174       25 Feb 2026         Tribal Education  Rajasthan            Global Community Foundation      1.2 L      Field team support\n179   MU-0175        2025-06-22  Maternal & Child Health  Karnataka                         Tata CSR Trust   2.5 lakh  Training and workshops\n180   MU-0176        02/11/2025       Water & Sanitation  Jharkhand                         Tata CSR Trust       1 Cr      Field team support\n181   MU-0177        3 Jun 2025        Rural Livelihoods     Odisha            Global Community Foundation        45k   Equipment procurement\n182   MU-0178        2025-08-23        Rural Livelihoods     Odisha                National Health Mission        NaN      Field team support\n183   MU-0179        06/06/2025        Rural Livelihoods  Jharkhand            Global Community Foundation          -  Training and workshops\n184   MU-0180        4 Feb 2026  Maternal & Child Health  Jharkhand                National Health Mission        NaN  Training and workshops\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'; df=pd.read_excel(f, sheet_name=0, header=5); print(df[df['Programme']=='Programme'])\\\"\"",
+   "output": "     Record ID  Disbursement Date  Programme  ...  Donor / Scheme  Amount  Purpose\n61   Record ID  Disbursement Date  Programme  ...  Donor / Scheme  Amount  Purpose\n123  Record ID  Disbursement Date  Programme  ...  Donor / Scheme  Amount  Purpose\n\n[2 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(f, sheet_name=0, header=None)\n# find header rows\n# rows where col0 == 'Record ID'\nmask=df[0].astype(str).str.match(r'\"'^MU-'\"\\\\d+\"'$'\"')\ndf_clean=df[mask].copy()\ndf_clean.columns=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']\nprint(df_clean.shape)\nprint(df_clean.head())\n\\\"\n\"",
+   "output": "(180, 7)\n   Record ID Disbursement Date  ...     Amount                 Purpose\n6    MU-0001        2025-04-03  ...     340000      Field team support\n7    MU-0002        03/04/2025  ...  \u20b91,20,000  Community mobilisation\n8    MU-0003        3 Apr 2025  ...      1.2 L   Equipment procurement\n9    MU-0004        2025-08-01  ...   2.5 lakh  Training and workshops\n10   MU-0005        28/02/2026  ...       1 Cr   Equipment procurement\n\n[5 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(f, sheet_name=0, header=None)\nmask=df[0].astype(str).str.match(r'\"'^MU-'\"\\\\d+\"'$'\"')\ndf_clean=df[mask].copy()\ndf_clean.columns=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']\n\ndef parse_amt(v):\n    if pd.isna(v):\n        return 0.0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0.0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    s_low=s.lower()\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)', s_low)\n    if not m:\n        return 0.0\n    num=float(m.group(1))\n    if 'cr' in s_low:\n        return num*10000000\n    if 'lakh' in s_low:\n        return num*100000\n    if s_low.endswith('l'):\n        # ensure not 'ml' etc\n        # but if number followed by l, treat as lakh\n        return num*100000\n    if 'k' in s_low:\n        return num*1000\n    return num\n\ndf_clean['Amount_num']=df_clean['Amount'].apply(parse_amt)\ntotals=df_clean.groupby('Programme')['Amount_num'].sum().sort_values(ascending=False)\nprint(totals)\nprint('Highest programme:', totals.index[0], totals.iloc[0])\n\\\"\n\"",
+   "output": "Programme\nTribal Education           63143000.0\nRural Livelihoods          54325500.0\nWater & Sanitation         53961000.0\nMaternal & Child Health    46079000.0\nName: Amount_num, dtype: float64\nHighest programme: Tribal Education 63143000.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws/mixed_units_register.xlsx'\ndf=pd.read_excel(f, sheet_name=0, header=None)\nmask=df[0].astype(str).str.match(r'\"'^MU-'\"\\\\d+\"'$'\"')\ndf_clean=df[mask].copy()\ndf_clean.columns=['Record ID','Disbursement Date','Programme','State','Donor / Scheme','Amount','Purpose']\nprint(df_clean['Programme'].value_counts())\n\\\"\n\"",
+   "output": "Programme\nMaternal & Child Health    52\nRural Livelihoods          49\nWater & Sanitation         41\nTribal Education           38\nName: count, dtype: int64\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 181568,
+  "output": 2979
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 4,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Which programme received the highest total disbursed amount? Use INR; L/lakh = 100,000, Cr = 10,000,000, k = 1,000, and treat blank, '-' and NA amounts as zero.",
+ "trap": "Including repeated header rows as data or failing to normalize units.",
+ "text": "I cleaned the register and converted all mixed units to INR (L/lakh = 100,000, Cr = 10,000,000, k = 1,000; blanks, \u201c-\u201d and NA = 0).\n\nTotals per programme:\n- Tribal Education: 63,143,000\n- Rural Livelihoods: 54,325,500\n- Water & Sanitation: 53,961,000\n- Maternal & Child Health: 46,079,000\n\nTribal Education has the highest total disbursed amount.\n\nANSWER: Tribal Education",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q6.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:33:38.515664Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

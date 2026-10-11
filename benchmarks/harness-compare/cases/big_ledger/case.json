@@ -1,0 +1,57 @@
+{
+  "id": "big_ledger",
+  "description": "A 20,000-row national NGO ledger split between field expenses and salary registers, with messy codes, status text, subtotal rows, and a lookup join.",
+  "files": [
+    "national_programme_ledger.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What is the combined eligible field-expense and salary total in INR? Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+      "answer": 1614773900,
+      "kind": "number",
+      "tol_pct": 0.001,
+      "trap": "Summing batch subtotals or including draft, void, held, reversed, or unmapped lines."
+    },
+    {
+      "id": "q2",
+      "question": "What is the combined eligible amount for Maternal and Child Health in Odisha? Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+      "answer": 126270000,
+      "kind": "number",
+      "tol_pct": 0.001,
+      "trap": "Filtering programme names without first joining cost-centre codes."
+    },
+    {
+      "id": "q3",
+      "question": "How many eligible transaction lines map to Barmer district across both registers? Count field and payroll lines, not employees. Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+      "answer": 3789,
+      "kind": "number",
+      "tol_pct": 0,
+      "trap": "Counting distinct employees or including subtotal rows."
+    },
+    {
+      "id": "q4",
+      "question": "Which programme has the highest combined eligible amount across both registers? Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+      "answer": "Water and Sanitation",
+      "kind": "name",
+      "tol_pct": 0,
+      "trap": "Ranking raw cost-centre codes instead of programmes from the lookup."
+    },
+    {
+      "id": "q5",
+      "question": "For Rural Livelihoods, what percentage of its combined eligible amount comes from the salary register? Return a percentage from 0 to 100. Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+      "answer": 28.748932,
+      "kind": "number",
+      "tol_pct": 0.001,
+      "trap": "Dividing salary spend by the whole ledger instead of Rural Livelihoods spend."
+    },
+    {
+      "id": "q6",
+      "question": "Which district has the highest combined eligible amount across both registers? Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+      "answer": "Barmer",
+      "kind": "name",
+      "tol_pct": 0,
+      "trap": "Using state or programme totals instead of the district mapping."
+    }
+  ]
+}

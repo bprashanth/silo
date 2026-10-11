@@ -1,0 +1,100 @@
+{
+ "job": "mixed_units.q2.codex.1",
+ "case": "mixed_units",
+ "q": "q2",
+ "harness": "codex",
+ "trial": 1,
+ "want": 2983000,
+ "got": "1518000",
+ "verdict": "wrong",
+ "seconds": 125.6,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 20\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 17:55 .\ndrwx------ 4 beeps beeps    80 Oct 11 17:55 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:55 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:55 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:55 .git\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 17:55 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='mixed_units_register.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Disbursement Register']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  Sahyog Foundation \u2014 FY 2025-26 Disbursement Register  ... Unnamed: 6\n0                                       Amount note:    ...        NaN\n1                                         Date note:    ...        NaN\n2                                      Prepared for:    ...        NaN\n3                                                NaN    ...        NaN\n4                                          Record ID    ...    Purpose\n\n[5 rows x 7 columns]\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[0:15,0:7].to_string(index=False, header=False))\\\"\"",
+   "output": "Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                       NaN                     NaN       NaN                                   NaN       NaN                    NaN\n                                        Amount note: Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                     NaN       NaN                                   NaN       NaN                    NaN\n                                          Date note:                                              Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                     NaN       NaN                                   NaN       NaN                    NaN\n                                       Prepared for:                                                               Programme management review \u2014 31 March 2026                     NaN       NaN                                   NaN       NaN                    NaN\n                                                 NaN                                                                                                       NaN                     NaN       NaN                                   NaN       NaN                    NaN\n                                           Record ID                                                                                         Disbursement Date               Programme     State                        Donor / Scheme    Amount                Purpose\n                                             MU-0001                                                                                                2025-04-03 Maternal & Child Health Karnataka Azim Premji Philanthropic Initiatives    340000     Field team support\n                                             MU-0002                                                                                                03/04/2025       Rural Livelihoods Rajasthan               National Health Mission \u20b91,20,000 Community mobilisation\n                                             MU-0003                                                                                                3 Apr 2025 Maternal & Child Health Jharkhand                        Tata CSR Trust     1.2 L  Equipment procurement\n                                             MU-0004                                                                                                2025-08-01 Maternal & Child Health Rajasthan           Global Community Foundation  2.5 lakh Training and workshops\n                                             MU-0005                                                                                                28/02/2026        Tribal Education Rajasthan Azim Premji Philanthropic Initiatives      1 Cr  Equipment procurement\n                                             MU-0006                                                                                               18 Jul 2025 Maternal & Child Health Jharkhand           Global Community Foundation       45k Direct programme grant\n                                             MU-0007                                                                                                2026-02-26       Rural Livelihoods Karnataka Azim Premji Philanthropic Initiatives       NaN     Field team support\n                                             MU-0008                                                                                                27/02/2026      Water & Sanitation Karnataka               National Health Mission         - Direct programme grant\n                                             MU-0009                                                                                               13 Jul 2025      Water & Sanitation Rajasthan               National Health Mission       NaN  Equipment procurement\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=4); print(df.columns.tolist()); print(df.head(10))\\\"\"",
+   "output": "['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n  Unnamed: 0         Unnamed: 1  ... Unnamed: 5              Unnamed: 6\n0  Record ID  Disbursement Date  ...     Amount                 Purpose\n1    MU-0001         2025-04-03  ...     340000      Field team support\n2    MU-0002         03/04/2025  ...  \u20b91,20,000  Community mobilisation\n3    MU-0003         3 Apr 2025  ...      1.2 L   Equipment procurement\n4    MU-0004         2025-08-01  ...   2.5 lakh  Training and workshops\n5    MU-0005         28/02/2026  ...       1 Cr   Equipment procurement\n6    MU-0006        18 Jul 2025  ...        45k  Direct programme grant\n7    MU-0007         2026-02-26  ...        NaN      Field team support\n8    MU-0008         27/02/2026  ...          -  Direct programme grant\n9    MU-0009        13 Jul 2025  ...        NaN   Equipment procurement\n\n[10 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None, skiprows=5); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "           0                  1  ...          5                       6\n0  Record ID  Disbursement Date  ...     Amount                 Purpose\n1    MU-0001         2025-04-03  ...     340000      Field team support\n2    MU-0002         03/04/2025  ...  \u20b91,20,000  Community mobilisation\n3    MU-0003         3 Apr 2025  ...      1.2 L   Equipment procurement\n4    MU-0004         2025-08-01  ...   2.5 lakh  Training and workshops\n\n[5 rows x 7 columns]\n[0, 1, 2, 3, 4, 5, 6]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None, skiprows=5); df.columns=df.iloc[0]; df=df.iloc[1:].reset_index(drop=True); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n0 Record ID Disbursement Date  ...     Amount                 Purpose\n0   MU-0001        2025-04-03  ...     340000      Field team support\n1   MU-0002        03/04/2025  ...  \u20b91,20,000  Community mobilisation\n2   MU-0003        3 Apr 2025  ...      1.2 L   Equipment procurement\n3   MU-0004        2025-08-01  ...   2.5 lakh  Training and workshops\n4   MU-0005        28/02/2026  ...       1 Cr   Equipment procurement\n\n[5 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nfrom dateutil import parser\nimport re\n\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None, skiprows=5)\ndf.columns=df.iloc[0]\ndf=df.iloc[1:].reset_index(drop=True)\n\n# clean column names strip\ndf.columns=[str(c).strip() for c in df.columns]\n\n# filter programme\nprog_col='Programme'\ndate_col='Disbursement Date'\namt_col='Amount'\n\ndef parse_date(v):\n    if pd.isna(v):\n        return None\n    try:\n        # parser can handle many formats\n        dt=parser.parse(v, dayfirst=True)\n        return dt.date()\n    except:\n        return None\n\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0\n    # remove \u20b9 and commas\n    s=s.replace('\u20b9','').replace(',','').strip()\n    # handle lakh/lakh/L\n    # pattern number with optional decimal followed by unit\n    # units: Cr, cr, lakh, L, l, k\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*([a-zA-Z]+)\"'$'\"', s)\n    if m:\n        num=float(m.group(1))\n        unit=m.group(2).lower()\n        if unit in ['l','lakh','lakhs']:\n            return int(num*100000)\n        if unit in ['cr','crore','crores']:\n            return int(num*10000000)\n        if unit in ['k','thousand']:\n            return int(num*1000)\n        # unknown unit -> try numeric\n    # try plain number\n    try:\n        # may have spaces\n        num=float(re.sub(r'[\"'^'\"\\\\d\\\\.]','',s))\n        return int(num)\n    except:\n        return 0\n\n# parse dates\ndf['_date']=df[date_col].apply(parse_date)\ndf['_amt']=df[amt_col].apply(parse_amount)\n\n# filter\nfrom datetime import date\nstart=date(2025,4,1)\nend=date(2025,6,30)\nmask=(df[prog_col]=='Maternal & Child Health') & (df['_date']>=start) & (df['_date']<=end)\nfiltered=df[mask]\ntotal=filtered['_amt'].sum()\nprint('Rows:', len(filtered))\nprint(filtered[[ 'Record ID', date_col, prog_col, amt_col, '_amt']])\nprint('Total', total)\nPY\"",
+   "output": "Rows: 11\n    Record ID Disbursement Date                Programme     Amount    _amt\n2     MU-0003        3 Apr 2025  Maternal & Child Health      1.2 L  120000\n10    MU-0011        25/04/2025  Maternal & Child Health  \u20b91,20,000  120000\n24    MU-0025        2025-06-04  Maternal & Child Health        NaN       0\n36    MU-0037        2025-04-14  Maternal & Child Health      78000   78000\n37    MU-0038        24/06/2025  Maternal & Child Health  \u20b91,20,000  120000\n58    MU-0058        2025-05-18  Maternal & Child Health   2.5 lakh  250000\n85    MU-0084        8 Apr 2025  Maternal & Child Health      1.2 L  120000\n93    MU-0091        2025-06-15  Maternal & Child Health     340000  340000\n108   MU-0106        2025-06-13  Maternal & Child Health        NaN       0\n141   MU-0137        26/04/2025  Maternal & Child Health  \u20b91,20,000  120000\n179   MU-0175        2025-06-22  Maternal & Child Health   2.5 lakh  250000\nTotal 1518000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nfrom dateutil import parser\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None, skiprows=5)\ndf.columns=df.iloc[0]\ndf=df.iloc[1:].reset_index(drop=True)\ndf.columns=[str(c).strip() for c in df.columns]\nprint(df['Programme'].unique()[:20])\nPY\"",
+   "output": "<StringArray>\n['Maternal & Child Health',       'Rural Livelihoods',\n        'Tribal Education',      'Water & Sanitation',\n                       nan,               'Programme']\nLength: 6, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None, skiprows=5)\ndf.columns=df.iloc[0]\ndf=df.iloc[1:].reset_index(drop=True)\nprint(len(df))\nPY\"",
+   "output": "185\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 159699,
+  "output": 2606
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How much was disbursed to Maternal & Child Health from 1 April through 30 June 2025 inclusive? Dates are YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY. Use INR; L/lakh = 100,000, Cr = 10,000,000, k = 1,000, and treat blank, '-' and NA amounts as zero.",
+ "trap": "Parsing 03/04/2025 as March 4 instead of 3 April.",
+ "text": "The disbursement register shows 11 matching entries for Maternal & Child Health between 2025-04-01 and 2025-06-30. After converting L/lakh, Cr and k to INR and treating blank/\u201c-\u201d/NA as zero, the total is 1,518,000 INR.\n\nANSWER: 1518000",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q2.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:25:18.875994Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

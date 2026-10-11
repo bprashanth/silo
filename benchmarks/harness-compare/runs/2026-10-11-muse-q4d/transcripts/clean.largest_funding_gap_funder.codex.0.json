@@ -1,0 +1,64 @@
+{
+ "job": "clean.largest_funding_gap_funder.codex.0",
+ "case": "clean",
+ "q": "largest_funding_gap_funder",
+ "harness": "codex",
+ "trial": 0,
+ "want": "Azim Premji Foundation",
+ "got": "Azim Premji Foundation",
+ "verdict": "correct",
+ "seconds": 39.7,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 28\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 15:46 .\ndrwx------ 4 beeps beeps    80 Oct 11 15:46 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 15:46 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 15:46 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 15:46 .git\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 15:46 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; x=pd.ExcelFile('asha_ngo_finances_FY25-26.xlsx'); print(x.sheet_names)\\\"\"",
+   "output": "['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); print(df.head(20)); print(df.columns.tolist())\\\"\"",
+   "output": "                     Funder           Type  ...  Received to date (INR)  Restricted?\n0         Tata Trusts (CSR)  Corporate CSR  ...                 9902000          Yes\n1    Azim Premji Foundation     Foundation  ...                 4973000          Yes\n2           USAID sub-grant  Institutional  ...                 4804000          Yes\n3         Individual donors     Individual  ...                 2681000           No\n4  Infosys Foundation (CSR)  Corporate CSR  ...                 4390000          Yes\n5          State Govt - NHM     Government  ...                 4186000          Yes\n6     Unrestricted reserves       Internal  ...                 2961000           No\n\n[7 rows x 5 columns]\n['Funder', 'Type', 'Committed FY25-26 (INR)', 'Received to date (INR)', 'Restricted?']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); df['gap']=df['Committed FY25-26 (INR)']-df['Received to date (INR)']; print(df[['Funder','Committed FY25-26 (INR)','Received to date (INR)','gap']]); print('Largest'); print(df.loc[df['gap'].idxmax()])\\\"\"",
+   "output": "                     Funder  ...      gap\n0         Tata Trusts (CSR)  ...  1098000\n1    Azim Premji Foundation  ...  3027000\n2           USAID sub-grant  ...  1696000\n3         Individual donors  ...  1519000\n4  Infosys Foundation (CSR)  ...   610000\n5          State Govt - NHM  ...   314000\n6     Unrestricted reserves  ...    39000\n\n[7 rows x 4 columns]\nLargest\nFunder                     Azim Premji Foundation\nType                                   Foundation\nCommitted FY25-26 (INR)                   8000000\nReceived to date (INR)                    4973000\nRestricted?                                   Yes\ngap                                       3027000\nName: 1, dtype: object\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 64498,
+  "output": 658
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Funder with the largest committed minus received gap (exact name)",
+ "trap": "",
+ "text": "The Funding sheet shows the committed amount and the amount received to date for each funder. The gap is committed minus received.\n\nThe biggest gap is with Azim Premji Foundation.\n\nANSWER: Azim Premji Foundation",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.largest_funding_gap_funder.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:16:32.862831Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

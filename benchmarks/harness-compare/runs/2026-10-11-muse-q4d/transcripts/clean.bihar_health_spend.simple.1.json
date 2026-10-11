@@ -1,0 +1,54 @@
+{
+ "job": "clean.bihar_health_spend.simple.1",
+ "case": "clean",
+ "q": "bihar_health_spend",
+ "harness": "simple",
+ "trial": 1,
+ "want": 2061700,
+ "got": "2061700",
+ "verdict": "correct",
+ "seconds": 153.7,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "import pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Load Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Inspect columns\nprint(df.columns.tolist())\n# Filter\nmask = (df['Program'] == 'Maternal & Child Health') & (df['Region'] == 'Bihar')\nfiltered = df[mask]\ntotal = filtered['Amount (INR)'].sum()\nprint('Rows found:', len(filtered))\nprint('Total:', total)\n# Also show sample\nprint(filtered.head())\n",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nRows found: 11\nTotal: 2061700\n     Txn ID       Date     Month  ... Region            Funding source Amount (INR)\n7    TX0008 2025-04-21  Apr 2025  ...  Bihar         Tata Trusts (CSR)       178100\n81   TX0082 2025-07-01  Jul 2025  ...  Bihar  Infosys Foundation (CSR)       148500\n83   TX0084 2025-07-04  Jul 2025  ...  Bihar           USAID sub-grant       232300\n84   TX0085 2025-07-25  Jul 2025  ...  Bihar    Azim Premji Foundation        85200\n188  TX0189 2025-11-09  Nov 2025  ...  Bihar         Individual donors        92300\n\n[5 rows x 9 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "import pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\n# Ensure exact match ignoring leading/trailing spaces\ndf['Program'] = df['Program'].astype(str).str.strip()\ndf['Region'] = df['Region'].astype(str).str.strip()\nmask = (df['Program'] == 'Maternal & Child Health') & (df['Region'] == 'Bihar')\nfiltered = df[mask]\nprint('Count', len(filtered))\nprint('Sum', filtered['Amount (INR)'].sum())\nprint(filtered[['Txn ID','Region','Program','Amount (INR)']])\n",
+   "output": "Count 11\nSum 2061700\n     Txn ID Region                  Program  Amount (INR)\n7    TX0008  Bihar  Maternal & Child Health        178100\n81   TX0082  Bihar  Maternal & Child Health        148500\n83   TX0084  Bihar  Maternal & Child Health        232300\n84   TX0085  Bihar  Maternal & Child Health         85200\n188  TX0189  Bihar  Maternal & Child Health         92300\n216  TX0217  Bihar  Maternal & Child Health        269500\n245  TX0246  Bihar  Maternal & Child Health        265700\n269  TX0270  Bihar  Maternal & Child Health        141600\n270  TX0271  Bihar  Maternal & Child Health        157700\n272  TX0273  Bihar  Maternal & Child Health        233500\n294  TX0295  Bihar  Maternal & Child Health        257300\n"
+  },
+  {
+   "kind": "python",
+   "input": "import pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\nprint(df['Category'].unique())\nprint(df['Category'].value_counts())\n",
+   "output": "['Program' 'Admin' 'Fundraising']\nCategory\nProgram        242\nAdmin           36\nFundraising     36\nName: count, dtype: int64\n"
+  },
+  {
+   "kind": "python",
+   "input": "import pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\ndf['Program'] = df['Program'].astype(str).str.strip()\ndf['Region'] = df['Region'].astype(str).str.strip()\nmask = (df['Program'] == 'Maternal & Child Health') & (df['Region'] == 'Bihar')\nfiltered = df[mask]\nprint(filtered[['Txn ID','Category','Program','Region','Amount (INR)']])\nprint('Category distribution:')\nprint(filtered['Category'].value_counts())\nprint('Sum total:', filtered['Amount (INR)'].sum())\nprint('Sum Program only:', filtered[filtered['Category']=='Program']['Amount (INR)'].sum())\n",
+   "output": "     Txn ID Category                  Program Region  Amount (INR)\n7    TX0008  Program  Maternal & Child Health  Bihar        178100\n81   TX0082  Program  Maternal & Child Health  Bihar        148500\n83   TX0084  Program  Maternal & Child Health  Bihar        232300\n84   TX0085  Program  Maternal & Child Health  Bihar         85200\n188  TX0189  Program  Maternal & Child Health  Bihar         92300\n216  TX0217  Program  Maternal & Child Health  Bihar        269500\n245  TX0246  Program  Maternal & Child Health  Bihar        265700\n269  TX0270  Program  Maternal & Child Health  Bihar        141600\n270  TX0271  Program  Maternal & Child Health  Bihar        157700\n272  TX0273  Program  Maternal & Child Health  Bihar        233500\n294  TX0295  Program  Maternal & Child Health  Bihar        257300\nCategory distribution:\nCategory\nProgram    11\nName: count, dtype: int64\nSum total: 2061700\nSum Program only: 2061700\n"
+  },
+  {
+   "kind": "python",
+   "input": "import pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\ndf['Program'] = df['Program'].astype(str).str.strip()\ndf['Region'] = df['Region'].astype(str).str.strip()\nmask = (df['Program'] == 'Maternal & Child Health') & (df['Region'].str.lower() == 'bihar')\ntotal = df.loc[mask, 'Amount (INR)'].sum()\nprint(int(total))\n",
+   "output": "2061700\n"
+  }
+ ],
+ "usage": {
+  "input": 14219,
+  "output": 2223
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 13,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Spend on 'Maternal & Child Health' in Bihar (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 11 entries for Program = \u201cMaternal & Child Health\u201d with Region = Bihar. Summing Amount (INR) for those rows:\n\n178,100 + 148,500 + 232,300 + 85,200 + 92,300 + 269,500 + 265,700 + 141,600 + 157,700 + 233,500 + 257,300 = 2,061,700 INR.\n\nANSWER: 2061700",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.bihar_health_spend.simple.1"
+}

@@ -1,0 +1,34 @@
+{
+ "job": "clean.jul_2025_spend.simple.1",
+ "case": "clean",
+ "q": "jul_2025_spend",
+ "harness": "simple",
+ "trial": 1,
+ "want": 3685400,
+ "got": "3685400",
+ "verdict": "correct",
+ "seconds": 26.5,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\nxl = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xl.sheet_names)\n\n# Load Transactions\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nprint(df.head())\nprint(df.columns.tolist())\n# Check unique months\nprint(df['Month'].unique()[:20])\n# Filter for Jul 2025\njul = df[df['Month'] == 'Jul 2025']\nprint(\"Jul rows count:\", len(jul))\ntotal_jul = jul['Amount (INR)'].sum()\nprint(\"Total Jul spend:\", total_jul)\n",
+   "output": "Sheets: ['Transactions', 'Budget vs Actual', 'Funding']\n   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n['Apr 2025' 'May 2025' 'Jun 2025' 'Jul 2025' 'Aug 2025' 'Sep 2025'\n 'Oct 2025' 'Nov 2025' 'Dec 2025' 'Jan 2026' 'Feb 2026' 'Mar 2026']\nJul rows count: 27\nTotal Jul spend: 3685400\n"
+  }
+ ],
+ "usage": {
+  "input": 3454,
+  "output": 540
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 1,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total spend in Jul 2025 (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 27 rows for Jul 2025. Summing Amount (INR) for those rows gives the July spend.\n\nANSWER: 3685400",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.jul_2025_spend.simple.1"
+}

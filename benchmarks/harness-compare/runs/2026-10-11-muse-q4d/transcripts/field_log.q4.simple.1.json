@@ -1,0 +1,74 @@
+{
+ "job": "field_log.q4.simple.1",
+ "case": "field_log",
+ "q": "q4",
+ "harness": "simple",
+ "trial": 1,
+ "want": "Bhilgaon",
+ "got": "Bhilgaon",
+ "verdict": "correct",
+ "seconds": 281.4,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport os\n\nfile_path = '/data/field_visit_log.xlsx'\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\n# Load first sheet\ndf = pd.read_excel(file_path, sheet_name=0)\nprint(df.head(20))\nprint(df.columns.tolist())\nprint(len(df))\n",
+   "output": "Sheets: ['Field Visit Log']\n   Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log  ...                 Unnamed: 11\n0   Data note: village spelling/case/spacing varie...      ...                         NaN\n1   Reporting period: April\u2013September 2025 | Amoun...      ...                         NaN\n2                                                 NaN      ...                         NaN\n3                                            Visit ID      ...  Travel Reimbursement (INR)\n4                                        FL-2025-0001      ...                         500\n5                                        FL-2025-0001      ...                         500\n6                                        FL-2025-0002      ...                        3250\n7                                        FL-2025-0003      ...                        3350\n8                                        FL-2025-0004      ...                      \u20b92,400\n9                                        FL-2025-0005      ...                        2300\n10                                       FL-2025-0006      ...                      3,200 \n11                                       FL-2025-0007      ...                        3700\n12                                       FL-2025-0007      ...                        3700\n13                                       FL-2025-0008      ...                      \u20b91,700\n14                                       FL-2025-0009      ...                        3750\n15                                       FL-2025-0010      ...                        3050\n16                                       FL-2025-0011      ...                        2350\n17                                       FL-2025-0012      ...                      2,850 \n18                                       FL-2025-0013      ...                      \u20b94,000\n19                                       FL-2025-0014      ...                        1200\n\n[20 rows x 12 columns]\n['Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n547\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name=0, header=3)\nprint(df.columns.tolist())\nprint(df.head())\nprint(df.shape)\n",
+   "output": "['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n     Unnamed: 0  ...                 Unnamed: 11\n0      Visit ID  ...  Travel Reimbursement (INR)\n1  FL-2025-0001  ...                         500\n2  FL-2025-0001  ...                         500\n3  FL-2025-0002  ...                        3250\n4  FL-2025-0003  ...                        3350\n\n[5 rows x 12 columns]\n(544, 12)\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\n# read without header to inspect\nraw = pd.read_excel(file_path, sheet_name=0, header=None)\nprint(raw.iloc[0:5, 0:12])\nprint(\"Columns in row 3:\", raw.iloc[3].tolist())\n",
+   "output": "                                                  0   ...                          11\n0  Sahyog Rural Initiatives \u2014 Beneficiary Field V...  ...                         NaN\n1  Data note: village spelling/case/spacing varie...  ...                         NaN\n2  Reporting period: April\u2013September 2025 | Amoun...  ...                         NaN\n3                                                NaN  ...                         NaN\n4                                           Visit ID  ...  Travel Reimbursement (INR)\n\n[5 rows x 12 columns]\nColumns in row 3: [nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\nraw = pd.read_excel(file_path, sheet_name=0, header=None)\nprint(raw.iloc[4])\nprint(raw.iloc[5:10])\n",
+   "output": "0                       Visit ID\n1                     Visit Date\n2                   Field Worker\n3                          State\n4                       District\n5                        Village\n6                      Programme\n7                  Women Reached\n8                    Men Reached\n9               Children Reached\n10            Follow-up Required\n11    Travel Reimbursement (INR)\nName: 4, dtype: object\n             0                    1               2   ...  9   10      11\n5  FL-2025-0001  2025-05-10 00:00:00    Ramesh Tekam  ...  27  No     500\n6  FL-2025-0001  2025-05-10 00:00:00    Ramesh Tekam  ...  27  No     500\n7  FL-2025-0002  2025-07-21 00:00:00    Ramesh Tekam  ...   4  No    3250\n8  FL-2025-0003  2025-08-14 00:00:00   Kavita Jadhav  ...  31  No    3350\n9  FL-2025-0004  2025-09-09 00:00:00  Sushila Korram  ...  19  No  \u20b92,400\n\n[5 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name=0, header=4)\nprint(df.columns.tolist())\nprint(df.head())\nprint(df.shape)\n",
+   "output": "['Visit ID', 'Visit Date', 'Field Worker', 'State', 'District', 'Village', 'Programme', 'Women Reached', 'Men Reached', 'Children Reached', 'Follow-up Required', 'Travel Reimbursement (INR)']\n       Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0  FL-2025-0001 2025-05-10  ...                 No                        500\n1  FL-2025-0001 2025-05-10  ...                 No                        500\n2  FL-2025-0002 2025-07-21  ...                 No                       3250\n3  FL-2025-0003 2025-08-14  ...                 No                       3350\n4  FL-2025-0004 2025-09-09  ...                 No                     \u20b92,400\n\n[5 rows x 12 columns]\n(543, 12)\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name=0, header=4)\n\n# Keep only data rows where Visit ID not null\ndf = df.dropna(subset=['Visit ID'])\n\n# Deduplicate Visit ID keeping first occurrence\ndf = df.drop_duplicates(subset=['Visit ID'], keep='first')\n\n# Ensure numeric columns\nfor col in ['Women Reached', 'Men Reached', 'Children Reached']:\n    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)\n\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v)\n    s = s.strip()\n    s = ' '.join(s.split())\n    return s.lower()\n\ndf['village_norm'] = df['Village'].apply(normalize_village)\n\n# Compute total people\ndf['total_people'] = df['Women Reached'] + df['Men Reached'] + df['Children Reached']\n\n# Aggregate by normalized village\nagg = df.groupby('village_norm').agg(\n    total_people=('total_people', 'sum'),\n    visits=('Visit ID', 'count')\n).reset_index()\n\n# Determine max\nmax_row = agg.loc[agg['total_people'].idxmax()]\nprint(max_row)\n\n# Prepare title case output\ndef title_case(s):\n    # title case but keep internal spaces\n    return ' '.join(word.capitalize() for word in s.split())\n\nnorm_village = max_row['village_norm']\ntitle_village = title_case(norm_village)\nprint('Title case:', title_village)\n\n# Show top few\nprint(agg.sort_values('total_people', ascending=False).head(10))\n",
+   "output": "village_norm    bhilgaon\ntotal_people        5614\nvisits               108\nName: 1, dtype: object\nTitle case: Bhilgaon\n      village_norm  total_people  visits\n1         bhilgaon          5614     108\n0        akkalkuwa          2326      44\n8         lamtaput          2116      42\n11        muniguda          2003      40\n2   bissam cuttack          1889      35\n7         kushtagi          1838      35\n6       kakiriguma          1825      35\n9            manvi          1762      36\n3        devadurga          1583      31\n5       gangavathi          1581      30\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name=0, header=4)\ndf = df.dropna(subset=['Visit ID'])\ndf = df.drop_duplicates(subset=['Visit ID'], keep='first')\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v)\n    s = s.strip()\n    s = ' '.join(s.split())\n    return s.lower()\ndf['village_norm'] = df['Village'].apply(normalize_village)\ndf['total_people'] = pd.to_numeric(df['Women Reached'], errors='coerce').fillna(0) + pd.to_numeric(df['Men Reached'], errors='coerce').fillna(0) + pd.to_numeric(df['Children Reached'], errors='coerce').fillna(0)\nagg = df.groupby('village_norm')['total_people'].sum().sort_values(ascending=False)\nprint(agg.head(5))\nprint('Number of unique villages:', agg.shape[0])\n",
+   "output": "village_norm\nbhilgaon          5614.0\nakkalkuwa         2326.0\nlamtaput          2116.0\nmuniguda          2003.0\nbissam cuttack    1889.0\nName: total_people, dtype: float64\nNumber of unique villages: 12\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name=0, header=4)\nprint('Initial shape', df.shape)\ndf = df.dropna(subset=['Visit ID'])\nprint('After dropna', df.shape)\ndup_count = df['Visit ID'].duplicated().sum()\nprint('Duplicates before drop', dup_count)\ndf = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint('After dedupe', df.shape)\n# verify first occurrence kept\n# example FL-2025-0001 appears twice\nprint(df[df['Visit ID']=='FL-2025-0001'])\n",
+   "output": "Initial shape (543, 12)\nAfter dropna (538, 12)\nDuplicates before drop 58\nAfter dedupe (480, 12)\n       Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0  FL-2025-0001 2025-05-10  ...                 No                        500\n\n[1 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name=0, header=4)\ndf = df.dropna(subset=['Visit ID'])\ndf = df.drop_duplicates(subset=['Visit ID'], keep='first')\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v)\n    s = s.strip()\n    s = ' '.join(s.split())\n    return s.lower()\ndf['village_norm'] = df['Village'].apply(normalize_village)\n# show raw examples for bhilgaon\nexamples = df[df['village_norm']=='bhilgaon']['Village'].unique()\nprint(examples[:20])\nprint(len(examples))\n# show all normalized villages\nprint(df['village_norm'].unique())\n",
+   "output": "['bhilgaon' 'Bhilgaon' 'bHILGAON' 'BHILGAON' '  Bhilgaon ']\n5\n['bhilgaon' 'muniguda' 'lamtaput' 'dhadgaon' 'manvi' 'gangavathi'\n 'devadurga' 'mendha' 'akkalkuwa' 'kushtagi' 'kakiriguma' 'bissam cuttack']\n"
+  }
+ ],
+ "usage": {
+  "input": 29288,
+  "output": 4784
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 5,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. Which village reached the most people in total? Report the normalised village in title case.",
+ "trap": "Case and spacing variants otherwise split one village into several groups.",
+ "text": "After deduplicating Visit IDs keeping the first occurrence and normalising village names by trimming outer whitespace, collapsing internal whitespace and lower-casing, totals of Women + Men + Children Reached were summed per village.\n\nThe highest aggregate is for the normalised village `bhilgaon`:\n* Total people reached: 5,614 across 108 unique visits\n* Title-case name: Bhilgaon\n\nTop villages by total people reached:\n1. Bhilgaon \u2013 5,614\n2. Akkalkuwa \u2013 2,326\n3. Lamtaput \u2013 2,116\n\nANSWER: Bhilgaon",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/field_log.q4.simple.1"
+}

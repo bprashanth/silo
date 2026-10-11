@@ -1,0 +1,12 @@
+[
+ {
+  "id": "q1_plain",
+  "of": "q1",
+  "question": "What was our total actual expenditure from April through September 2025, in INR?"
+ },
+ {
+  "id": "q4_plain",
+  "of": "q4",
+  "question": "Which district had the highest total actual expenditure?"
+ }
+]

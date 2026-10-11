@@ -1,0 +1,69 @@
+{
+ "job": "mixed_units.q2_plain.codex.0",
+ "case": "mixed_units",
+ "q": "q2_plain",
+ "harness": "codex",
+ "trial": 0,
+ "want": 2983000,
+ "got": "2983000",
+ "verdict": "correct",
+ "seconds": 115.3,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 16\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 16:24 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='mixed_units_register.xlsx'; xls=pd.ExcelFile(f); print('Sheets:', xls.sheet_names)\\\"\"",
+   "output": "Sheets: ['Disbursement Register']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register'); print(df.head(20).to_string())\\\"\"",
+   "output": "   Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                 Unnamed: 1               Unnamed: 2 Unnamed: 3                             Unnamed: 4 Unnamed: 5              Unnamed: 6\n0                                          Amount note:  Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                      NaN        NaN                                    NaN        NaN                     NaN\n1                                            Date note:                                               Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                      NaN        NaN                                    NaN        NaN                     NaN\n2                                         Prepared for:                                                                Programme management review \u2014 31 March 2026                      NaN        NaN                                    NaN        NaN                     NaN\n3                                                   NaN                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n4                                             Record ID                                                                                          Disbursement Date                Programme      State                         Donor / Scheme     Amount                 Purpose\n5                                               MU-0001                                                                                                 2025-04-03  Maternal & Child Health  Karnataka  Azim Premji Philanthropic Initiatives     340000      Field team support\n6                                               MU-0002                                                                                                 03/04/2025        Rural Livelihoods  Rajasthan                National Health Mission  \u20b91,20,000  Community mobilisation\n7                                               MU-0003                                                                                                 3 Apr 2025  Maternal & Child Health  Jharkhand                         Tata CSR Trust      1.2 L   Equipment procurement\n8                                               MU-0004                                                                                                 2025-08-01  Maternal & Child Health  Rajasthan            Global Community Foundation   2.5 lakh  Training and workshops\n9                                               MU-0005                                                                                                 28/02/2026         Tribal Education  Rajasthan  Azim Premji Philanthropic Initiatives       1 Cr   Equipment procurement\n10                                              MU-0006                                                                                                18 Jul 2025  Maternal & Child Health  Jharkhand            Global Community Foundation        45k  Direct programme grant\n11                                              MU-0007                                                                                                 2026-02-26        Rural Livelihoods  Karnataka  Azim Premji Philanthropic Initiatives        NaN      Field team support\n12                                              MU-0008                                                                                                 27/02/2026       Water & Sanitation  Karnataka                National Health Mission          -  Direct programme grant\n13                                              MU-0009                                                                                                13 Jul 2025       Water & Sanitation  Rajasthan                National Health Mission        NaN   Equipment procurement\n14                                              MU-0010                                                                                                 2025-07-22       Water & Sanitation     Odisha                National Health Mission      78000   Equipment procurement\n15                                              MU-0011                                                                                                 25/04/2025  Maternal & Child Health  Karnataka            Global Community Foundation  \u20b91,20,000      Field team support\n16                                              MU-0012                                                                                                14 Dec 2025        Rural Livelihoods  Jharkhand  Azim Premji Philanthropic Initiatives      1.2 L      Field team support\n17                                              MU-0013                                                                                                 2025-11-29  Maternal & Child Health  Jharkhand            Global Community Foundation   2.5 lakh   Equipment procurement\n18                                              MU-0014                                                                                                 10/07/2025        Rural Livelihoods  Rajasthan                         Tata CSR Trust       1 Cr  Community mobilisation\n19                                              MU-0015                                                                                                12 Aug 2025         Tribal Education  Karnataka            Global Community Foundation        45k      Field team support\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\nfrom datetime import datetime\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register')\n# header row is at index 4\nheader=df.iloc[4]\ndata=df.iloc[5:].copy()\ndata.columns=header\nprint(data.columns.tolist())\nprint(data.shape)\n\\\"\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n(185, 7)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 << 'PY'\nimport pandas as pd, re\nfrom datetime import datetime\n\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register')\nheader=df.iloc[4]\ndata=df.iloc[5:].copy()\ndata.columns=header\ndata=data.dropna(subset=['Record ID'])\n\ndef parse_date(s):\n    if pd.isna(s):\n        return None\n    s=str(s).strip()\n    for fmt in ('%Y-%m-%d','%d/%m/%Y','%d %b %Y','%d %B %Y'):\n        try:\n            return datetime.strptime(s, fmt).date()\n        except:\n            pass\n    # try with day month year with month abbrev\n    # already covered\n    return None\n\ndef parse_amount(s):\n    if pd.isna(s):\n        return 0.0\n    s=str(s).strip()\n    if s in ('','-','NA','NaN'):\n        return 0.0\n    # remove \u20b9 and commas\n    s=s.replace('\u20b9','').replace(',','').strip()\n    # handle L, lakh, Cr, k\n    # patterns\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*L\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*lakh\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*Cr\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*10000000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*k\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*1000\n    # try numeric\n    try:\n        return float(s)\n    except:\n        # maybe like '1.2 L' already handled, try extracting number\n        m=re.search(r'([0-9]*\\\\.?[0-9]+)', s)\n        if m:\n            return float(m.group(1))\n    return 0.0\n\ndata['date_parsed']=data['Disbursement Date'].apply(parse_date)\ndata['amount_num']=data['Amount'].apply(parse_amount)\n\nmask=data['Programme'].astype(str).str.strip().str.lower()=='maternal & child health'\nmask &= data['date_parsed'].notna()\nmask &= data['date_parsed']>=datetime(2025,4,1).date()\nmask &= data['date_parsed']<=datetime(2025,6,30).date()\n\nfiltered=data[mask]\nprint(filtered[['Record ID','Disbursement Date','Programme','Amount','amount_num']])\ntotal=filtered['amount_num'].sum()\nprint('Total', total)\nPY\"",
+   "output": "4   Record ID Disbursement Date                Programme     Amount  amount_num\n5     MU-0001        2025-04-03  Maternal & Child Health     340000    340000.0\n7     MU-0003        3 Apr 2025  Maternal & Child Health      1.2 L    120000.0\n15    MU-0011        25/04/2025  Maternal & Child Health  \u20b91,20,000    120000.0\n29    MU-0025        2025-06-04  Maternal & Child Health        NaN         0.0\n38    MU-0034        2025-06-03  Maternal & Child Health        NaN         0.0\n41    MU-0037        2025-04-14  Maternal & Child Health      78000     78000.0\n42    MU-0038        24/06/2025  Maternal & Child Health  \u20b91,20,000    120000.0\n54    MU-0049        2025-06-07  Maternal & Child Health   2.5 lakh    250000.0\n63    MU-0058        2025-05-18  Maternal & Child Health   2.5 lakh    250000.0\n90    MU-0084        8 Apr 2025  Maternal & Child Health      1.2 L    120000.0\n98    MU-0091        2025-06-15  Maternal & Child Health     340000    340000.0\n107   MU-0100        2025-05-12  Maternal & Child Health     875000    875000.0\n113   MU-0106        2025-06-13  Maternal & Child Health        NaN         0.0\n146   MU-0137        26/04/2025  Maternal & Child Health  \u20b91,20,000    120000.0\n184   MU-0175        2025-06-22  Maternal & Child Health   2.5 lakh    250000.0\nTotal 2983000.0\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 80298,
+  "output": 1510
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 1,
+  "untraced": [
+   30.0
+  ],
+  "answer_traced": true,
+  "clean": false
+ },
+ "audit": [],
+ "question": "How much was disbursed to Maternal & Child Health from April to June 2025?",
+ "trap": "plain variant of q2",
+ "text": "I checked the Disbursement Register and summed the Maternal & Child Health entries with disbursement dates between 1 April 2025 and 30 June 2025.\n\nANSWER: 2983000",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q2_plain.codex.0/ws",
+ "files_after": [
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:54:14.980136Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

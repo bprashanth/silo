@@ -1,0 +1,142 @@
+{
+ "job": "big_ledger.q1.codex.1",
+ "case": "big_ledger",
+ "q": "q1",
+ "harness": "codex",
+ "trial": 1,
+ "want": 1614773900,
+ "got": "1614773900",
+ "verdict": "correct",
+ "seconds": 183.0,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 772\n-rw-rw-r-- 1 beeps beeps 790093 Oct 11 17:06 national_programme_ledger.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; xl=pd.ExcelFile('national_programme_ledger.xlsx'); print(xl.sheet_names)\\\"\"",
+   "output": "['Field Expenses', 'Salary Register', 'Cost Centre Lookup']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses'); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n  Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26  ...      Unnamed: 6\n0  Use only transaction IDs beginning FE-. Postin...            ...             NaN\n1                     Prepared by Finance Operations            ...             NaN\n2                                                NaN            ...             NaN\n3                                     Transaction ID            ...  Posting Status\n4                                          FE-000001            ...          Posted\n\n[5 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=3); print(df.columns.tolist()); print(df.head(10))\\\"\"",
+   "output": "['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n       Unnamed: 0           Unnamed: 1  ...    Unnamed: 5      Unnamed: 6\n0  Transaction ID     Transaction Date  ...  Amount (INR)  Posting Status\n1       FE-000001  2026-01-05 00:00:00  ...         57600          Posted\n2       FE-000002  2026-02-12 00:00:00  ...          3100            Void\n3       FE-000003  2025-09-03 00:00:00  ...        236500          Posted\n4       FE-000004  2026-02-24 00:00:00  ...         15400          Posted\n5       FE-000005  2026-02-28 00:00:00  ...         54300          Posted\n6       FE-000006  2026-03-02 00:00:00  ...         23400          Posted\n7       FE-000007  2025-07-22 00:00:00  ...         92300          Posted\n8       FE-000008  2025-07-17 00:00:00  ...        131400          Posted\n9       FE-000009  2026-03-09 00:00:00  ...        \u20b92,000          Posted\n\n[10 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=None); print(df.iloc[0:10,0:7].to_string())\\\"\"",
+   "output": "                                                                                                                                0                    1             2                   3                           4             5               6\n0                                                                    Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26                  NaN           NaN                 NaN                         NaN           NaN             NaN\n1  Use only transaction IDs beginning FE-. Posting status and cost-centre codes may have inconsistent case or surrounding spaces.                  NaN           NaN                 NaN                         NaN           NaN             NaN\n2                                                                                                  Prepared by Finance Operations                  NaN           NaN                 NaN                         NaN           NaN             NaN\n3                                                                                                                             NaN                  NaN           NaN                 NaN                         NaN           NaN             NaN\n4                                                                                                                  Transaction ID     Transaction Date   Cost Centre        Expense Head              Vendor / Payee  Amount (INR)  Posting Status\n5                                                                                                                       FE-000001  2026-01-05 00:00:00  CC-CR-JH-WES    Monitoring visit      Maa Tarini Enterprises         57600          Posted\n6                                                                                                                       FE-000002  2026-02-12 00:00:00  CC-RL-OD-MAY        Field travel  Bharat Training Associates          3100            Void\n7                                                                                                                       FE-000003  2025-09-03 00:00:00  CC-CR-KA-RAI    Medical supplies    District Resource Centre        236500          Posted\n8                                                                                                                       FE-000004  2026-02-24 00:00:00  CC-TE-RJ-BAR        Field travel            Kaveri Logistics         15400          Posted\n9                                                                                                                       FE-000005  2026-02-28 00:00:00  CC-WS-JH-WES  Community training            Kaveri Logistics         54300          Posted\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Transaction ID', 'Transaction Date', 'Cost Centre', 'Expense Head', 'Vendor / Payee', 'Amount (INR)', 'Posting Status']\n  Transaction ID     Transaction Date  ... Amount (INR) Posting Status\n0      FE-000001  2026-01-05 00:00:00  ...        57600         Posted\n1      FE-000002  2026-02-12 00:00:00  ...         3100           Void\n2      FE-000003  2025-09-03 00:00:00  ...       236500         Posted\n3      FE-000004  2026-02-24 00:00:00  ...        15400         Posted\n4      FE-000005  2026-02-28 00:00:00  ...        54300         Posted\n\n[5 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=None); print(df.iloc[0:10,0:10].to_string())\\\"\"",
+   "output": "                                                                                                                                0          1            2                     3             4                   5               6\n0                                                                     Sahyog Foundation \u2014 Consolidated Salary Register FY 2025-26        NaN          NaN                   NaN           NaN                 NaN             NaN\n1  Use only payroll line IDs beginning PAY-. Paid lines only; cost-centre codes may have inconsistent case or surrounding spaces.        NaN          NaN                   NaN           NaN                 NaN             NaN\n2                                                                                           Confidential \u2014 programme costing copy        NaN          NaN                   NaN           NaN                 NaN             NaN\n3                                                                                                                             NaN        NaN          NaN                   NaN           NaN                 NaN             NaN\n4                                                                                                                             NaN        NaN          NaN                   NaN           NaN                 NaN             NaN\n5                                                                                                                 Payroll Line ID  Pay Month  Employee ID                  Role   Cost Centre  Gross Salary (INR)  Payroll Status\n6                                                                                                                      PAY-000001   Apr-2025     EMP-0422     Programme Manager  CC-TE-OD-KOR               82000            Paid\n7                                                                                                                      PAY-000002   Aug-2025     EMP-0289   Community Mobiliser  cc-ws-od-gan               34900            Paid\n8                                                                                                                      PAY-000003    2025-06     EMP-0420     Programme Manager  CC-WS-JH-WES              102300            Paid\n9                                                                                                                      PAY-000004   Sep-2025     EMP-0307  District Coordinator  CC-WS-KA-RAI               88200            Paid\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Payroll Line ID', 'Pay Month', 'Employee ID', 'Role', 'Cost Centre', 'Gross Salary (INR)', 'Payroll Status']\n  Payroll Line ID Pay Month  ... Gross Salary (INR) Payroll Status\n0      PAY-000001  Apr-2025  ...              82000           Paid\n1      PAY-000002  Aug-2025  ...              34900           Paid\n2      PAY-000003   2025-06  ...             102300           Paid\n3      PAY-000004  Sep-2025  ...              88200           Paid\n4      PAY-000005  Nov-2025  ...              88600           Paid\n\n[5 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=None); print(df.iloc[0:10,0:10].to_string())\\\"\"",
+   "output": "                                                                                   0                          1           2          3                           4\n0                                          Approved Cost-Centre Mapping \u2014 FY 2025-26                        NaN         NaN        NaN                         NaN\n1  Match codes after trimming spaces and ignoring case. Unlisted codes are unmapped.                        NaN         NaN        NaN                         NaN\n2                                                                                NaN                        NaN         NaN        NaN                         NaN\n3                                                                   Cost Centre Code                  Programme    District      State              Primary Funder\n4                                                                      CC-MCH-OD-GAN  Maternal and Child Health      Ganjam     Odisha     National Health Mission\n5                                                                     CC-MCH-OD-KOR   Maternal and Child Health     Koraput     Odisha     National Health Mission\n6                                                                      CC-MCH-KA-RAI  Maternal and Child Health     Raichur  Karnataka              Tata CSR Trust\n7                                                                      CC-MCH-JH-DUM  Maternal and Child Health       Dumka  Jharkhand          Global Health Fund\n8                                                                       cc-rl-od-may          Rural Livelihoods  Mayurbhanj     Odisha  Deendayal Antyodaya Yojana\n9                                                                       CC-RL-KA-KOP          Rural Livelihoods      Koppal  Karnataka             HDFC Parivartan\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Cost Centre Code', 'Programme', 'District', 'State', 'Primary Funder']\n  Cost Centre Code  ...              Primary Funder\n0    CC-MCH-OD-GAN  ...     National Health Mission\n1   CC-MCH-OD-KOR   ...     National Health Mission\n2    CC-MCH-KA-RAI  ...              Tata CSR Trust\n3    CC-MCH-JH-DUM  ...          Global Health Fund\n4     cc-rl-od-may  ...  Deendayal Antyodaya Yojana\n\n[5 rows x 5 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4); print(df['Amount (INR)'].head(20).tolist()); print(df['Amount (INR)'].dtype)\\\"\"",
+   "output": "[57600, 3100, 236500, 15400, 54300, 23400, 92300, 131400, '\u20b92,000', 64000, 2300, 128100, 138800, '77,600', 338800, 4200, 5100, '\u20b95,40,200', 38900, 335700]\nobject\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5); print(df['Gross Salary (INR)'].head(20).tolist())\\\"\"",
+   "output": "[82000, 34900, 102300, 88200, 88600, '\u20b980,900', 63000, 60300, 81700, 77800, '27,400', 65100, 63800, 32900, '\u20b973,300', 41400, 78900, 38500, 35000, 38000]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nimport re\n\ndef parse_amount(val):\n    if pd.isna(val):\n        return 0\n    s = str(val).strip()\n    # remove \u20b9 and commas\n    s = s.replace('\u20b9','').replace(',','').strip()\n    # sometimes spaces\n    # try convert\n    try:\n        return float(s)\n    except:\n        # try extract numbers\n        m = re.search(r'[\\\\d\\\\.]+', s)\n        if m:\n            try:\n                return float(m.group())\n            except:\n                return 0\n        return 0\n\nfield = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nsalary = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5)\nlookup = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3)\n\n# normalize lookup codes\nlookup_codes = set()\nfor code in lookup['Cost Centre Code'].dropna():\n    norm = str(code).strip().lower()\n    lookup_codes.add(norm)\n\ndef normalize_code(c):\n    if pd.isna(c):\n        return ''\n    return str(c).strip().lower()\n\nfield['cost_norm'] = field['Cost Centre'].apply(normalize_code)\nfield['status_norm'] = field['Posting Status'].apply(lambda x: str(x).strip().lower() if pd.notna(x) else '')\nfield['amount_num'] = field['Amount (INR)'].apply(parse_amount)\n\nfield_eligible = field[(field['status_norm']=='posted') & (field['cost_norm'].isin(lookup_codes))]\nfield_total = field_eligible['amount_num'].sum()\n\nsalary['cost_norm'] = salary['Cost Centre'].apply(normalize_code)\nsalary['status_norm'] = salary['Payroll Status'].apply(lambda x: str(x).strip().lower() if pd.notna(x) else '')\nsalary['amount_num'] = salary['Gross Salary (INR)'].apply(parse_amount)\n\nsalary_eligible = salary[(salary['status_norm']=='paid') & (salary['cost_norm'].isin(lookup_codes))]\nsalary_total = salary_eligible['amount_num'].sum()\n\ncombined = field_total + salary_total\nprint('field_total', field_total)\nprint('salary_total', salary_total)\nprint('combined', combined)\nprint('field rows', len(field_eligible))\nprint('salary rows', len(salary_eligible))\nPY\"",
+   "output": "field_total 1146644900.0\nsalary_total 468129000.0\ncombined 1614773900.0\nfield rows 10730\nsalary rows 7429\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4); print(len(df))\\\"\"",
+   "output": "12012\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5); print(len(df))\\\"\"",
+   "output": "8009\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; lookup=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3); print(len(lookup)); print(lookup['Cost Centre Code'].nunique())\\\"\"",
+   "output": "24\n24\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, re\ndef parse_amount(val):\n    if pd.isna(val): return 0\n    s=str(val).strip().replace('\u20b9','').replace(',','')\n    try: return float(s)\n    except: m=re.search(r'[\\\\d\\\\.]+',s); return float(m.group()) if m else 0\nfield=pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nprint(field['Amount (INR)'].iloc[8:12].tolist())\nprint([parse_amount(v) for v in field['Amount (INR)'].iloc[8:12]])\nPY\"",
+   "output": "['\u20b92,000', 64000, 2300, 128100]\n[2000.0, 64000.0, 2300.0, 128100.0]\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 277590,
+  "output": 3017
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 3,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "What is the combined eligible field-expense and salary total in INR? Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+ "trap": "Summing batch subtotals or including draft, void, held, reversed, or unmapped lines.",
+ "text": "I checked the ledger, kept only lines with a cost centre that appears in the lookup after trimming spaces and ignoring case, and kept only Posted field expenses and Paid salary lines.\n\nField expense total: 1,146,644,900 INR\nSalary total: 468,129,000 INR\nCombined eligible total: 1,614,773,900 INR\n\nANSWER: 1614773900",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/big_ledger.q1.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "national_programme_ledger.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:36:17.365223Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

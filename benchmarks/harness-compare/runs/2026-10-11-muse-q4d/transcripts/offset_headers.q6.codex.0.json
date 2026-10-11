@@ -1,0 +1,76 @@
+{
+ "job": "offset_headers.q6.codex.0",
+ "case": "offset_headers",
+ "q": "q6",
+ "harness": "codex",
+ "trial": 0,
+ "want": "Global Health Access Fund",
+ "got": "Global Health Access Fund",
+ "verdict": "correct",
+ "seconds": 75.4,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 8\n-rw-rw-r-- 1 beeps beeps 7004 Oct 11 16:40 programme_monthly_spend.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/offset_headers.q6.codex.0/ws/programme_monthly_spend.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Monthly Spend']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('/home/beeps/.local/share/idli-bench/codex/offset_headers.q6.codex.0/ws/programme_monthly_spend.xlsx', sheet_name='Monthly Spend'); print(df.head(20).to_string())\\\"\"",
+   "output": "                                                                 JanSahyog Collective \u2014 Programme Monthly Spend         Unnamed: 1      Unnamed: 2                          Unnamed: 3     Unnamed: 4 Unnamed: 5 Unnamed: 6     Unnamed: 7 Unnamed: 8 Unnamed: 9            Unnamed: 10\n0                                            Prepared by: Grants & Finance Team | Internal management statement                NaN             NaN                                 NaN            NaN        NaN        NaN            NaN        NaN        NaN                    NaN\n1   Reporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero                NaN             NaN                                 NaN            NaN        NaN        NaN            NaN        NaN        NaN                    NaN\n2                                                                                                Programme Code          Programme      Lead State                     Funding Partner  Q1 FY 2025\u201326        NaN        NaN  Q2 FY 2025\u201326        NaN        NaN  Six-month Total (INR)\n3                                                                                                           NaN                NaN             NaN                                 NaN       Apr 2025   May 2025   Jun 2025       Jul 2025   Aug 2025   Sep 2025                    NaN\n4                                                                                                        PRG-01  Jal Jeevan Saathi     Maharashtra                  Jal Jeevan Mission         812500    1628000    1427000         964000    1273000    1068000                7172500\n5                                                                                                        PRG-02      Poshan Shakti     Maharashtra                     Tata Trusts CSR         840000    1134000    1081000         511000        NaN     758000                4324000\n6                                                                                                        PRG-03      Shiksha Udaan       Rajasthan              Azim Premji Foundation         577000     770500     529500         928500     470000     683500                3959000\n7                                                                                                        PRG-04     Swasthya Sathi          Odisha           Global Health Access Fund         722500          \u2013     719000        1118000    1487000     877000                4923500\n8                                                                                                        PRG-05    Mahila Ajeevika           Bihar                HDFC Bank Parivartan         849000     930000     624500         544000     591500          -                3539000\n9                                                                                                        PRG-06     Krishi Pragati          Odisha               NABARD Watershed Fund         795000     862500     835500         803500    1014500    1201000                5512000\n10                                                                                                       PRG-07       Bal Suraksha       Jharkhand                     Tata Trusts CSR         621500     656000        NaN         780000     663500     750000                3471000\n11                                                                                                       PRG-08      Digital Sakhi  Madhya Pradesh                HDFC Bank Parivartan         762500     509000     918000         784500     834000     693000                4501000\n12                                                                                                       PRG-09          Gram Urja       Rajasthan                   Global Green Fund         550000     919000    1059500         702000    1202000     565000                4997500\n13                                                                                                       PRG-10    Adivasi Adhikar     Maharashtra              Azim Premji Foundation         598500     903000     842500              -     605500     483500                3433000\n14                                                                                                       PRG-11  Nayi Disha Skills           Bihar  National Skill Development Mission         637000     648500     458500         784500     624500     435000                3588000\n15                                                                                                       PRG-12     Maa aur Shishu       Jharkhand           Global Health Access Fund            NaN     950000    1096000         761500     639500    1146500                4593500\n16                                                                                                          NaN                NaN             NaN                                 NaN            NaN        NaN        NaN            NaN        NaN        NaN                    NaN\n17                                                                                              PORTFOLIO TOTAL                NaN             NaN                                 NaN        7765500    9910500    9591000        8681500    9405000    8660500               54014000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\nimport numpy as np\nf='/home/beeps/.local/share/idli-bench/codex/offset_headers.q6.codex.0/ws/programme_monthly_spend.xlsx'\ndf=pd.read_excel(f, sheet_name='Monthly Spend', header=None)\n# Find header row\n# Row 2 (0-index 2) contains column names\nheader_row = df.iloc[2]\n# Actually columns start at row 2? Let's inspect\nprint(df.iloc[2:4].to_string())\n\\\"\"",
+   "output": "                                                                                                            0          1           2                3              4    5    6              7    8    9                      10\n2  Reporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero        NaN         NaN              NaN            NaN  NaN  NaN            NaN  NaN  NaN                    NaN\n3                                                                                               Programme Code  Programme  Lead State  Funding Partner  Q1 FY 2025\u201326  NaN  NaN  Q2 FY 2025\u201326  NaN  NaN  Six-month Total (INR)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/offset_headers.q6.codex.0/ws/programme_monthly_spend.xlsx'\ndf_raw=pd.read_excel(f, sheet_name='Monthly Spend', header=None)\n# print rows 3 to 18\nprint(df_raw.iloc[3:18].to_string())\n\\\"\"",
+   "output": "                0                  1               2                                   3              4         5         6              7         8         9                      10\n3   Programme Code          Programme      Lead State                     Funding Partner  Q1 FY 2025\u201326       NaN       NaN  Q2 FY 2025\u201326       NaN       NaN  Six-month Total (INR)\n4              NaN                NaN             NaN                                 NaN       Apr 2025  May 2025  Jun 2025       Jul 2025  Aug 2025  Sep 2025                    NaN\n5           PRG-01  Jal Jeevan Saathi     Maharashtra                  Jal Jeevan Mission         812500   1628000   1427000         964000   1273000   1068000                7172500\n6           PRG-02      Poshan Shakti     Maharashtra                     Tata Trusts CSR         840000   1134000   1081000         511000       NaN    758000                4324000\n7           PRG-03      Shiksha Udaan       Rajasthan              Azim Premji Foundation         577000    770500    529500         928500    470000    683500                3959000\n8           PRG-04     Swasthya Sathi          Odisha           Global Health Access Fund         722500         \u2013    719000        1118000   1487000    877000                4923500\n9           PRG-05    Mahila Ajeevika           Bihar                HDFC Bank Parivartan         849000    930000    624500         544000    591500         -                3539000\n10          PRG-06     Krishi Pragati          Odisha               NABARD Watershed Fund         795000    862500    835500         803500   1014500   1201000                5512000\n11          PRG-07       Bal Suraksha       Jharkhand                     Tata Trusts CSR         621500    656000       NaN         780000    663500    750000                3471000\n12          PRG-08      Digital Sakhi  Madhya Pradesh                HDFC Bank Parivartan         762500    509000    918000         784500    834000    693000                4501000\n13          PRG-09          Gram Urja       Rajasthan                   Global Green Fund         550000    919000   1059500         702000   1202000    565000                4997500\n14          PRG-10    Adivasi Adhikar     Maharashtra              Azim Premji Foundation         598500    903000    842500              -    605500    483500                3433000\n15          PRG-11  Nayi Disha Skills           Bihar  National Skill Development Mission         637000    648500    458500         784500    624500    435000                3588000\n16          PRG-12     Maa aur Shishu       Jharkhand           Global Health Access Fund            NaN    950000   1096000         761500    639500   1146500                4593500\n17             NaN                NaN             NaN                                 NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/offset_headers.q6.codex.0/ws/programme_monthly_spend.xlsx'\ndf_raw=pd.read_excel(f, sheet_name='Monthly Spend', header=None)\ndata=[]\nfor i in range(5,17):\n    row=df_raw.iloc[i]\n    prog_code=row[0]\n    if pd.isna(prog_code):\n        continue\n    funding=row[3]\n    # columns 4-9\n    vals=[]\n    for col in [4,5,6,7,8,9]:\n        v=row[col]\n        if pd.isna(v):\n            vals.append(0)\n        elif isinstance(v,str):\n            if v.strip() in ['-','\u2013','']:\n                vals.append(0)\n            else:\n                try:\n                    vals.append(float(v.replace(',','')))\n                except:\n                    vals.append(0)\n        else:\n            vals.append(float(v))\n    data.append((funding, sum(vals)))\nfrom collections import defaultdict\nsums=defaultdict(float)\nfor fnd, s in data:\n    sums[fnd]+=s\nfor k,v in sorted(sums.items(), key=lambda x:x[1], reverse=True):\n    print(k, int(v))\n\\\"\"",
+   "output": "Global Health Access Fund 9517000\nHDFC Bank Parivartan 8040000\nTata Trusts CSR 7795000\nAzim Premji Foundation 7392000\nJal Jeevan Mission 7172500\nNABARD Watershed Fund 5512000\nGlobal Green Fund 4997500\nNational Skill Development Mission 3588000\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 96708,
+  "output": 1611
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Which Funding Partner supported the highest combined April\u2013September spend across its programme detail rows? Treat zero markers as zero and exclude PORTFOLIO TOTAL.",
+ "trap": "Reading from row 1 or grouping the portfolio summary as a programme obscures the funding-partner totals.",
+ "text": "I read programme_monthly_spend.xlsx and summed April to September for each Funding Partner, treating \u2018-\u2019 / \u2018\u2013\u2019 / blank as zero and skipping PORTFOLIO TOTAL.\n\nGlobal Health Access Fund has the highest combined spend.\n\nANSWER: Global Health Access Fund",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/offset_headers.q6.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "programme_monthly_spend.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:10:59.182822Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

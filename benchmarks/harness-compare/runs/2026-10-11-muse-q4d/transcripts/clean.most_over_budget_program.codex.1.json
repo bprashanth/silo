@@ -1,0 +1,102 @@
+{
+ "job": "clean.most_over_budget_program.codex.1",
+ "case": "clean",
+ "q": "most_over_budget_program",
+ "harness": "codex",
+ "trial": 1,
+ "want": "Maternal & Child Health",
+ "got": "Maternal & Child Health",
+ "verdict": "correct",
+ "seconds": 123.6,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 28\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 17:27 .\ndrwx------ 4 beeps beeps    80 Oct 11 17:28 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:28 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:28 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:28 .git\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 17:27 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='asha_ngo_finances_FY25-26.xlsx'; xl=pd.ExcelFile(f); print(xl.sheet_names)\\\"\"",
+   "output": "['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.head(20)); print(df.columns.tolist())\\\"\"",
+   "output": "                           Program  ...  Beneficiaries reached\n0              Education (Shiksha)  ...                 4025.0\n1          Maternal & Child Health  ...                 2570.0\n2        Water & Sanitation (WASH)  ...                10754.0\n3              Women's Livelihoods  ...                 1684.0\n4                  Disaster Relief  ...                 2074.0\n5        Admin (organisation-wide)  ...                    NaN\n6  Fundraising (organisation-wide)  ...                    NaN\n\n[7 rows x 4 columns]\n['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.to_string())\\\"\"",
+   "output": "                           Program  Annual budget (INR)  Beneficiaries target  Beneficiaries reached\n0              Education (Shiksha)              9600000                4200.0                 4025.0\n1          Maternal & Child Health              8400000                3100.0                 2570.0\n2        Water & Sanitation (WASH)              6000000               12000.0                10754.0\n3              Women's Livelihoods              5400000                1800.0                 1684.0\n4                  Disaster Relief              2400000                2500.0                 2074.0\n5        Admin (organisation-wide)              5200000                   NaN                    NaN\n6  Fundraising (organisation-wide)              2600000                   NaN                    NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.columns.tolist()); print(df.head(20).to_string())\\\"\"",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n    Txn ID       Date     Month                    Program Category          Expense type                   Region            Funding source  Amount (INR)\n0   TX0001 2025-04-02  Apr 2025        Education (Shiksha)  Program        Staff salaries                Karnataka           USAID sub-grant        160300\n1   TX0002 2025-04-17  Apr 2025        Education (Shiksha)  Program  Supplies & materials                Karnataka         Tata Trusts (CSR)        194000\n2   TX0003 2025-04-03  Apr 2025        Education (Shiksha)  Program  Supplies & materials                Karnataka  Infosys Foundation (CSR)        167300\n3   TX0004 2025-04-08  Apr 2025    Maternal & Child Health  Program  Training & workshops                Karnataka  Infosys Foundation (CSR)        102700\n4   TX0005 2025-04-02  Apr 2025    Maternal & Child Health  Program  Supplies & materials                Karnataka  Infosys Foundation (CSR)        178800\n5   TX0006 2025-04-10  Apr 2025    Maternal & Child Health  Program          Field travel                   Odisha  Infosys Foundation (CSR)        223700\n6   TX0007 2025-04-10  Apr 2025    Maternal & Child Health  Program  Training & workshops                   Odisha         Tata Trusts (CSR)        101700\n7   TX0008 2025-04-21  Apr 2025    Maternal & Child Health  Program  Supplies & materials                    Bihar         Tata Trusts (CSR)        178100\n8   TX0009 2025-04-20  Apr 2025  Water & Sanitation (WASH)  Program  Supplies & materials              Maharashtra          State Govt - NHM        132600\n9   TX0010 2025-04-25  Apr 2025  Water & Sanitation (WASH)  Program        Partner grants              Maharashtra  Infosys Foundation (CSR)        128500\n10  TX0011 2025-04-12  Apr 2025  Water & Sanitation (WASH)  Program        Partner grants                   Odisha    Azim Premji Foundation        177300\n11  TX0012 2025-04-10  Apr 2025        Women's Livelihoods  Program  Training & workshops              Maharashtra           USAID sub-grant         69700\n12  TX0013 2025-04-10  Apr 2025        Women's Livelihoods  Program  Training & workshops                Karnataka         Tata Trusts (CSR)        147200\n13  TX0014 2025-04-06  Apr 2025        Women's Livelihoods  Program        Partner grants                   Odisha         Individual donors        121200\n14  TX0015 2025-04-18  Apr 2025            Disaster Relief  Program  Training & workshops                    Bihar           USAID sub-grant         27100\n15  TX0016 2025-04-20  Apr 2025            Disaster Relief  Program          Field travel              Maharashtra         Tata Trusts (CSR)         56200\n16  TX0017 2025-04-09  Apr 2025            Disaster Relief  Program          Field travel                Karnataka         Tata Trusts (CSR)         63000\n17  TX0018 2025-04-10  Apr 2025            Disaster Relief  Program  Training & workshops              Maharashtra           USAID sub-grant         57800\n18  TX0019 2025-04-22  Apr 2025            Disaster Relief  Program        Partner grants                Karnataka         Individual donors         57200\n19  TX0020 2025-04-04  Apr 2025          Organisation-wide    Admin         IT & software  Head office (Bengaluru)              Unrestricted        143100\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df['Program'].unique())\\\"\"",
+   "output": "<StringArray>\n[      'Education (Shiksha)',   'Maternal & Child Health',\n 'Water & Sanitation (WASH)',       'Women's Livelihoods',\n           'Disaster Relief',         'Organisation-wide']\nLength: 6, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; tr=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); bud=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); spend=tr.groupby('Program')['Amount (INR)'].sum(); print(spend)\\\"\"",
+   "output": "Program\nDisaster Relief              2807100\nEducation (Shiksha)          8370800\nMaternal & Child Health      9229600\nOrganisation-wide            8132800\nWater & Sanitation (WASH)    5402400\nWomen's Livelihoods          5851700\nName: Amount (INR), dtype: int64\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; tr=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(tr[tr['Program']=='Organisation-wide']['Category'].unique())\\\"\"",
+   "output": "<StringArray>\n['Admin', 'Fundraising']\nLength: 2, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; tr=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); prog=tr[tr['Category']=='Program']; spend=prog.groupby('Program')['Amount (INR)'].sum(); print(spend)\\\"\"",
+   "output": "Program\nDisaster Relief              2807100\nEducation (Shiksha)          8370800\nMaternal & Child Health      9229600\nWater & Sanitation (WASH)    5402400\nWomen's Livelihoods          5851700\nName: Amount (INR), dtype: int64\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 139966,
+  "output": 1976
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 18,
+  "untraced": [
+   1229200.0,
+   829600.0,
+   597600.0,
+   451700.0,
+   407100.0,
+   7800000.0,
+   332800.0
+  ],
+  "answer_traced": true,
+  "clean": false
+ },
+ "audit": [],
+ "question": "Program with the largest spend minus annual budget, in INR (exact name)",
+ "trap": "",
+ "text": "I checked the Transactions sheet and summed spend per program, then compared it with the Annual budget (INR) from the Budget vs Actual sheet.\n\nSpend minus budget:\n- Education (Shiksha): 8,370,800 \u2212 9,600,000 = \u22121,229,200\n- Maternal & Child Health: 9,229,600 \u2212 8,400,000 = +829,600\n- Water & Sanitation (WASH): 5,402,400 \u2212 6,000,000 = \u2212597,600\n- Women's Livelihoods: 5,851,700 \u2212 5,400,000 = +451,700\n- Disaster Relief: 2,807,100 \u2212 2,400,000 = +407,100\n- Organisation-wide (Admin + Fundraising): 8,132,800 \u2212 7,800,000 = +332,800\n\nThe largest positive spend minus annual budget is Maternal & Child Health.\n\nANSWER: Maternal & Child Health",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.most_over_budget_program.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:57:57.382735Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

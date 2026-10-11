@@ -1,0 +1,49 @@
+{
+  "id": "two_tables",
+  "description": "A single messy finance sheet contains an approved-budget table and, after three blank rows, a donor-receipts table with a different schema.",
+  "files": [
+    "sahyog_budget_and_receipts.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What is the total approved FY 2025-26 budget in INR across all programme-district rows? Do not add the displayed TOTAL APPROVED row.",
+      "answer": 46700000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Adding the displayed total row double-counts the budget."
+    },
+    {
+      "id": "q2",
+      "question": "How much donor receipt income in INR was credited for the Jal Jeevan Saathi programme?",
+      "answer": 7325000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "The receipts table has different columns from the budget table."
+    },
+    {
+      "id": "q3",
+      "question": "How many distinct Receipt IDs in the donor-receipts table have Donor Type exactly 'Foreign Grant'?",
+      "answer": 5,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Counting budget rows or the receipts total row gives a wrong count."
+    },
+    {
+      "id": "q4",
+      "question": "Which donor has the highest total receipt amount when all of that donor's receipt rows are combined?",
+      "answer": "Tata Trusts CSR",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "Selecting the largest single receipt is not the same as ranking donor totals."
+    },
+    {
+      "id": "q5",
+      "question": "What percentage of the total approved budget has been received across all donor receipts? Report 100 × total receipts / total approved budget, rounded to two decimals, and exclude both displayed total rows.",
+      "answer": 66.33,
+      "kind": "number",
+      "tol_pct": 0.01,
+      "trap": "Using either displayed total in addition to detail rows double-counts."
+    }
+  ]
+}

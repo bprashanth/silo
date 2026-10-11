@@ -1,0 +1,49 @@
+{
+  "id": "formulas_no_cache",
+  "description": "A quarterly NGO invoice register has live line-total, monthly-subtotal, and grand-total formulas but no cached formula results.",
+  "files": [
+    "seva_invoice_register_uncalculated.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "What is the total invoice spend in INR? Calculate each invoice line as Quantity × Unit Rate, and ignore monthly subtotal and grand total rows.",
+      "answer": 24083000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "The live formula cells have no cached values and appear blank in data-only reads."
+    },
+    {
+      "id": "q2",
+      "question": "What is the total computed spend in INR for Community Nutrition in Odisha, using Quantity × Unit Rate for each invoice line?",
+      "answer": 10360000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Summing the uncached Line Amount column yields blanks instead of spend."
+    },
+    {
+      "id": "q3",
+      "question": "How many distinct invoice IDs are funded by rows whose Funding Type is exactly 'Government Scheme'? Count invoice detail rows only.",
+      "answer": 9,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Month labels and subtotal rows are interspersed with invoice rows."
+    },
+    {
+      "id": "q4",
+      "question": "Which district has the highest total computed spend after calculating Quantity × Unit Rate for every invoice?",
+      "answer": "Koraput",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "Ranking blank cached formula cells or the largest single invoice is wrong."
+    },
+    {
+      "id": "q5",
+      "question": "What percentage of total computed invoice spend is funded by rows whose Funding Type is 'Foreign Grant'? Use Quantity × Unit Rate and round to two decimals.",
+      "answer": 22.4,
+      "kind": "number",
+      "tol_pct": 0.01,
+      "trap": "The percentage must be derived from inputs, not uncached formula results."
+    }
+  ]
+}

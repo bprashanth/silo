@@ -1,0 +1,58 @@
+{
+ "job": "clean.beneficiaries_reached.codex.1",
+ "case": "clean",
+ "q": "beneficiaries_reached",
+ "harness": "codex",
+ "trial": 1,
+ "want": 21107,
+ "got": "21107",
+ "verdict": "correct",
+ "seconds": 48.3,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 28\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 17:29 .\ndrwx------ 4 beeps beeps    80 Oct 11 17:29 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:29 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:29 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:29 .git\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 17:29 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nimport sys\nfile='asha_ngo_finances_FY25-26.xlsx'\nxl=pd.ExcelFile(file)\nprint('Sheets:', xl.sheet_names)\nfor s in xl.sheet_names:\n    df=pd.read_excel(file, sheet_name=s)\n    print('---',s,'---')\n    print(df.head())\n    print(df.columns.tolist())\nPY\"",
+   "output": "Sheets: ['Transactions', 'Budget vs Actual', 'Funding']\n--- Transactions ---\n   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n--- Budget vs Actual ---\n                     Program  ...  Beneficiaries reached\n0        Education (Shiksha)  ...                 4025.0\n1    Maternal & Child Health  ...                 2570.0\n2  Water & Sanitation (WASH)  ...                10754.0\n3        Women's Livelihoods  ...                 1684.0\n4            Disaster Relief  ...                 2074.0\n\n[5 rows x 4 columns]\n['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\n--- Funding ---\n                     Funder           Type  ...  Received to date (INR)  Restricted?\n0         Tata Trusts (CSR)  Corporate CSR  ...                 9902000          Yes\n1    Azim Premji Foundation     Foundation  ...                 4973000          Yes\n2           USAID sub-grant  Institutional  ...                 4804000          Yes\n3         Individual donors     Individual  ...                 2681000           No\n4  Infosys Foundation (CSR)  Corporate CSR  ...                 4390000          Yes\n\n[5 rows x 5 columns]\n['Funder', 'Type', 'Committed FY25-26 (INR)', 'Received to date (INR)', 'Restricted?']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual')\ntotal=df['Beneficiaries reached'].sum()\nprint(total)\nPY\"",
+   "output": "21107.0\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 51696,
+  "output": 481
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total beneficiaries reached across all programs",
+ "trap": "",
+ "text": "The Budget vs Actual sheet lists beneficiaries reached per program. Adding them gives the total.\n\nANSWER: 21107",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.beneficiaries_reached.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:59:30.872951Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

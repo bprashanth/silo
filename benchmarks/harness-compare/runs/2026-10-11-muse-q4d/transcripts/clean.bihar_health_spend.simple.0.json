@@ -1,0 +1,34 @@
+{
+ "job": "clean.bihar_health_spend.simple.0",
+ "case": "clean",
+ "q": "bihar_health_spend",
+ "harness": "simple",
+ "trial": 0,
+ "want": 2061700,
+ "got": "2061700",
+ "verdict": "correct",
+ "seconds": 45.0,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "import pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Load Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Filter for Program = 'Maternal & Child Health' and Region = 'Bihar'\nmask = (df['Program'] == 'Maternal & Child Health') & (df['Region'] == 'Bihar')\nfiltered = df[mask]\ntotal_spend = filtered['Amount (INR)'].sum()\nprint('Rows found:', len(filtered))\nprint(filtered[['Txn ID','Date','Region','Program','Amount (INR)']].head())\nprint('Total spend:', total_spend)\n",
+   "output": "Rows found: 11\n     Txn ID       Date Region                  Program  Amount (INR)\n7    TX0008 2025-04-21  Bihar  Maternal & Child Health        178100\n81   TX0082 2025-07-01  Bihar  Maternal & Child Health        148500\n83   TX0084 2025-07-04  Bihar  Maternal & Child Health        232300\n84   TX0085 2025-07-25  Bihar  Maternal & Child Health         85200\n188  TX0189 2025-11-09  Bihar  Maternal & Child Health         92300\nTotal spend: 2061700\n"
+  }
+ ],
+ "usage": {
+  "input": 3334,
+  "output": 699
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Spend on 'Maternal & Child Health' in Bihar (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 11 records for Program = **Maternal & Child Health** and Region = **Bihar**. Summing the Amount (INR) column:\n\nTotal spend = 2,061,700 INR\n\nANSWER: 2061700",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.bihar_health_spend.simple.0"
+}

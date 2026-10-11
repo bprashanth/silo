@@ -1,0 +1,39 @@
+{
+ "job": "clean.program_ratio_pct.simple.1",
+ "case": "clean",
+ "q": "program_ratio_pct",
+ "harness": "simple",
+ "trial": 1,
+ "want": 79.6,
+ "got": "79.6",
+ "verdict": "correct",
+ "seconds": 272.3,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport os\npath = '/data/asha_ngo_finances_FY25-26.xlsx'\nxls = pd.ExcelFile(path)\nprint(\"Sheets:\", xls.sheet_names)\nfor sheet in xls.sheet_names:\n    df = pd.read_excel(path, sheet_name=sheet)\n    print(\"\\n=== Sheet:\", sheet, \"===\")\n    print(df.head())\n    print(\"Columns:\", df.columns.tolist())\n    print(\"Shape:\", df.shape)\n",
+   "output": "Sheets: ['Transactions', 'Budget vs Actual', 'Funding']\n\n=== Sheet: Transactions ===\n   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\nColumns: ['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nShape: (314, 9)\n\n=== Sheet: Budget vs Actual ===\n                     Program  ...  Beneficiaries reached\n0        Education (Shiksha)  ...                 4025.0\n1    Maternal & Child Health  ...                 2570.0\n2  Water & Sanitation (WASH)  ...                10754.0\n3        Women's Livelihoods  ...                 1684.0\n4            Disaster Relief  ...                 2074.0\n\n[5 rows x 4 columns]\nColumns: ['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\nShape: (7, 4)\n\n=== Sheet: Funding ===\n                     Funder           Type  ...  Received to date (INR)  Restricted?\n0         Tata Trusts (CSR)  Corporate CSR  ...                 9902000          Yes\n1    Azim Premji Foundation     Foundation  ...                 4973000          Yes\n2           USAID sub-grant  Institutional  ...                 4804000          Yes\n3         Individual donors     Individual  ...                 2681000           No\n4  Infosys Foundation (CSR)  Corporate CSR  ...                 4390000          Yes\n\n[5 rows x 5 columns]\nColumns: ['Funder', 'Type', 'Committed FY25-26 (INR)', 'Received to date (INR)', 'Restricted?']\nShape: (7, 5)\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\npath = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(path, sheet_name='Transactions')\nprint(df['Category'].unique())\nprint(df['Program'].unique())\n# Compute total spend\ntotal_spend = df['Amount (INR)'].sum()\nprint(\"Total spend:\", total_spend)\n# Group by Program and Category\ngrouped = df.groupby(['Program','Category'])['Amount (INR)'].sum().reset_index()\ngrouped['pct_of_total'] = grouped['Amount (INR)'] / total_spend * 100\ngrouped['pct_of_total'] = grouped['pct_of_total'].round(1)\nprint(grouped.sort_values('Amount (INR)', ascending=False))\n# Also total by Program\nprog_total = df.groupby('Program')['Amount (INR)'].sum().reset_index()\nprog_total['pct'] = prog_total['Amount (INR)']/total_spend*100\nprint(prog_total)\n# Total by Category\ncat_total = df.groupby('Category')['Amount (INR)'].sum().reset_index()\ncat_total['pct'] = cat_total['Amount (INR)']/total_spend*100\nprint(cat_total)\n",
+   "output": "['Program' 'Admin' 'Fundraising']\n['Education (Shiksha)' 'Maternal & Child Health'\n 'Water & Sanitation (WASH)' \"Women's Livelihoods\" 'Disaster Relief'\n 'Organisation-wide']\nTotal spend: 39794400\n                     Program     Category  Amount (INR)  pct_of_total\n2    Maternal & Child Health      Program       9229600          23.2\n1        Education (Shiksha)      Program       8370800          21.0\n6        Women's Livelihoods      Program       5851700          14.7\n5  Water & Sanitation (WASH)      Program       5402400          13.6\n3          Organisation-wide        Admin       5238900          13.2\n4          Organisation-wide  Fundraising       2893900           7.3\n0            Disaster Relief      Program       2807100           7.1\n                     Program  Amount (INR)        pct\n0            Disaster Relief       2807100   7.054008\n1        Education (Shiksha)       8370800  21.035121\n2    Maternal & Child Health       9229600  23.193213\n3          Organisation-wide       8132800  20.437046\n4  Water & Sanitation (WASH)       5402400  13.575780\n5        Women's Livelihoods       5851700  14.704833\n      Category  Amount (INR)        pct\n0        Admin       5238900  13.164918\n1  Fundraising       2893900   7.272129\n2      Program      31661600  79.562954\n"
+  }
+ ],
+ "usage": {
+  "input": 6504,
+  "output": 4061
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 29,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Program-category spend as a percentage of total spend (one decimal)",
+ "trap": "",
+ "text": "Total spend from the Transactions sheet is INR 39,794,400.\n\nProgram \u00d7 Category spend:\n\n* Maternal & Child Health \u2013 Program: 9,229,600  \u2192 23.2 %\n* Education (Shiksha) \u2013 Program: 8,370,800  \u2192 21.0 %\n* Women's Livelihoods \u2013 Program: 5,851,700  \u2192 14.7 %\n* Water & Sanitation (WASH) \u2013 Program: 5,402,400  \u2192 13.6 %\n* Organisation-wide \u2013 Admin: 5,238,900  \u2192 13.2 %\n* Organisation-wide \u2013 Fundraising: 2,893,900  \u2192 7.3 %\n* Disaster Relief \u2013 Program: 2,807,100  \u2192 7.1 %\n\nCategory totals:\n* Program: 31,661,600  \u2192 79.6 %\n* Admin: 5,238,900  \u2192 13.2 %\n* Fundraising: 2,893,900  \u2192 7.3 %\n\n```chart\n{\"title\": \"Program-Category spend share of total FY25-26 spend\",\n \"panels\": [\n  {\"type\": \"kpi\", \"title\": \"Total spend\", \"value\": \"39794400\", \"note\": \"INR\"},\n  {\"type\": \"kpi\", \"title\": \"Program category share\", \"value\": \"79.6\", \"note\": \"% of total\"},\n  {\"type\": \"bar\", \"title\": \"Spend by Program-Category % of total\", \"labels\": [\"Maternal & Child Health - Program\",\"Education (Shiksha) - Program\",\"Women's Livelihoods - Program\",\"Water & Sanitation (WASH) - Program\",\"Organisation-wide - Admin\",\"Organisation-wide - Fundraising\",\"Disaster Relief - Program\"], \"series\": [{\"name\": \"Share %\", \"values\": [23.2,21.0,14.7,13.6,13.2,7.3,7.1]}], \"unit\": \"%\"},\n  {\"type\": \"pie\", \"title\": \"Share by Category\", \"labels\": [\"Program\",\"Admin\",\"Fundraising\"], \"series\": [{\"name\": \"Share\", \"values\": [79.6,13.2,7.3]}]}\n ]\n}\n```\n\nProgram category spend is 79.6 % of total spend.\n\nANSWER: 79.6",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.program_ratio_pct.simple.1"
+}

@@ -1,0 +1,45 @@
+doc chars=38051; questions=11; trials=3
+
+=== muse-or (meta/muse-glimmer-30b)
+PASS total_spend                  want=39794400                   got=['39794400', '39794400', '39794400']
+PASS admin_spend                  want=5238900                    got=['5238900', '5238900', '5238900']
+PASS program_ratio_pct            want=79.6                       got=['79.6', '79.6', '79.6']
+PASS jul_2025_spend               want=3685400                    got=['3685400', '3685400', '3685400']
+FAIL usaid_spend                  want=4806600                    got=['5417800', '4806600', '4806600']
+PASS bihar_health_spend           want=2061700                    got=['2061700', '2061700', '2061700']
+PASS n_txn_over_1L                want=200                        got=['200', '200', '200']
+PASS top_edu_expense_type         want='Supplies & materials'     got=['Supplies & materials', 'Supplies & materials', 'Supplies & materials']
+PASS most_over_budget_program     want='Maternal & Child Health'  got=['Maternal & Child Health', 'Maternal & Child Health', 'Maternal & Child Health']
+PASS largest_funding_gap_funder   want='Azim Premji Foundation'   got=['Azim Premji Foundation', 'Azim Premji Foundation', 'Azim Premji Foundation']
+PASS beneficiaries_reached        want=21107                      got=['21107', '21107', '21107']
+--> muse-or: 32/33 correct (97%)
+
+=== qwen (qwen/qwen3.5-9b)
+FAIL total_spend                  want=39794400                   got=['39664600', '40672400', '45394400']
+FAIL admin_spend                  want=5238900                    got=['4091300', '5238900', None] {'no answer (finish=length, tokens=65536)'}
+FAIL program_ratio_pct            want=79.6                       got=['79.5', '79.5', '78.2']
+PASS jul_2025_spend               want=3685400                    got=['3685400', '3685400', '3685400']
+FAIL usaid_spend                  want=4806600                    got=['4806600', '3152700', '3677700']
+FAIL bihar_health_spend           want=2061700                    got=['2061700', '2061700', '1828200']
+PASS n_txn_over_1L                want=200                        got=['200', '200', '200']
+PASS top_edu_expense_type         want='Supplies & materials'     got=['Supplies & materials', 'Supplies & materials', 'Supplies & materials']
+FAIL most_over_budget_program     want='Maternal & Child Health'  got=["Women's Livelihoods", 'Maternal & Child Health', 'Disaster Relief']
+PASS largest_funding_gap_funder   want='Azim Premji Foundation'   got=['Azim Premji Foundation', 'Azim Premji Foundation', 'Azim Premji Foundation']
+PASS beneficiaries_reached        want=21107                      got=['21107', '21107', '21107']
+--> qwen: 23/33 correct (70%)
+
+=== deepseek (deepseek/deepseek-v4.1-flash)
+PASS total_spend                  want=39794400                   got=['39794400', '39794400', '39794400']
+PASS admin_spend                  want=5238900                    got=['5238900', '5238900', '5238900']
+PASS program_ratio_pct            want=79.6                       got=['79.6', '79.6', '79.6']
+PASS jul_2025_spend               want=3685400                    got=['3685400', '3685400', '3685400']
+PASS usaid_spend                  want=4806600                    got=['4806600', '4806600', '4806600']
+PASS bihar_health_spend           want=2061700                    got=['2061700', '2061700', '2061700']
+PASS n_txn_over_1L                want=200                        got=['200', '200', '200']
+PASS top_edu_expense_type         want='Supplies & materials'     got=['Supplies & materials', 'Supplies & materials', 'Supplies & materials']
+PASS most_over_budget_program     want='Maternal & Child Health'  got=['Maternal & Child Health', 'Maternal & Child Health', 'Maternal & Child Health']
+PASS largest_funding_gap_funder   want='Azim Premji Foundation'   got=['Azim Premji Foundation', 'Azim Premji Foundation', 'Azim Premji Foundation']
+PASS beneficiaries_reached        want=21107                      got=['21107', '21107', '21107']
+--> deepseek: 33/33 correct (100%)
+
+[exited with code 0]

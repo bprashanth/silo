@@ -1,0 +1,64 @@
+{
+ "job": "clean.n_txn_over_1L.codex.1",
+ "case": "clean",
+ "q": "n_txn_over_1L",
+ "harness": "codex",
+ "trial": 1,
+ "want": 200,
+ "got": "200",
+ "verdict": "correct",
+ "seconds": 50.6,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 24\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 17:26 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; x=pd.ExcelFile('asha_ngo_finances_FY25-26.xlsx'); print(x.sheet_names)\\\"\"",
+   "output": "['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); cnt=(df['Amount (INR)']>100000).sum(); print(cnt)\\\"\"",
+   "output": "200\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 63847,
+  "output": 534
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 1,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Number of transactions with amount greater than 100000",
+ "trap": "",
+ "text": "The file has 200 transactions with an amount over 100,000 INR.\n\nANSWER: 200",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.n_txn_over_1L.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:56:31.711947Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

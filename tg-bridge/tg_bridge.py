@@ -1,0 +1,375 @@
+#!/usr/bin/env python3
+"""Telegram bot <-> LLM bridge.
+
+Long-polls the Bot API (no public URL needed), sends each text message to an
+OpenAI-compatible chat endpoint (OpenRouter by default, or a local server),
+and replies. Per-chat history is kept in memory.
+
+Models are picked per chat with /model (see MODELS). Charts: the model emits
+```chart JSON, which charts.py renders to a dashboard PNG.
+
+Env (see docs/deployment.md):
+  TELEGRAM_BOT_TOKEN  bot token from @BotFather (or "api_key" in $SILO_CONFIG/telegram.json)
+  OPENROUTER_API_KEY  optional; enables the external models (or $SILO_CONFIG/openrouter.json)
+  SILO_CONFIG         dir holding the json files above (default ~/.config/silo)
+  IDLI_BASE_URL       local OpenAI-compatible server (default http://127.0.0.1:8181/v1)
+  IDLI_MODEL          model name the local server expects (default muse-glimmer-30b)
+  IDLI_KEY            bearer token for the local server, if it wants one
+  TG_ALLOWED          comma-separated Telegram user ids/usernames; empty = anyone
+  SYSTEM_PROMPT       override the system prompt
+"""
+import base64
+import json
+import os
+import subprocess
+import tempfile
+import threading
+import time
+import urllib.request
+import uuid
+from collections import defaultdict, deque
+
+import charts
+import harness
+
+CFG = os.path.expanduser(os.environ.get("SILO_CONFIG", "~/.config/silo"))
+
+
+def secret(env, file):
+    """A key from the environment, else "api_key" in $SILO_CONFIG/<file>; None if neither."""
+    if os.environ.get(env):
+        return os.environ[env]
+    try:
+        return json.load(open(f"{CFG}/{file}"))["api_key"]
+    except (OSError, KeyError, ValueError):
+        return None
+
+
+TG_TOKEN = secret("TELEGRAM_BOT_TOKEN", "telegram.json")
+if not TG_TOKEN:
+    raise SystemExit(f"No bot token: set TELEGRAM_BOT_TOKEN or put api_key in {CFG}/telegram.json")
+OR_KEY = secret("OPENROUTER_API_KEY", "openrouter.json")
+
+API = f"https://api.telegram.org/bot{TG_TOKEN}"
+OPENROUTER = "https://openrouter.ai/api/v1"
+# Ordered small -> large; "idli" is the default. External models exist only with an OpenRouter key.
+MODELS = {
+    "qwen": {"label": "Qwen3.5 9B", "kind": "external",
+             "base": OPENROUTER, "model": "qwen/qwen3.5-9b", "key": OR_KEY},
+    "idli": {"label": "Muse Glimmer 30B", "kind": "idli internal",
+             "base": os.environ.get("IDLI_BASE_URL", "http://127.0.0.1:8181/v1"),
+             "model": os.environ.get("IDLI_MODEL", "muse-glimmer-30b"),
+             "key": os.environ.get("IDLI_KEY", "none")},
+    "deepseek": {"label": "DeepSeek V4.1 Flash", "kind": "external",
+                 "base": OPENROUTER, "model": "deepseek/deepseek-v4.1-flash", "key": OR_KEY},
+}
+MODELS = {k: m for k, m in MODELS.items() if m["kind"] != "external" or OR_KEY}
+DEFAULT_MODEL = "idli"
+chat_model = defaultdict(lambda: DEFAULT_MODEL)
+ALLOWED = {a.strip().lstrip("@").lower() for a in os.environ.get("TG_ALLOWED", "").split(",") if a.strip()}
+SYSTEM = os.environ.get(
+    "SYSTEM_PROMPT",
+    "You are a helpful assistant chatting over Telegram. Keep replies concise.",
+) + charts.SYSTEM_HINT
+
+MAX_DOC_CHARS = 100_000  # ~25k tokens; Glimmer has 131k context
+FILE_URL = f"https://api.telegram.org/file/bot{TG_TOKEN}"
+
+history = defaultdict(lambda: deque(maxlen=20))
+locks = defaultdict(threading.Lock)
+
+
+def post_json(url, body, headers=None, timeout=120):
+    req = urllib.request.Request(
+        url, json.dumps(body).encode(), {"Content-Type": "application/json", **(headers or {})}
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return json.load(r)
+
+
+def tg(method, **params):
+    return post_json(f"{API}/{method}", params, timeout=70)
+
+
+def llm(chat):
+    """Run the harness tool loop; returns the final text. Tool steps aren't kept in history."""
+    m = MODELS[chat_model[chat]]
+    files = ", ".join(harness.files(chat)) or "(none yet)"
+    msgs = [{"role": "system", "content": SYSTEM + harness.SYSTEM_HINT.format(files=files)}, *history[chat]]
+
+    def call(messages, tools):
+        r = post_json(f"{m['base']}/chat/completions",
+                      {"model": m["model"], "messages": messages, **({"tools": tools} if tools else {})},
+                      {"Authorization": f"Bearer {m['key']}"}, timeout=1800)
+        return r["choices"][0]
+
+    content, steps, finish = harness.chat_loop(chat, msgs, call, log=lambda s: print(s, flush=True))
+    if not content:
+        raise Unsupported(
+            "The model didn't produce an answer "
+            f"(finish_reason={finish}). Try a narrower question."
+        )
+    return content
+
+
+class typing:
+    """Keep Telegram's "typing..." indicator alive while the model works."""
+
+    def __init__(self, chat):
+        self.chat, self.stop = chat, threading.Event()
+
+    def __enter__(self):
+        def tick():
+            while not self.stop.is_set():
+                try:
+                    tg("sendChatAction", chat_id=self.chat, action="typing")
+                except Exception:
+                    pass
+                self.stop.wait(4)
+        threading.Thread(target=tick, daemon=True).start()
+
+    def __exit__(self, *a):
+        self.stop.set()
+
+
+def model_name(key):
+    m = MODELS[key]
+    return f"{m['label']} ({m['kind']})"
+
+
+def model_menu(chat):
+    cur = chat_model[chat]
+    text = "Current model: " + model_name(cur) + "\nPick a model (switching keeps the conversation):"
+    buttons = [[{"text": ("• " if k == cur else "") + model_name(k), "callback_data": f"model:{k}"}]
+               for k in MODELS]
+    tg("sendMessage", chat_id=chat, text=text, reply_markup={"inline_keyboard": buttons})
+
+
+def set_model(chat, key):
+    if key not in MODELS:
+        return f"Unknown model {key!r}. Options: {', '.join(MODELS)}"
+    chat_model[chat] = key
+    return f"Switched to {model_name(key)}."
+
+
+def send_photo(chat, png, caption=""):
+    boundary = uuid.uuid4().hex
+    parts = [f'--{boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n{chat}\r\n'.encode(),
+             f'--{boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n{caption[:1000]}\r\n'.encode(),
+             f'--{boundary}\r\nContent-Disposition: form-data; name="photo"; filename="chart.png"\r\n'
+             f'Content-Type: image/png\r\n\r\n'.encode() + png + b"\r\n",
+             f"--{boundary}--\r\n".encode()]
+    req = urllib.request.Request(f"{API}/sendPhoto", b"".join(parts),
+                                 {"Content-Type": f"multipart/form-data; boundary={boundary}"})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        return json.load(r)
+
+
+def send(chat, text):
+    for i in range(0, len(text), 4000):  # Telegram limit is 4096
+        tg("sendMessage", chat_id=chat, text=text[i:i + 4000])
+
+
+def download(file_id):
+    path = tg("getFile", file_id=file_id)["result"]["file_path"]
+    with urllib.request.urlopen(f"{FILE_URL}/{path}", timeout=120) as r:
+        return r.read()
+
+
+def pdf_text(data):
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as f:
+        f.write(data)
+        f.flush()
+        return subprocess.run(
+            ["pdftotext", "-layout", f.name, "-"], capture_output=True, text=True, timeout=60
+        ).stdout
+
+
+class Unsupported(Exception):
+    """Message can't be passed to the model; str(e) is sent back to the user."""
+
+
+def sheet_text(data, name):
+    """Render every sheet of an .xlsx/.xls as tab-separated text."""
+    import openpyxl
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, os.path.basename(name))
+        open(path, "wb").write(data)
+        if name.lower().endswith(".xls"):  # legacy format: convert with LibreOffice
+            subprocess.run(["soffice", "--headless", "--convert-to", "xlsx", "--outdir", d, path],
+                           capture_output=True, timeout=120)
+            path += "x"
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        out = []
+        for ws in wb.worksheets:
+            out.append(f"## Sheet: {ws.title}")
+            for row in ws.iter_rows(values_only=True):
+                if any(v is not None for v in row):
+                    out.append("\t".join("" if v is None else str(v) for v in row))
+        return "\n".join(out)
+
+
+def preview(text, rows=8):
+    """Header plus first rows of each sheet, so the model knows the columns."""
+    out, n = [], 0
+    for line in text.splitlines():
+        if line.startswith("## Sheet:"):
+            out.append(line)
+            n = 0
+        elif n < rows:
+            out.append(line)
+            n += 1
+    return "\n".join(out)
+
+
+def to_content(msg):
+    """Turn a Telegram message into chat content; raises Unsupported."""
+    caption = msg.get("caption") or msg.get("text") or ""
+    if "photo" in msg:
+        img = base64.b64encode(download(msg["photo"][-1]["file_id"])).decode()
+        return [
+            {"type": "text", "text": caption or "What's in this image?"},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{img}"}},
+        ]
+    doc = msg.get("document")
+    if doc:
+        if doc.get("file_size", 0) > 20_000_000:
+            raise Unsupported("Sorry, that file is over Telegram's 20MB bot download limit.")
+        name, mime = doc.get("file_name", "file"), doc.get("mime_type", "")
+        return file_content(msg["chat"]["id"], name, mime, download(doc["file_id"]), caption)
+    if not caption:
+        raise Unsupported("Sorry, I can read text messages, photos, and PDF, Excel, PNG/JPG, TXT and MD files.")
+    return caption
+
+
+def file_content(chat, name, mime, data, caption):
+    """Save an uploaded file to the chat's workdir and turn it into chat content."""
+    harness.save_file(chat, name, data)
+    if mime == "application/pdf" or name.lower().endswith(".pdf"):
+        body = pdf_text(data).strip()
+        if not body:
+            raise Unsupported("I couldn't extract any text from that PDF (it may be scanned images).")
+    elif name.lower().endswith((".xlsx", ".xls")):
+        body = sheet_text(data, name).strip()
+        if not body:
+            raise Unsupported("That spreadsheet looks empty.")
+        return (f"Attached file: {name} (saved at /data/{name}; use the python tool to compute "
+                f"anything from it). Preview, first rows of each sheet:\n{preview(body)}\n\n"
+                + (caption or "Summarize this spreadsheet."))
+    elif name.lower().endswith((".txt", ".md", ".csv")):
+        body = data.decode("utf-8", "replace")
+    elif mime in ("image/png", "image/jpeg"):
+        img = base64.b64encode(data).decode()
+        return [
+            {"type": "text", "text": caption or "What's in this image?"},
+            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{img}"}},
+        ]
+    else:
+        raise Unsupported(f"Sorry, I can read PDF, Excel, PNG/JPG, TXT and MD files, not {name}.")
+    note = "\n[truncated]" if len(body) > MAX_DOC_CHARS else ""
+    return (f"Attached file: {name}\n<<<\n{body[:MAX_DOC_CHARS]}{note}\n>>>\n\n"
+            + (caption or "Summarize this document."))
+
+
+def allowed(user):
+    if not ALLOWED:
+        return True
+    return str(user.get("id")) in ALLOWED or (user.get("username") or "").lower() in ALLOWED
+
+
+def handle(msg):
+    chat, user = msg["chat"]["id"], msg.get("from", {})
+    who = f"{user.get('username') or user.get('first_name')}({user.get('id')})"
+    if not allowed(user):
+        print(f"denied {who}", flush=True)
+        send(chat, "Sorry, this bot is private.")
+        return
+    text = msg.get("text") or ""
+    if text.strip().lower().startswith("/model"):
+        arg = text.split(maxsplit=1)[1:]
+        if arg:
+            send(chat, set_model(chat, arg[0].strip().lower()))
+        else:
+            model_menu(chat)
+        return
+    if text.strip().lower() in ("/reset", "/start"):
+        history[chat].clear()
+        harness.clear(chat)
+        send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
+                   f"You're on {model_name(chat_model[chat])}; /model to switch, /reset to start over.")
+        return
+    try:
+        content = to_content(msg)
+    except Unsupported as e:
+        send(chat, str(e))
+        return
+    kind = "photo" if "photo" in msg else (msg.get("document") or {}).get("file_name", "")
+    print(f"<- {who}: {('[' + kind + '] ') if kind else ''}{msg.get('caption') or text}", flush=True)
+    with locks[chat]:
+        history[chat].append({"role": "user", "content": content})
+        try:
+            with typing(chat):
+                reply = llm(chat)
+        except Exception as e:
+            print(f"LLM error: {e}", flush=True)
+            history[chat].pop()
+            send(chat, str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
+            return
+        history[chat].append({"role": "assistant", "content": reply})
+    print(f"-> {who} [{chat_model[chat]}]: {reply}", flush=True)
+    body, specs, errors = charts.extract(reply)
+    for spec in specs:
+        try:
+            send_photo(chat, charts.render(spec), spec.get("title", ""))
+        except Exception as e:
+            errors.append(str(e))
+    if errors:
+        print(f"chart errors: {errors}", flush=True)
+        body += "\n\n(Couldn't draw a chart: " + "; ".join(errors) + ")"
+    if body:
+        send(chat, body)
+
+
+def handle_callback(cb):
+    chat, user = cb["message"]["chat"]["id"], cb.get("from", {})
+    if not allowed(user):
+        return
+    key = cb.get("data", "").removeprefix("model:")
+    result = set_model(chat, key)
+    tg("answerCallbackQuery", callback_query_id=cb["id"], text=result)
+    tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=result)
+
+
+def safe_handle(update):
+    try:
+        if "callback_query" in update:
+            handle_callback(update["callback_query"])
+        elif "message" in update:
+            handle(update["message"])
+    except Exception as e:
+        body = getattr(e, "read", lambda: b"")().decode()
+        print(f"handle error: {e} {body}", flush=True)
+
+
+def main():
+    print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
+          f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
+    tg("setMyCommands", commands=[
+        {"command": "model", "description": "Switch model (idli internal / external)"},
+        {"command": "reset", "description": "Start a fresh conversation"},
+    ])
+    offset = 0
+    while True:
+        try:
+            r = tg("getUpdates", offset=offset, timeout=50, allowed_updates=["message", "callback_query"])
+        except Exception as e:
+            print(f"poll error: {e}", flush=True)
+            time.sleep(5)
+            continue
+        for u in r.get("result", []):
+            offset = u["update_id"] + 1
+            threading.Thread(target=safe_handle, args=(u,), daemon=True).start()
+
+
+if __name__ == "__main__":
+    main()

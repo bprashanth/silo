@@ -1,0 +1,54 @@
+{
+ "job": "multi_file.q3.simple.0",
+ "case": "multi_file",
+ "q": "q3",
+ "harness": "simple",
+ "trial": 0,
+ "want": 588,
+ "got": "588",
+ "verdict": "correct",
+ "seconds": 173.6,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport os\n\n# Load beneficiaries\nbeneficiaries_path = '/data/beneficiaries.csv'\npayments_path = '/data/payments.xlsx'\n\n# Read beneficiaries\nbeneficiaries = pd.read_csv(beneficiaries_path)\n# Ensure Beneficiary ID column name\nprint('Beneficiaries columns:', beneficiaries.columns.tolist())\nprint('Beneficiaries shape:', beneficiaries.shape)\n\n# Read payments sheet Disbursements\npayments = pd.read_excel(payments_path, sheet_name='Disbursements')\nprint('Payments columns:', payments.columns.tolist())\nprint('Payments shape:', payments.shape)\nprint(payments.head())\n\n# Clean status\n# Trim whitespace and lower case\npayments['Status_clean'] = payments['Status'].astype(str).str.strip().str.lower()\n\n# Filter paid\npaid_payments = payments[payments['Status_clean'] == 'paid']\n\n# Get set of beneficiary IDs from beneficiaries\nbeneficiary_ids = set(beneficiaries['Beneficiary ID'].astype(str).str.strip())\n\n# Filter paid payments where Beneficiary ID is in set\npaid_payments_valid = paid_payments[paid_payments['Beneficiary ID'].astype(str).str.strip().isin(beneficiary_ids)]\n\n# Distinct beneficiaries\ndistinct_beneficiaries = paid_payments_valid['Beneficiary ID'].nunique()\n\nprint('Distinct beneficiaries with paid payment and valid ID:', distinct_beneficiaries)\n# Also list count of paid payments considered\nprint('Number of paid payment rows after filtering:', len(paid_payments_valid))\n",
+   "output": "Beneficiaries columns: ['Beneficiary ID', 'Full Name', 'Gender', 'State', 'District', 'Village', 'Programme', 'Enrolment Date']\nBeneficiaries shape: (760, 8)\nPayments columns: ['Jan Kalyan Programme \u2014 Beneficiary Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\nPayments shape: (1434, 7)\n  Jan Kalyan Programme \u2014 Beneficiary Disbursement Register  ... Unnamed: 6\n0  Join Beneficiary ID to beneficiaries.csv; unma...        ...        NaN\n1  FY 2025\u201326 | Status and amount cells retain fi...        ...        NaN\n2                                                NaN        ...        NaN\n3                                         Payment ID        ...     Status\n4                                     PMT-2025-00001        ...       Paid\n\n[5 rows x 7 columns]\n\n[stderr]\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3805, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"index.pyx\", line 167, in pandas._libs.index.IndexEngine.get_loc\n  File \"index.pyx\", line 196, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Status'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<stdin>\", line 23, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 4102, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3812, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Status'\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\n# Try reading with header row 3 (0-indexed)\n# Let's inspect raw rows\nxl = pd.ExcelFile(payments_path)\nprint('Sheets:', xl.sheet_names)\n# Read sheet with no header to see rows\nraw = pd.read_excel(payments_path, sheet_name='Disbursements', header=None)\nprint(raw.head(10))\n",
+   "output": "Sheets: ['Disbursements']\n                                                   0  ...       6\n0  Jan Kalyan Programme \u2014 Beneficiary Disbursemen...  ...     NaN\n1  Join Beneficiary ID to beneficiaries.csv; unma...  ...     NaN\n2  FY 2025\u201326 | Status and amount cells retain fi...  ...     NaN\n3                                                NaN  ...     NaN\n4                                         Payment ID  ...  Status\n5                                     PMT-2025-00001  ...    Paid\n6                                     PMT-2025-00002  ...    Paid\n7                                     PMT-2025-00003  ...    Paid\n8                                     PMT-2025-00004  ...  Failed\n9                                     PMT-2025-00005  ...    paid\n\n[10 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\n# Header row is at index 4 (0-based) based on inspection\npayments = pd.read_excel(payments_path, sheet_name='Disbursements', header=4)\nprint('Columns:', payments.columns.tolist())\nprint(payments.head())\nprint('Shape:', payments.shape)\n# Drop rows with all NaN\npayments = payments.dropna(how='all')\n# Strip whitespace from column names\npayments.columns = [str(c).strip() for c in payments.columns]\nprint('Cleaned columns:', payments.columns.tolist())\n# Check first few rows\nprint(payments.head(10))\n",
+   "output": "Columns: ['Payment ID', 'Beneficiary ID', 'Payment Date', 'Tranche', 'Donor', 'Amount (INR)', 'Status']\n       Payment ID Beneficiary ID  ... Amount (INR)  Status\n0  PMT-2025-00001      BEN-00001  ...         4000    Paid\n1  PMT-2025-00002      BEN-00001  ...         5000    Paid\n2  PMT-2025-00003      BEN-00003  ...        10000    Paid\n3  PMT-2025-00004      BEN-00003  ...         4000  Failed\n4  PMT-2025-00005      BEN-00005  ...         2500    paid\n\n[5 rows x 7 columns]\nShape: (1430, 7)\nCleaned columns: ['Payment ID', 'Beneficiary ID', 'Payment Date', 'Tranche', 'Donor', 'Amount (INR)', 'Status']\n       Payment ID Beneficiary ID  ... Amount (INR)  Status\n0  PMT-2025-00001      BEN-00001  ...         4000    Paid\n1  PMT-2025-00002      BEN-00001  ...         5000    Paid\n2  PMT-2025-00003      BEN-00003  ...        10000    Paid\n3  PMT-2025-00004      BEN-00003  ...         4000  Failed\n4  PMT-2025-00005      BEN-00005  ...         2500    paid\n5  PMT-2025-00006      BEN-00005  ...         2500    Paid\n6  PMT-2025-00007      BEN-00005  ...         5000    Paid\n7  PMT-2025-00008      BEN-00006  ...      \u20b920,000    Paid\n8  PMT-2025-00009      BEN-00006  ...        10000   PAID \n9  PMT-2025-00010      BEN-00007  ...         4000    paid\n\n[10 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nbeneficiaries_path = '/data/beneficiaries.csv'\npayments_path = '/data/payments.xlsx'\n\nbeneficiaries = pd.read_csv(beneficiaries_path)\n# Ensure string\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\n\npayments = pd.read_excel(payments_path, sheet_name='Disbursements', header=4)\npayments.columns = [str(c).strip() for c in payments.columns]\n# Drop rows where Payment ID is NaN\npayments = payments.dropna(subset=['Payment ID'])\n\n# Clean Beneficiary ID and Status\npayments['Beneficiary ID'] = payments['Beneficiary ID'].astype(str).str.strip()\npayments['Status_clean'] = payments['Status'].astype(str).str.strip().str.lower()\n\n# Filter paid\npaid = payments[payments['Status_clean'] == 'paid']\n\n# Filter where Beneficiary ID in beneficiaries\nvalid_ids = set(beneficiaries['Beneficiary ID'])\npaid_valid = paid[paid['Beneficiary ID'].isin(valid_ids)]\n\ndistinct_count = paid_valid['Beneficiary ID'].nunique()\nprint('Distinct beneficiaries:', distinct_count)\nprint('Total paid rows valid:', len(paid_valid))\n# For sanity, check number of unique beneficiary IDs in payments\nprint('Unique beneficiary IDs in paid (including invalid):', paid['Beneficiary ID'].nunique())\n# Check how many beneficiary IDs are not in CSV\ninvalid_ids = set(paid['Beneficiary ID']) - valid_ids\nprint('Invalid IDs count:', len(invalid_ids))\n",
+   "output": "Distinct beneficiaries: 588\nTotal paid rows valid: 1150\nUnique beneficiary IDs in paid (including invalid): 662\nInvalid IDs count: 74\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nbeneficiaries = pd.read_csv('/data/beneficiaries.csv')\nprint('Duplicates in Beneficiary ID:', beneficiaries['Beneficiary ID'].duplicated().sum())\nprint('Unique IDs:', beneficiaries['Beneficiary ID'].nunique())\n",
+   "output": "Duplicates in Beneficiary ID: 0\nUnique IDs: 760\n"
+  }
+ ],
+ "usage": {
+  "input": 166961,
+  "output": 2271
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 3,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. How many distinct beneficiaries received at least one such paid payment?",
+ "trap": "Counting payment rows counts multi-tranche beneficiaries more than once.",
+ "text": "The payments sheet has a header row at row 5. After reading with `header=4`, cleaning the `Status` field (trimmed and lower-cased) and keeping only rows with `status == 'paid'`, the paid rows were filtered to those whose `Beneficiary ID` exists in `beneficiaries.csv`.\n\n* Beneficiaries in CSV: 760 unique IDs\n* Paid payment rows with a valid beneficiary ID: 1,150\n* Distinct beneficiaries with \u22651 paid payment: 588\n\nANSWER: 588",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/multi_file.q3.simple.0"
+}

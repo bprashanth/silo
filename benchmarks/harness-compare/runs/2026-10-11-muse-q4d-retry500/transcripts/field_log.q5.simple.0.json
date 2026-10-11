@@ -1,0 +1,60 @@
+{
+ "job": "field_log.q5.simple.0",
+ "case": "field_log",
+ "q": "q5",
+ "harness": "simple",
+ "trial": 0,
+ "want": 30.62,
+ "got": "30.56",
+ "verdict": "wrong",
+ "seconds": 94.4,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\n# Load sheet\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log')\nprint(df.head())\nprint(df.columns.tolist())\nprint(len(df))\n\n# Normalize village names (for completeness)\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v).strip()\n    # collapse internal whitespace\n    import re\n    s = re.sub(r'\\s+', ' ', s)\n    return s.lower()\n\ndf['Village_norm'] = df['Village'].apply(normalize_village)\n\n# Deduplicate Visit ID keeping first occurrence\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Retained rows:\", len(df_dedup))\n\n# Check Follow-up Required values\nprint(df_dedup['Follow-up Required'].value_counts(dropna=False))\n\n# Compute percentage requiring follow-up\n# Assume values like 'Yes'/'No' with possible case variation\nfollow_up_col = df_dedup['Follow-up Required'].astype(str).str.strip().str.lower()\nrequire_follow = follow_up_col == 'yes'\npct = require_follow.mean() * 100\nprint(\"Percentage:\", pct)\n\n# Round to two decimal places\npct_rounded = round(pct, 2)\nprint(\"Rounded:\", pct_rounded)\n",
+   "output": "Sheets: ['Field Visit Log']\n  Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log  ...                 Unnamed: 11\n0  Data note: village spelling/case/spacing varie...      ...                         NaN\n1  Reporting period: April\u2013September 2025 | Amoun...      ...                         NaN\n2                                                NaN      ...                         NaN\n3                                           Visit ID      ...  Travel Reimbursement (INR)\n4                                       FL-2025-0001      ...                         500\n\n[5 rows x 12 columns]\n['Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n547\n\n[stderr]\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3805, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"index.pyx\", line 167, in pandas._libs.index.IndexEngine.get_loc\n  File \"index.pyx\", line 196, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Village'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<stdin>\", line 24, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 4102, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3812, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Village'\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\n# Load with header at row 3 (0-indexed)\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=3)\nprint(\"Columns:\", df.columns.tolist())\nprint(df.head())\n\n# Normalize village names\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v).strip()\n    s = re.sub(r'\\s+', ' ', s)\n    return s.lower()\n\ndf['Village_norm'] = df['Village'].apply(normalize_village)\n\n# Deduplicate Visit ID keeping first occurrence\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Total rows before dedup:\", len(df))\nprint(\"Retained rows after dedup:\", len(df_dedup))\n\n# Check follow-up column values\nprint(\"Follow-up Required unique values:\", df_dedup['Follow-up Required'].dropna().unique())\n# Count\nfollow_up_col = df_dedup['Follow-up Required'].astype(str).str.strip().str.lower()\nrequire_follow = follow_up_col == 'yes'\npct = require_follow.mean() * 100\npct_rounded = round(pct, 2)\nprint(\"Percentage requiring follow-up:\", pct_rounded)\n",
+   "output": "Columns: ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n     Unnamed: 0  ...                 Unnamed: 11\n0      Visit ID  ...  Travel Reimbursement (INR)\n1  FL-2025-0001  ...                         500\n2  FL-2025-0001  ...                         500\n3  FL-2025-0002  ...                        3250\n4  FL-2025-0003  ...                        3350\n\n[5 rows x 12 columns]\n\n[stderr]\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3805, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"index.pyx\", line 167, in pandas._libs.index.IndexEngine.get_loc\n  File \"index.pyx\", line 196, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Village'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<stdin>\", line 19, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 4102, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3812, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Village'\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\n# Read without header to inspect raw rows\ndf_raw = pd.read_excel(file_path, sheet_name='Field Visit Log', header=None)\nprint(df_raw.head(10))\n",
+   "output": "                                                  0   ...                          11\n0  Sahyog Rural Initiatives \u2014 Beneficiary Field V...  ...                         NaN\n1  Data note: village spelling/case/spacing varie...  ...                         NaN\n2  Reporting period: April\u2013September 2025 | Amoun...  ...                         NaN\n3                                                NaN  ...                         NaN\n4                                           Visit ID  ...  Travel Reimbursement (INR)\n5                                       FL-2025-0001  ...                         500\n6                                       FL-2025-0001  ...                         500\n7                                       FL-2025-0002  ...                        3250\n8                                       FL-2025-0003  ...                        3350\n9                                       FL-2025-0004  ...                      \u20b92,400\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\nprint(\"Columns:\", df.columns.tolist())\nprint(df.head())\nprint(\"Shape:\", df.shape)\n",
+   "output": "Columns: ['Visit ID', 'Visit Date', 'Field Worker', 'State', 'District', 'Village', 'Programme', 'Women Reached', 'Men Reached', 'Children Reached', 'Follow-up Required', 'Travel Reimbursement (INR)']\n       Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0  FL-2025-0001 2025-05-10  ...                 No                        500\n1  FL-2025-0001 2025-05-10  ...                 No                        500\n2  FL-2025-0002 2025-07-21  ...                 No                       3250\n3  FL-2025-0003 2025-08-14  ...                 No                       3350\n4  FL-2025-0004 2025-09-09  ...                 No                     \u20b92,400\n\n[5 rows x 12 columns]\nShape: (543, 12)\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\n\n# Normalize village names (not strictly needed for dedup but per instruction)\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v).strip()\n    s = re.sub(r'\\s+', ' ', s)\n    return s.lower()\n\ndf['Village_norm'] = df['Village'].apply(normalize_village)\n\n# Deduplicate Visit ID keeping first occurrence\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Retained rows:\", len(df_dedup))\nprint(\"Total rows original:\", len(df))\n\n# Compute percentage requiring follow-up\nfollow_up_series = df_dedup['Follow-up Required'].astype(str).str.strip().str.lower()\nrequire_follow = follow_up_series == 'yes'\npct = require_follow.mean() * 100\npct_rounded = round(pct + 1e-8, 2)  # tiny epsilon to avoid floating errors\nprint(\"Count Yes:\", require_follow.sum())\nprint(\"Percentage:\", pct_rounded)\n",
+   "output": "Retained rows: 481\nTotal rows original: 543\nCount Yes: 147\nPercentage: 30.56\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\ncounts = df_dedup['Follow-up Required'].astype(str).str.strip().str.lower().value_counts()\nprint(counts)\nprint(len(df_dedup))\n",
+   "output": "Follow-up Required\nno     333\nyes    147\nnan      1\nName: count, dtype: int64\n481\n"
+  }
+ ],
+ "usage": {
+  "input": 20333,
+  "output": 3206
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 5,
+  "untraced": [],
+  "answer_traced": true,
+  "zero_answer": false,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. What percentage of retained visits require follow-up? Round to two decimal places.",
+ "trap": "Using raw rows as the denominator gives duplicates extra weight.",
+ "text": "Retained visits after keeping the first occurrence of each Visit ID: 481 rows.  \nFollow-up Required = Yes for 147 of those retained visits.\n\n147 / 481 = 30.56 %\n\nANSWER: 30.56",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/field_log.q5.simple.0"
+}

@@ -1,0 +1,24 @@
+{
+ "job": "two_tables.q1_plain.simple.1",
+ "case": "two_tables",
+ "q": "q1_plain",
+ "harness": "simple",
+ "trial": 1,
+ "want": 46700000,
+ "got": null,
+ "verdict": "missing",
+ "seconds": 269.9,
+ "actions": [],
+ "usage": {},
+ "finish": "error: <HTTPError 500: 'Internal Server Error'>",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": false,
+  "clean": false
+ },
+ "audit": [],
+ "question": "What is the total approved FY 2025-26 budget, in INR?",
+ "trap": "plain variant of q1",
+ "text": ""
+}

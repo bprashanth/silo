@@ -1,0 +1,88 @@
+{
+ "job": "clean.program_ratio_pct.codex.0",
+ "case": "clean",
+ "q": "program_ratio_pct",
+ "harness": "codex",
+ "trial": 0,
+ "want": 79.6,
+ "got": "79.6",
+ "verdict": "correct",
+ "seconds": 111.2,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 24\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 15:40 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='asha_ngo_finances_FY25-26.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.head(20)); print(df.columns.tolist())\\\"\"",
+   "output": "                           Program  ...  Beneficiaries reached\n0              Education (Shiksha)  ...                 4025.0\n1          Maternal & Child Health  ...                 2570.0\n2        Water & Sanitation (WASH)  ...                10754.0\n3              Women's Livelihoods  ...                 1684.0\n4                  Disaster Relief  ...                 2074.0\n5        Admin (organisation-wide)  ...                    NaN\n6  Fundraising (organisation-wide)  ...                    NaN\n\n[7 rows x 4 columns]\n['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "                     Funder           Type  ...  Received to date (INR)  Restricted?\n0         Tata Trusts (CSR)  Corporate CSR  ...                 9902000          Yes\n1    Azim Premji Foundation     Foundation  ...                 4973000          Yes\n2           USAID sub-grant  Institutional  ...                 4804000          Yes\n3         Individual donors     Individual  ...                 2681000           No\n4  Infosys Foundation (CSR)  Corporate CSR  ...                 4390000          Yes\n\n[5 rows x 5 columns]\n['Funder', 'Type', 'Committed FY25-26 (INR)', 'Received to date (INR)', 'Restricted?']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df['Program'].unique()); print(df['Category'].unique())\\\"\"",
+   "output": "<StringArray>\n[      'Education (Shiksha)',   'Maternal & Child Health',\n 'Water & Sanitation (WASH)',       'Women's Livelihoods',\n           'Disaster Relief',         'Organisation-wide']\nLength: 6, dtype: str\n<StringArray>\n['Program', 'Admin', 'Fundraising']\nLength: 3, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); total=df['Amount (INR)'].sum(); prog=df.loc[df['Category']=='Program','Amount (INR)'].sum(); print(total, prog, prog/total*100)\\\"\"",
+   "output": "39794400 31661600 79.56295358140844\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.groupby(['Program','Category'])['Amount (INR)'].sum().reset_index())\\\"\"",
+   "output": "                     Program     Category  Amount (INR)\n0            Disaster Relief      Program       2807100\n1        Education (Shiksha)      Program       8370800\n2    Maternal & Child Health      Program       9229600\n3          Organisation-wide        Admin       5238900\n4          Organisation-wide  Fundraising       2893900\n5  Water & Sanitation (WASH)      Program       5402400\n6        Women's Livelihoods      Program       5851700\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 120885,
+  "output": 1744
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 3,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Program-category spend as a percentage of total spend (one decimal)",
+ "trap": "",
+ "text": "Program spend is the amount where Category is Program.\n\nTotal spend: \u20b939,794,400\nProgram spend: \u20b931,661,600\nShare of total: 79.6%\n\nANSWER: 79.6",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.program_ratio_pct.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:10:13.204464Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

@@ -1,0 +1,106 @@
+{
+ "job": "two_tables.q5_plain.codex.0",
+ "case": "two_tables",
+ "q": "q5_plain",
+ "harness": "codex",
+ "trial": 0,
+ "want": 66.33,
+ "got": "66.33",
+ "verdict": "correct",
+ "seconds": 97.2,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 16\ndrwxrwxr-x 5 beeps beeps 4096 Oct 11 17:04 .\ndrwx------ 4 beeps beeps   80 Oct 11 17:04 ..\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 17:04 .agents\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 17:04 .codex\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 17:04 .git\n-rw-rw-r-- 1 beeps beeps 8679 Oct 11 17:04 sahyog_budget_and_receipts.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='sahyog_budget_and_receipts.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Finance FY25-26', 'Read me - notes']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26'); print(df.head(20)); print(df.columns.tolist())\\\"\"",
+   "output": "   SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER  ... Unnamed: 6\n0   FY 2025-26 | Internal management copy | Amount...    ...        NaN\n1                                                 NaN    ...        NaN\n2                        A. APPROVED PROGRAMME BUDGET    ...        NaN\n3                                         Budget Code    ...        NaN\n4                                              BG-001    ...        NaN\n5                                              BG-002    ...        NaN\n6                                              BG-003    ...        NaN\n7                                              BG-004    ...        NaN\n8                                              BG-005    ...        NaN\n9                                              BG-006    ...        NaN\n10                                             BG-007    ...        NaN\n11                                             BG-008    ...        NaN\n12                                             BG-009    ...        NaN\n13                                             BG-010    ...        NaN\n14                                             BG-011    ...        NaN\n15                                             BG-012    ...        NaN\n16                                     TOTAL APPROVED    ...        NaN\n17                                                NaN    ...        NaN\n18                                                NaN    ...        NaN\n19                                                NaN    ...        NaN\n\n[20 rows x 7 columns]\n['SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); print(df.iloc[:40, :7].to_string(index=False, header=False))\\\"\"",
+   "output": "  SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\nFY 2025-26 | Internal management copy | Amounts in INR                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                                                   NaN                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                          A. APPROVED PROGRAMME BUDGET                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                                           Budget Code                     Programme                                 State          District         Approved Budget (INR) Community Contribution (INR)            NaN\n                                                BG-001             Jal Jeevan Saathi                             Karnataka           Raichur                       5000000                        75000            NaN\n                                                BG-002             Jal Jeevan Saathi                             Karnataka            Koppal                       2500000                        50000            NaN\n                                                BG-003             Jal Jeevan Saathi                                Odisha          Gajapati                       2600000                       175000            NaN\n                                                BG-004             Jal Jeevan Saathi                                Odisha           Koraput                       4100000                       150000            NaN\n                                                BG-005                 Poshan Sakhis                        Madhya Pradesh            Mandla                       2700000                       175000            NaN\n                                                BG-006                 Poshan Sakhis                        Madhya Pradesh           Dindori                       3500000                       175000            NaN\n                                                BG-007                 Poshan Sakhis                                Odisha          Rayagada                       5600000                       200000            NaN\n                                                BG-008      Digital Learning Centres                             Rajasthan            Barmer                       5400000                       125000            NaN\n                                                BG-009      Digital Learning Centres                             Rajasthan         Jaisalmer                       4600000                        75000            NaN\n                                                BG-010      Digital Learning Centres                             Karnataka            Yadgir                       3500000                       175000            NaN\n                                                BG-011 Climate-Resilient Livelihoods                           Maharashtra         Nandurbar                       4500000                        75000            NaN\n                                                BG-012 Climate-Resilient Livelihoods                           Maharashtra        Gadchiroli                       2700000                       125000            NaN\n                                        TOTAL APPROVED                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                                                   NaN                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                                                   NaN                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                                                   NaN                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n      B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025                           NaN                                   NaN               NaN                           NaN                          NaN            NaN\n                                            Receipt ID                   Credit Date                        Donor / Scheme        Donor Type              Programme Tagged        Amount Received (INR) Bank Reference\n                                           RCPT-25-001           2025-04-10 00:00:00                       Tata Trusts CSR               CSR                 Poshan Sakhis                      1650000   UTR202507919\n                                           RCPT-25-002           2025-05-17 00:00:00 Azim Premji Philanthropic Initiatives Indian Foundation Climate-Resilient Livelihoods                      1200000   UTR202515838\n                                           RCPT-25-003           2025-06-24 00:00:00                    Jal Jeevan Mission Government Scheme                 Poshan Sakhis                      1150000   UTR202523757\n                                           RCPT-25-004           2025-07-07 00:00:00               Global Greengrants Fund     Foreign Grant      Digital Learning Centres                      1525000   UTR202531676\n                                           RCPT-25-005           2025-08-14 00:00:00                  HDFC Bank Parivartan               CSR             Jal Jeevan Saathi                      1225000   UTR202539595\n                                           RCPT-25-006           2025-09-21 00:00:00                       Tata Trusts CSR               CSR      Digital Learning Centres                      2175000   UTR202547514\n                                           RCPT-25-007           2025-04-04 00:00:00 Azim Premji Philanthropic Initiatives Indian Foundation             Jal Jeevan Saathi                       500000   UTR202555433\n                                           RCPT-25-008           2025-05-11 00:00:00                    Jal Jeevan Mission Government Scheme                 Poshan Sakhis                       550000   UTR202563352\n                                           RCPT-25-009           2025-06-18 00:00:00               Global Greengrants Fund     Foreign Grant Climate-Resilient Livelihoods                       525000   UTR202571271\n                                           RCPT-25-010           2025-07-25 00:00:00                  HDFC Bank Parivartan               CSR             Jal Jeevan Saathi                       575000   UTR202579190\n                                           RCPT-25-011           2025-08-08 00:00:00                       Tata Trusts CSR               CSR      Digital Learning Centres                      2450000   UTR202587109\n                                           RCPT-25-012           2025-09-15 00:00:00 Azim Premji Philanthropic Initiatives Indian Foundation             Jal Jeevan Saathi                       425000   UTR202595028\n                                           RCPT-25-013           2025-04-22 00:00:00                    Jal Jeevan Mission Government Scheme                 Poshan Sakhis                       575000   UTR202602947\n                                           RCPT-25-014           2025-05-05 00:00:00               Global Greengrants Fund     Foreign Grant Climate-Resilient Livelihoods                      1150000   UTR202610866\n                                           RCPT-25-015           2025-06-12 00:00:00                  HDFC Bank Parivartan               CSR                 Poshan Sakhis                      1750000   UTR202618785\n                                           RCPT-25-016           2025-07-19 00:00:00                       Tata Trusts CSR               CSR      Digital Learning Centres                      1325000   UTR202626704\n                                           RCPT-25-017           2025-08-26 00:00:00 Azim Premji Philanthropic Initiatives Indian Foundation             Jal Jeevan Saathi                      1350000   UTR202634623\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); print(df.iloc[40:80, :7].to_string(index=False, header=False))\\\"\"",
+   "output": "   RCPT-25-018 2025-09-09 00:00:00                    Jal Jeevan Mission Government Scheme      Digital Learning Centres  875000 UTR202642542\n   RCPT-25-019 2025-04-16 00:00:00               Global Greengrants Fund     Foreign Grant             Jal Jeevan Saathi 1300000 UTR202650461\n   RCPT-25-020 2025-05-23 00:00:00                  HDFC Bank Parivartan               CSR                 Poshan Sakhis  600000 UTR202658380\n   RCPT-25-021 2025-06-06 00:00:00                       Tata Trusts CSR               CSR Climate-Resilient Livelihoods 1775000 UTR202666299\n   RCPT-25-022 2025-07-13 00:00:00 Azim Premji Philanthropic Initiatives Indian Foundation             Jal Jeevan Saathi  700000 UTR202674218\n   RCPT-25-023 2025-08-20 00:00:00                    Jal Jeevan Mission Government Scheme      Digital Learning Centres  875000 UTR202682137\n   RCPT-25-024 2025-09-03 00:00:00               Global Greengrants Fund     Foreign Grant             Jal Jeevan Saathi 1250000 UTR202690056\n   RCPT-25-025 2025-04-10 00:00:00                  HDFC Bank Parivartan               CSR                 Poshan Sakhis 1350000 UTR202697975\n   RCPT-25-026 2025-05-17 00:00:00                       Tata Trusts CSR               CSR Climate-Resilient Livelihoods 2150000 UTR202705894\nTOTAL RECEIPTS                 NaN                                   NaN               NaN                           NaN     NaN          NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); rows=[i for i in range(len(df)) if df.iloc[i,0] and 'TOTAL APPROVED' in str(df.iloc[i,0])]; print(rows); print(df.iloc[rows[0]:rows[0]+5].to_string(index=False, header=False))\\\"\"",
+   "output": "[17]\n                                  TOTAL APPROVED NaN NaN NaN NaN NaN NaN\n                                             NaN NaN NaN NaN NaN NaN NaN\n                                             NaN NaN NaN NaN NaN NaN NaN\n                                             NaN NaN NaN NaN NaN NaN NaN\nB. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025 NaN NaN NaN NaN NaN NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); rows=range(4,17); print(df.iloc[rows, [0,4]].to_string(index=False, header=False))\\\"\"",
+   "output": "Budget Code Approved Budget (INR)\n     BG-001               5000000\n     BG-002               2500000\n     BG-003               2600000\n     BG-004               4100000\n     BG-005               2700000\n     BG-006               3500000\n     BG-007               5600000\n     BG-008               5400000\n     BG-009               4600000\n     BG-010               3500000\n     BG-011               4500000\n     BG-012               2700000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'python3 -c \"vals=[5000000,2500000,2600000,4100000,2700000,3500000,5600000,5400000,4600000,3500000,4500000,2700000]; print(sum(vals))\"'",
+   "output": "46700000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); vals=[]; \nfor i in range(len(df)):\n    v=str(df.iloc[i,0])\n    if v.startswith('RCPT-'):\n        amt=df.iloc[i,5]\n        try: vals.append(float(amt))\n        except: pass\nprint(len(vals), sum(vals))\n\\\"\"",
+   "output": "26 30975000.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'python3 -c \"print(30975000/46700000*100)\"'",
+   "output": "66.32762312633832\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); rows=[i for i in range(len(df)) if str(df.iloc[i,0]).strip()=='TOTAL RECEIPTS']; print(rows); print(df.iloc[rows[0] if rows else 0])\\\"\"",
+   "output": "[49]\n0    TOTAL RECEIPTS\n1               NaN\n2               NaN\n3               NaN\n4               NaN\n5               NaN\n6               NaN\nName: 49, dtype: object\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 179958,
+  "output": 1700
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 7,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "What percentage of the approved budget have we received from donors so far? Round to two decimals.",
+ "trap": "plain variant of q5",
+ "text": "The approved programme budget totals \u20b946,700,000.\n\nDonor receipts cleared Apr\u2013Sep 2025 total \u20b930,975,000 across 26 receipts.\n\n30,975,000 / 46,700,000 \u00d7 100 = 66.33 %\n\nANSWER: 66.33",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/two_tables.q5_plain.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "sahyog_budget_and_receipts.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:34:40.127312Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

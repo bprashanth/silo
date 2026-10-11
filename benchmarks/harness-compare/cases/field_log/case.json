@@ -1,0 +1,57 @@
+{
+  "id": "field_log",
+  "description": "A field-staff beneficiary visit log with inconsistent village case/spacing, duplicate Visit IDs, blank separators and mixed INR cells.",
+  "files": [
+    "field_visit_log.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. What is the total number of people reached (women + men + children)?",
+      "answer": 24717,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Counting duplicate Visit IDs inflates the total reached."
+    },
+    {
+      "id": "q2",
+      "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. How many women were reached by Health & Nutrition visits in Odisha?",
+      "answer": 964,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Summing all Odisha attendees or retaining resubmitted visits is wrong."
+    },
+    {
+      "id": "q3",
+      "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. How many distinct retained visits took place in Gadchiroli district?",
+      "answer": 131,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Spreadsheet row count includes duplicate Visit IDs and blank separators."
+    },
+    {
+      "id": "q4",
+      "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. Which village reached the most people in total? Report the normalised village in title case.",
+      "answer": "Bhilgaon",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "Case and spacing variants otherwise split one village into several groups."
+    },
+    {
+      "id": "q5",
+      "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. What percentage of retained visits require follow-up? Round to two decimal places.",
+      "answer": 30.62,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Using raw rows as the denominator gives duplicates extra weight."
+    },
+    {
+      "id": "q6",
+      "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. Treat numeric and ₹/comma-formatted travel cells as INR. What was the total travel reimbursement for Water Security visits in Maharashtra?",
+      "answer": 104550,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Text-formatted INR cells are easily dropped, and duplicate visits are easily counted twice."
+    }
+  ]
+}

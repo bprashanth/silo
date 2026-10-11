@@ -1,0 +1,24 @@
+{
+ "job": "field_log.q5.simple.0",
+ "case": "field_log",
+ "q": "q5",
+ "harness": "simple",
+ "trial": 0,
+ "want": 30.62,
+ "got": null,
+ "verdict": "missing",
+ "seconds": 546.4,
+ "actions": [],
+ "usage": {},
+ "finish": "error: <HTTPError 500: 'Internal Server Error'>",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": false,
+  "clean": false
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. What percentage of retained visits require follow-up? Round to two decimal places.",
+ "trap": "Using raw rows as the denominator gives duplicates extra weight.",
+ "text": ""
+}

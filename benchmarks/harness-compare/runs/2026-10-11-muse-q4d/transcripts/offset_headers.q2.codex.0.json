@@ -1,0 +1,88 @@
+{
+ "job": "offset_headers.q2.codex.0",
+ "case": "offset_headers",
+ "q": "q2",
+ "harness": "codex",
+ "trial": 0,
+ "want": 9266500,
+ "got": "9266500",
+ "verdict": "correct",
+ "seconds": 82.8,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 12\ndrwxrwxr-x 5 beeps beeps 4096 Oct 11 16:35 .\ndrwx------ 4 beeps beeps   80 Oct 11 16:35 ..\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 16:35 .agents\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 16:35 .codex\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 16:35 .git\n-rw-rw-r-- 1 beeps beeps 7004 Oct 11 16:35 programme_monthly_spend.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='programme_monthly_spend.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Monthly Spend']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('programme_monthly_spend.xlsx', sheet_name='Monthly Spend'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "      JanSahyog Collective \u2014 Programme Monthly Spend  ...            Unnamed: 10\n0  Prepared by: Grants & Finance Team | Internal ...  ...                    NaN\n1  Reporting period: 01-Apr-2025 to 30-Sep-2025 |...  ...                    NaN\n2                                     Programme Code  ...  Six-month Total (INR)\n3                                                NaN  ...                    NaN\n4                                             PRG-01  ...                7172500\n\n[5 rows x 11 columns]\n['JanSahyog Collective \u2014 Programme Monthly Spend', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('programme_monthly_spend.xlsx', sheet_name='Monthly Spend', header=None); print(df.iloc[:10, :12].to_string(header=False, index=False))\\\"\"",
+   "output": "                                                             JanSahyog Collective \u2014 Programme Monthly Spend               NaN         NaN                       NaN           NaN      NaN      NaN           NaN      NaN      NaN                   NaN\n                                         Prepared by: Grants & Finance Team | Internal management statement               NaN         NaN                       NaN           NaN      NaN      NaN           NaN      NaN      NaN                   NaN\nReporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero               NaN         NaN                       NaN           NaN      NaN      NaN           NaN      NaN      NaN                   NaN\n                                                                                             Programme Code         Programme  Lead State           Funding Partner Q1 FY 2025\u201326      NaN      NaN Q2 FY 2025\u201326      NaN      NaN Six-month Total (INR)\n                                                                                                        NaN               NaN         NaN                       NaN      Apr 2025 May 2025 Jun 2025      Jul 2025 Aug 2025 Sep 2025                   NaN\n                                                                                                     PRG-01 Jal Jeevan Saathi Maharashtra        Jal Jeevan Mission        812500  1628000  1427000        964000  1273000  1068000               7172500\n                                                                                                     PRG-02     Poshan Shakti Maharashtra           Tata Trusts CSR        840000  1134000  1081000        511000      NaN   758000               4324000\n                                                                                                     PRG-03     Shiksha Udaan   Rajasthan    Azim Premji Foundation        577000   770500   529500        928500   470000   683500               3959000\n                                                                                                     PRG-04    Swasthya Sathi      Odisha Global Health Access Fund        722500        \u2013   719000       1118000  1487000   877000               4923500\n                                                                                                     PRG-05   Mahila Ajeevika       Bihar      HDFC Bank Parivartan        849000   930000   624500        544000   591500        -               3539000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\ndf=pd.read_excel('programme_monthly_spend.xlsx', sheet_name='Monthly Spend', header=None)\n# data starts at row 5\ndata=df.iloc[5:].reset_index(drop=True)\ncols=['Programme Code','Programme','Lead State','Funding Partner','Apr 2025','May 2025','Jun 2025','Jul 2025','Aug 2025','Sep 2025','Six-month Total']\ndata.columns=cols\n# clean numeric columns\ndef to_num(x):\n    if pd.isna(x):\n        return 0\n    if isinstance(x,str):\n        x=x.strip()\n        if x in ['-','\u2013','']:\n            return 0\n    try:\n        return float(x)\n    except:\n        return 0\nfor c in ['Apr 2025','May 2025','Jun 2025','Jul 2025','Aug 2025','Sep 2025']:\n    data[c]=data[c].apply(to_num)\nmask=data['Lead State']=='Maharashtra'\nsub=data[mask]\ntotal=sub[['Apr 2025','May 2025','Jun 2025']].sum().sum()\nprint('Rows:',len(sub))\nprint(sub[['Programme Code','Programme','Lead State','Apr 2025','May 2025','Jun 2025']])\nprint('Total',total)\n\\\"\n\"",
+   "output": "Rows: 3\n  Programme Code          Programme  ...   May 2025   Jun 2025\n0         PRG-01  Jal Jeevan Saathi  ...  1628000.0  1427000.0\n1         PRG-02      Poshan Shakti  ...  1134000.0  1081000.0\n9         PRG-10    Adivasi Adhikar  ...   903000.0   842500.0\n\n[3 rows x 6 columns]\nTotal 9266500.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\ndf=pd.read_excel('programme_monthly_spend.xlsx', sheet_name='Monthly Spend', header=None)\ndata=df.iloc[5:].reset_index(drop=True)\ncols=['Programme Code','Programme','Lead State','Funding Partner','Apr 2025','May 2025','Jun 2025','Jul 2025','Aug 2025','Sep 2025','Six-month Total']\ndata.columns=cols\nmask=data['Lead State']=='Maharashtra'\nprint(data[mask][['Programme Code','Programme','Lead State','Apr 2025','May 2025','Jun 2025']])\n\\\"\n\"",
+   "output": "  Programme Code          Programme   Lead State Apr 2025 May 2025 Jun 2025\n0         PRG-01  Jal Jeevan Saathi  Maharashtra   812500  1628000  1427000\n1         PRG-02      Poshan Shakti  Maharashtra   840000  1134000  1081000\n9         PRG-10    Adivasi Adhikar  Maharashtra   598500   903000   842500\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'python3 -c \"print(812500+1628000+1427000); print(840000+1134000+1081000); print(598500+903000+842500); print(sum([812500+1628000+1427000,840000+1134000+1081000,598500+903000+842500]))\"'",
+   "output": "3867500\n3055000\n2344000\n9266500\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\ndf=pd.read_excel('programme_monthly_spend.xlsx', sheet_name='Monthly Spend', header=None)\ndata=df.iloc[5:].reset_index(drop=True)\ncols=['Programme Code','Programme','Lead State','Funding Partner','Apr 2025','May 2025','Jun 2025','Jul 2025','Aug 2025','Sep 2025','Six-month Total']\ndata.columns=cols\nprint(data['Lead State'].value_counts())\n\\\"\n\"",
+   "output": "Lead State\nMaharashtra       3\nRajasthan         2\nOdisha            2\nBihar             2\nJharkhand         2\nMadhya Pradesh    1\nName: count, dtype: int64\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 125368,
+  "output": 1973
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 13,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "For programme rows whose Lead State is Maharashtra, what was total Q1 FY 2025\u201326 spend (April, May, and June), in INR? Treat '-', '\u2013', and blanks as zero.",
+ "trap": "A flat one-row header import can lose the quarter-to-month relationship or mistake notes for headers.",
+ "text": "The file has 3 programme rows with Lead State Maharashtra.\n\n- PRG-01 Jal Jeevan Saathi: Apr 812,500 + May 1,628,000 + Jun 1,427,000 = 3,867,500\n- PRG-02 Poshan Shakti: Apr 840,000 + May 1,134,000 + Jun 1,081,000 = 3,055,000\n- PRG-10 Adivasi Adhikar: Apr 598,500 + May 903,000 + Jun 842,500 = 2,344,000\n\nTotal Q1 FY 2025\u201326 spend for Maharashtra = 9,266,500 INR\n\nANSWER: 9266500",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/offset_headers.q2.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "programme_monthly_spend.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:05:33.459687Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

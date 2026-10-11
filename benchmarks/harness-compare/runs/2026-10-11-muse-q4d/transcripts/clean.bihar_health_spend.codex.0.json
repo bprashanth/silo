@@ -1,0 +1,88 @@
+{
+ "job": "clean.bihar_health_spend.codex.0",
+ "case": "clean",
+ "q": "bihar_health_spend",
+ "harness": "codex",
+ "trial": 0,
+ "want": 2061700,
+ "got": "2061700",
+ "verdict": "correct",
+ "seconds": 78.0,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 28\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 15:42 .\ndrwx------ 4 beeps beeps    80 Oct 11 15:43 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 15:43 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 15:43 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 15:43 .git\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 15:42 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='asha_ngo_finances_FY25-26.xlsx'; xl=pd.ExcelFile(f); print('Sheets:', xl.sheet_names)\\\"\"",
+   "output": "Sheets: ['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.head()); print(df.columns.tolist()); print(df.shape)\\\"\"",
+   "output": "   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n(314, 9)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df['Program'].unique()); print(df['Region'].unique()); print(df['Category'].unique())\\\"\"",
+   "output": "<StringArray>\n[      'Education (Shiksha)',   'Maternal & Child Health',\n 'Water & Sanitation (WASH)',       'Women's Livelihoods',\n           'Disaster Relief',         'Organisation-wide']\nLength: 6, dtype: str\n<StringArray>\n['Karnataka', 'Odisha', 'Bihar', 'Maharashtra', 'Head office (Bengaluru)']\nLength: 5, dtype: str\n<StringArray>\n['Program', 'Admin', 'Fundraising']\nLength: 3, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); mask=(df['Program']=='Maternal & Child Health') & (df['Region']=='Bihar'); total=df.loc[mask,'Amount (INR)'].sum(); print(total)\\\"\"",
+   "output": "2061700\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); mask=(df['Program']=='Maternal & Child Health') & (df['Region']=='Bihar'); sub=df.loc[mask]; print(sub['Category'].value_counts())\\\"\"",
+   "output": "Category\nProgram    11\nName: count, dtype: int64\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "                     Program  ...  Beneficiaries reached\n0        Education (Shiksha)  ...                 4025.0\n1    Maternal & Child Health  ...                 2570.0\n2  Water & Sanitation (WASH)  ...                10754.0\n3        Women's Livelihoods  ...                 1684.0\n4            Disaster Relief  ...                 2074.0\n\n[5 rows x 4 columns]\n['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "                     Funder           Type  ...  Received to date (INR)  Restricted?\n0         Tata Trusts (CSR)  Corporate CSR  ...                 9902000          Yes\n1    Azim Premji Foundation     Foundation  ...                 4973000          Yes\n2           USAID sub-grant  Institutional  ...                 4804000          Yes\n3         Individual donors     Individual  ...                 2681000           No\n4  Infosys Foundation (CSR)  Corporate CSR  ...                 4390000          Yes\n\n[5 rows x 5 columns]\n['Funder', 'Type', 'Committed FY25-26 (INR)', 'Received to date (INR)', 'Restricted?']\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 120759,
+  "output": 1201
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Spend on 'Maternal & Child Health' in Bihar (INR)",
+ "trap": "",
+ "text": "The transactions sheet shows 11 program expenses for Maternal & Child Health in Bihar.\n\nTotal spend = 2,061,700 INR\n\nANSWER: 2061700",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.bihar_health_spend.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:12:59.182631Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

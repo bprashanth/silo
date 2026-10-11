@@ -1,0 +1,19 @@
+up: Muse-Glimmer-30B-UD-Q8_K_XL.gguf -md /m/dflash-Muse-Glimmer-30B-Q4_K_M.gguf -ngld 999 --spec-draft-n-max 16
+doc chars=38051; questions=11; trials=2
+
+=== idli+h (muse-glimmer-30b)
+PASS total_spend                  want=39794400                   got=['39794400', '39794400'] ['tools=5', 'tools=4']
+PASS admin_spend                  want=5238900                    got=['5238900', '5238900'] ['tools=7', 'tools=5']
+PASS program_ratio_pct            want=79.6                       got=['79.6', '79.6'] ['tools=4', 'tools=4']
+PASS jul_2025_spend               want=3685400                    got=['3685400', '3685400'] ['tools=6', 'tools=2']
+FAIL usaid_spend                  want=4806600                    got=['4806600', None] ['tools=7', 'no answer (finish=max_steps, tool calls=8)']
+FAIL bihar_health_spend           want=2061700                    got=['2061700', None] ['tools=4', 'no answer (finish=max_steps, tool calls=8)']
+PASS n_txn_over_1L                want=200                        got=['200', '200'] ['tools=2', 'tools=2']
+FAIL top_edu_expense_type         want='Supplies & materials'     got=[None, 'Supplies & materials'] ['no answer (finish=max_steps, tool calls=8)', 'tools=5']
+FAIL most_over_budget_program     want='Maternal & Child Health'  got=['Maternal & Child Health', None] ['tools=6', 'no answer (finish=max_steps, tool calls=8)']
+PASS largest_funding_gap_funder   want='Azim Premji Foundation'   got=['Azim Premji Foundation', 'Azim Premji Foundation'] ['tools=1', 'tools=1']
+PASS beneficiaries_reached        want=21107                      got=['21107', '21107'] ['tools=2', 'tools=2']
+--> idli+h: 18/22 correct (82%)
+eval wall time 1350s for 22 questions, 2 at a time
+
+[exited with code 0]

@@ -1,0 +1,190 @@
+{
+ "job": "big_ledger.q5.codex.1",
+ "case": "big_ledger",
+ "q": "q5",
+ "harness": "codex",
+ "trial": 1,
+ "want": 28.748932,
+ "got": "28.748932032859674",
+ "verdict": "correct",
+ "seconds": 302.9,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'find /home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws -maxdepth 2 -type f -ls'",
+   "output": " 15886583    772 -rw-rw-r--   1 beeps    beeps      790093 Oct 11 17:15 /home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; xl=pd.ExcelFile(f); print(xl.sheet_names)\\\"\"",
+   "output": "['Field Expenses', 'Salary Register', 'Cost Centre Lookup']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Field Expenses'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26  ...      Unnamed: 6\n0  Use only transaction IDs beginning FE-. Postin...            ...             NaN\n1                     Prepared by Finance Operations            ...             NaN\n2                                                NaN            ...             NaN\n3                                     Transaction ID            ...  Posting Status\n4                                          FE-000001            ...          Posted\n\n[5 rows x 7 columns]\n['Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Field Expenses', header=3); print(df.columns.tolist()); print(df.head(10).to_string())\\\"\"",
+   "output": "['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n       Unnamed: 0           Unnamed: 1    Unnamed: 2          Unnamed: 3                  Unnamed: 4    Unnamed: 5      Unnamed: 6\n0  Transaction ID     Transaction Date   Cost Centre        Expense Head              Vendor / Payee  Amount (INR)  Posting Status\n1       FE-000001  2026-01-05 00:00:00  CC-CR-JH-WES    Monitoring visit      Maa Tarini Enterprises         57600          Posted\n2       FE-000002  2026-02-12 00:00:00  CC-RL-OD-MAY        Field travel  Bharat Training Associates          3100            Void\n3       FE-000003  2025-09-03 00:00:00  CC-CR-KA-RAI    Medical supplies    District Resource Centre        236500          Posted\n4       FE-000004  2026-02-24 00:00:00  CC-TE-RJ-BAR        Field travel            Kaveri Logistics         15400          Posted\n5       FE-000005  2026-02-28 00:00:00  CC-WS-JH-WES  Community training            Kaveri Logistics         54300          Posted\n6       FE-000006  2026-03-02 00:00:00  CC-TE-JH-WES        Field travel         Jai Marwar Supplies         23400          Posted\n7       FE-000007  2025-07-22 00:00:00  cc-ns-jh-dum    School materials            Kaveri Logistics         92300          Posted\n8       FE-000008  2025-07-17 00:00:00  CC-TE-JH-WES  Community training            Kaveri Logistics        131400          Posted\n9       FE-000009  2026-03-09 00:00:00  CC-NS-KA-KOP        Field travel  Bharat Training Associates        \u20b92,000          Posted\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Field Expenses', header=None); print(df.iloc[3:10].to_string(index=False, header=False))\\\"\"",
+   "output": "           NaN                 NaN          NaN                NaN                        NaN          NaN            NaN\nTransaction ID    Transaction Date  Cost Centre       Expense Head             Vendor / Payee Amount (INR) Posting Status\n     FE-000001 2026-01-05 00:00:00 CC-CR-JH-WES   Monitoring visit     Maa Tarini Enterprises        57600         Posted\n     FE-000002 2026-02-12 00:00:00 CC-RL-OD-MAY       Field travel Bharat Training Associates         3100           Void\n     FE-000003 2025-09-03 00:00:00 CC-CR-KA-RAI   Medical supplies   District Resource Centre       236500         Posted\n     FE-000004 2026-02-24 00:00:00 CC-TE-RJ-BAR       Field travel           Kaveri Logistics        15400         Posted\n     FE-000005 2026-02-28 00:00:00 CC-WS-JH-WES Community training           Kaveri Logistics        54300         Posted\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Field Expenses', header=4); print(df.columns.tolist()); print(df.head().to_string())\\\"\"",
+   "output": "['Transaction ID', 'Transaction Date', 'Cost Centre', 'Expense Head', 'Vendor / Payee', 'Amount (INR)', 'Posting Status']\n  Transaction ID     Transaction Date   Cost Centre        Expense Head              Vendor / Payee Amount (INR) Posting Status\n0      FE-000001  2026-01-05 00:00:00  CC-CR-JH-WES    Monitoring visit      Maa Tarini Enterprises        57600         Posted\n1      FE-000002  2026-02-12 00:00:00  CC-RL-OD-MAY        Field travel  Bharat Training Associates         3100           Void\n2      FE-000003  2025-09-03 00:00:00  CC-CR-KA-RAI    Medical supplies    District Resource Centre       236500         Posted\n3      FE-000004  2026-02-24 00:00:00  CC-TE-RJ-BAR        Field travel            Kaveri Logistics        15400         Posted\n4      FE-000005  2026-02-28 00:00:00  CC-WS-JH-WES  Community training            Kaveri Logistics        54300         Posted\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Salary Register', header=None); print(df.head(10).to_string(index=False, header=False))\\\"\"",
+   "output": "                                                                   Sahyog Foundation \u2014 Consolidated Salary Register FY 2025-26       NaN         NaN                  NaN          NaN                NaN            NaN\nUse only payroll line IDs beginning PAY-. Paid lines only; cost-centre codes may have inconsistent case or surrounding spaces.       NaN         NaN                  NaN          NaN                NaN            NaN\n                                                                                         Confidential \u2014 programme costing copy       NaN         NaN                  NaN          NaN                NaN            NaN\n                                                                                                                           NaN       NaN         NaN                  NaN          NaN                NaN            NaN\n                                                                                                                           NaN       NaN         NaN                  NaN          NaN                NaN            NaN\n                                                                                                               Payroll Line ID Pay Month Employee ID                 Role  Cost Centre Gross Salary (INR) Payroll Status\n                                                                                                                    PAY-000001  Apr-2025    EMP-0422    Programme Manager CC-TE-OD-KOR              82000           Paid\n                                                                                                                    PAY-000002  Aug-2025    EMP-0289  Community Mobiliser cc-ws-od-gan              34900           Paid\n                                                                                                                    PAY-000003   2025-06    EMP-0420    Programme Manager CC-WS-JH-WES             102300           Paid\n                                                                                                                    PAY-000004  Sep-2025    EMP-0307 District Coordinator CC-WS-KA-RAI              88200           Paid\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Salary Register', header=5); print(df.columns.tolist()); print(df.head().to_string())\\\"\"",
+   "output": "['Payroll Line ID', 'Pay Month', 'Employee ID', 'Role', 'Cost Centre', 'Gross Salary (INR)', 'Payroll Status']\n  Payroll Line ID Pay Month Employee ID                  Role   Cost Centre Gross Salary (INR) Payroll Status\n0      PAY-000001  Apr-2025    EMP-0422     Programme Manager  CC-TE-OD-KOR              82000           Paid\n1      PAY-000002  Aug-2025    EMP-0289   Community Mobiliser  cc-ws-od-gan              34900           Paid\n2      PAY-000003   2025-06    EMP-0420     Programme Manager  CC-WS-JH-WES             102300           Paid\n3      PAY-000004  Sep-2025    EMP-0307  District Coordinator  CC-WS-KA-RAI              88200           Paid\n4      PAY-000005  Nov-2025    EMP-0857  District Coordinator  CC-RL-RJ-BAR              88600           Paid\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Cost Centre Lookup', header=None); print(df.head(15).to_string(index=False, header=False))\\\"\"",
+   "output": "                                        Approved Cost-Centre Mapping \u2014 FY 2025-26                       NaN        NaN       NaN                        NaN\nMatch codes after trimming spaces and ignoring case. Unlisted codes are unmapped.                       NaN        NaN       NaN                        NaN\n                                                                              NaN                       NaN        NaN       NaN                        NaN\n                                                                 Cost Centre Code                 Programme   District     State             Primary Funder\n                                                                    CC-MCH-OD-GAN Maternal and Child Health     Ganjam    Odisha    National Health Mission\n                                                                   CC-MCH-OD-KOR  Maternal and Child Health    Koraput    Odisha    National Health Mission\n                                                                    CC-MCH-KA-RAI Maternal and Child Health    Raichur Karnataka             Tata CSR Trust\n                                                                    CC-MCH-JH-DUM Maternal and Child Health      Dumka Jharkhand         Global Health Fund\n                                                                     cc-rl-od-may         Rural Livelihoods Mayurbhanj    Odisha Deendayal Antyodaya Yojana\n                                                                     CC-RL-KA-KOP         Rural Livelihoods     Koppal Karnataka            HDFC Parivartan\n                                                                     CC-RL-RJ-BAR         Rural Livelihoods     Barmer Rajasthan  Rajasthan Grameen Mission\n                                                                    cc-rl-jh-dum          Rural Livelihoods      Dumka Jharkhand            Ford Foundation\n                                                                     CC-TE-OD-KOR          Tribal Education    Koraput    Odisha            Samagra Shiksha\n                                                                     CC-TE-OD-MAY          Tribal Education Mayurbhanj    Odisha     Azim Premji Foundation\n                                                                     CC-TE-RJ-BAR          Tribal Education     Barmer Rajasthan    Educate India CSR Trust\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Cost Centre Lookup', header=3); print(df.columns.tolist()); print(df.head(20).to_string())\\\"\"",
+   "output": "['Cost Centre Code', 'Programme', 'District', 'State', 'Primary Funder']\n   Cost Centre Code                  Programme        District      State              Primary Funder\n0     CC-MCH-OD-GAN  Maternal and Child Health          Ganjam     Odisha     National Health Mission\n1    CC-MCH-OD-KOR   Maternal and Child Health         Koraput     Odisha     National Health Mission\n2     CC-MCH-KA-RAI  Maternal and Child Health         Raichur  Karnataka              Tata CSR Trust\n3     CC-MCH-JH-DUM  Maternal and Child Health           Dumka  Jharkhand          Global Health Fund\n4      cc-rl-od-may          Rural Livelihoods      Mayurbhanj     Odisha  Deendayal Antyodaya Yojana\n5      CC-RL-KA-KOP          Rural Livelihoods          Koppal  Karnataka             HDFC Parivartan\n6      CC-RL-RJ-BAR          Rural Livelihoods          Barmer  Rajasthan   Rajasthan Grameen Mission\n7     cc-rl-jh-dum           Rural Livelihoods           Dumka  Jharkhand             Ford Foundation\n8      CC-TE-OD-KOR           Tribal Education         Koraput     Odisha             Samagra Shiksha\n9      CC-TE-OD-MAY           Tribal Education      Mayurbhanj     Odisha      Azim Premji Foundation\n10     CC-TE-RJ-BAR           Tribal Education          Barmer  Rajasthan     Educate India CSR Trust\n11     cc-te-jh-wes           Tribal Education  West Singhbhum  Jharkhand             Samagra Shiksha\n12    CC-WS-OD-GAN        Water and Sanitation          Ganjam     Odisha          Jal Jeevan Mission\n13     CC-WS-KA-RAI       Water and Sanitation         Raichur  Karnataka          Infosys Foundation\n14     CC-WS-RJ-BAR       Water and Sanitation          Barmer  Rajasthan          Jal Jeevan Mission\n15     CC-WS-JH-WES       Water and Sanitation  West Singhbhum  Jharkhand              WaterAid India\n16     CC-NS-OD-GAN         Nutrition Security          Ganjam     Odisha             POSHAN Abhiyaan\n17     CC-NS-KA-KOP         Nutrition Security          Koppal  Karnataka              Tata CSR Trust\n18     cc-ns-rj-bar         Nutrition Security          Barmer  Rajasthan        World Food Programme\n19     CC-NS-JH-DUM         Nutrition Security           Dumka  Jharkhand             POSHAN Abhiyaan\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Field Expenses', header=4); print(df.shape); print(df['Amount (INR)'].head(20).tolist())\\\"\"",
+   "output": "(12012, 7)\n[57600, 3100, 236500, 15400, 54300, 23400, 92300, 131400, '\u20b92,000', 64000, 2300, 128100, 138800, '77,600', 338800, 4200, 5100, '\u20b95,40,200', 38900, 335700]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Salary Register', header=5); print(df.shape); print(df['Gross Salary (INR)'].head(20).tolist())\\\"\"",
+   "output": "(8009, 7)\n[82000, 34900, 102300, 88200, 88600, '\u20b980,900', 63000, 60300, 81700, 77800, '27,400', 65100, 63800, 32900, '\u20b973,300', 41400, 78900, 38500, 35000, 38000]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'; df=pd.read_excel(f, sheet_name='Field Expenses', header=None, nrows=10); print(df.to_string(index=False, header=False))\\\"\"",
+   "output": "                                                                  Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26                 NaN          NaN                NaN                        NaN          NaN            NaN\nUse only transaction IDs beginning FE-. Posting status and cost-centre codes may have inconsistent case or surrounding spaces.                 NaN          NaN                NaN                        NaN          NaN            NaN\n                                                                                                Prepared by Finance Operations                 NaN          NaN                NaN                        NaN          NaN            NaN\n                                                                                                                           NaN                 NaN          NaN                NaN                        NaN          NaN            NaN\n                                                                                                                Transaction ID    Transaction Date  Cost Centre       Expense Head             Vendor / Payee Amount (INR) Posting Status\n                                                                                                                     FE-000001 2026-01-05 00:00:00 CC-CR-JH-WES   Monitoring visit     Maa Tarini Enterprises        57600         Posted\n                                                                                                                     FE-000002 2026-02-12 00:00:00 CC-RL-OD-MAY       Field travel Bharat Training Associates         3100           Void\n                                                                                                                     FE-000003 2025-09-03 00:00:00 CC-CR-KA-RAI   Medical supplies   District Resource Centre       236500         Posted\n                                                                                                                     FE-000004 2026-02-24 00:00:00 CC-TE-RJ-BAR       Field travel           Kaveri Logistics        15400         Posted\n                                                                                                                     FE-000005 2026-02-28 00:00:00 CC-WS-JH-WES Community training           Kaveri Logistics        54300         Posted\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\n\nlookup = pd.read_excel(f, sheet_name='Cost Centre Lookup', header=3)\n# normalize codes\nlookup['norm_code'] = lookup['Cost Centre Code'].astype(str).str.strip().str.lower()\nlookup_map = {row.norm_code: row['Programme'] for _, row in lookup.iterrows()}\nvalid_codes = set(lookup_map.keys())\n\ndef parse_money(x):\n    if pd.isna(x):\n        return 0.0\n    s = str(x)\n    # remove \u20b9 , commas\n    s = s.replace('\u20b9','').replace(',','').strip()\n    # maybe spaces\n    try:\n        return float(s)\n    except:\n        return 0.0\n\nfield = pd.read_excel(f, sheet_name='Field Expenses', header=4)\nfield['norm_cc'] = field['Cost Centre'].astype(str).str.strip().str.lower()\nfield['status_norm'] = field['Posting Status'].astype(str).str.strip().str.lower()\nfield = field[field['status_norm']=='posted']\nfield = field[field['norm_cc'].isin(valid_codes)]\nfield['amount'] = field['Amount (INR)'].apply(parse_money)\n# map programme\nfield['programme'] = field['norm_cc'].map(lookup_map)\nfield_rl = field[field['programme'].str.lower()=='rural livelihoods']\nfield_sum = field_rl['amount'].sum()\n\nsalary = pd.read_excel(f, sheet_name='Salary Register', header=5)\nsalary['norm_cc'] = salary['Cost Centre'].astype(str).str.strip().str.lower()\nsalary['status_norm'] = salary['Payroll Status'].astype(str).str.strip().str.lower()\nsalary = salary[salary['status_norm']=='paid']\nsalary = salary[salary['norm_cc'].isin(valid_codes)]\nsalary['amount'] = salary['Gross Salary (INR)'].apply(parse_money)\nsalary['programme'] = salary['norm_cc'].map(lookup_map)\nsalary_rl = salary[salary['programme'].str.lower()=='rural livelihoods']\nsalary_sum = salary_rl['amount'].sum()\n\ntotal = field_sum + salary_sum\nperc = salary_sum/total*100 if total>0 else 0\nprint('field_sum',field_sum)\nprint('salary_sum',salary_sum)\nprint('total',total)\nprint('perc',perc)\nPY\"",
+   "output": "field_sum 206070700.0\nsalary_sum 83147000.0\ntotal 289217700.0\nperc 28.748932032859674\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nlookup=pd.read_excel(f, sheet_name='Cost Centre Lookup', header=3)\nrl=lookup[lookup['Programme'].str.lower()=='rural livelihoods']\nprint(rl[['Cost Centre Code']].to_string(index=False))\nPY\"",
+   "output": "Cost Centre Code\n    cc-rl-od-may\n    CC-RL-KA-KOP\n    CC-RL-RJ-BAR\n   cc-rl-jh-dum \n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nfield['norm']=field['Cost Centre'].astype(str).str.strip().str.lower()\ncodes=['cc-rl-od-may','cc-rl-ka-kop','cc-rl-rj-bar','cc-rl-jh-dum']\nprint(field[field['norm'].isin(codes)].shape)\nPY\"",
+   "output": "(1990, 8)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\ndf=pd.read_excel(f, sheet_name='Field Expenses', header=None)\nprint(df.shape)\nprint(df.iloc[4].tolist())\nPY\"",
+   "output": "(12017, 7)\n['Transaction ID', 'Transaction Date', 'Cost Centre', 'Expense Head', 'Vendor / Payee', 'Amount (INR)', 'Posting Status']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nprint(field['Expense Head'].unique()[:50])\nPY\"",
+   "output": "<StringArray>\n[    'Monitoring visit',         'Field travel',     'Medical supplies',\n   'Community training',     'School materials', 'Water infrastructure',\n                    nan,         'Expense Head']\nLength: 8, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, re\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nlookup=pd.read_excel(f, sheet_name='Cost Centre Lookup', header=3)\nlookup['norm_code']=lookup['Cost Centre Code'].astype(str).str.strip().str.lower()\nlookup_map=dict(zip(lookup['norm_code'], lookup['Programme']))\nvalid=set(lookup_map.keys())\n\ndef parse_money(x):\n    if pd.isna(x): return 0\n    s=str(x)\n    s=re.sub(r'[\u20b9,]', '', s)\n    s=s.strip()\n    try: return float(s)\n    except: return 0\n\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nfield['norm_cc']=field['Cost Centre'].astype(str).str.strip().str.lower()\nfield['status']=field['Posting Status'].astype(str).str.strip().str.lower()\nfield=field[field['status']=='posted']\nfield=field[field['norm_cc'].isin(valid)]\nfield['amt']=field['Amount (INR)'].apply(parse_money)\nfield['prog']=field['norm_cc'].map(lookup_map)\nfield_rl=field[field['prog'].str.lower()=='rural livelihoods']\nfield_sum=field_rl['amt'].sum()\n\nsalary=pd.read_excel(f, sheet_name='Salary Register', header=5)\nsalary['norm_cc']=salary['Cost Centre'].astype(str).str.strip().str.lower()\nsalary['status']=salary['Payroll Status'].astype(str).str.strip().str.lower()\nsalary=salary[salary['status']=='paid']\nsalary=salary[salary['norm_cc'].isin(valid)]\nsalary['amt']=salary['Gross Salary (INR)'].apply(parse_money)\nsalary['prog']=salary['norm_cc'].map(lookup_map)\nsalary_rl=salary[salary['prog'].str.lower()=='rural livelihoods']\nsalary_sum=salary_rl['amt'].sum()\n\nperc=salary_sum/(field_sum+salary_sum)*100\nprint(field_sum, salary_sum, perc)\nPY\"",
+   "output": "206070700.0 83147000.0 28.748932032859674\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nheads=field['Expense Head'].dropna().unique()\nprint(len(heads))\nprint(sorted(heads))\nPY\"",
+   "output": "7\n['Community training', 'Expense Head', 'Field travel', 'Medical supplies', 'Monitoring visit', 'School materials', 'Water infrastructure']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nvals=field['Cost Centre'].astype(str).unique()\nspaces=[v for v in vals if v\"'!=v.strip()]\nprint('\"'with spaces', len(spaces))\nprint(spaces[:10])\nPY\"",
+   "output": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAttributeError: 'float' object has no attribute 'strip'\n",
+   "exit_code": 1
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nvals=field['Cost Centre'].astype(object)\nspaces=[]\nfor v in vals.unique():\n    if isinstance(v,str) and v\"'!=v.strip():\n        spaces.append(v)\nprint('\"'with spaces', len(spaces))\nprint(spaces[:10])\nPY\"",
+   "output": "with spaces 63\n['CC-CR-KA-RAI ', ' cc-mch-jh-dum ', 'CC-WS-RJ-BAR ', 'CC-NS-OD-GAN ', ' cc-cr-jh-wes ', 'CC-WS-KA-RAI ', ' cc-rl-rj-bar ', 'CC-RL-KA-KOP ', ' cc-ws-rj-bar ', 'CC-TE-OD-MAY ']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nsal=pd.read_excel(f, sheet_name='Salary Register', header=5)\nvals=sal['Cost Centre'].astype(object)\nspaces=[v for v in vals.unique() if isinstance(v,str) and v\"'!=v.strip()]\nprint('\"'with spaces', len(spaces))\nprint(spaces[:10])\nPY\"",
+   "output": "with spaces 62\n['CC-WS-JH-WES ', ' cc-ws-rj-bar ', 'CC-NS-OD-GAN ', 'CC-WS-OD-GAN ', ' cc-cr-od-kor ', 'CC-NS-RJ-BAR ', ' cc-rl-od-may ', 'CC-NS-KA-KOP ', ' cc-cr-jh-wes ', 'CC-WS-KA-RAI ']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nf='/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws/national_programme_ledger.xlsx'\nfield=pd.read_excel(f, sheet_name='Field Expenses', header=4)\nprint(field['Posting Status'].unique()[:20])\nsal=pd.read_excel(f, sheet_name='Salary Register', header=5)\nprint(sal['Payroll Status'].unique()[:20])\nPY\"",
+   "output": "<StringArray>\n[        'Posted',           'Void',          'Draft',         'POSTED',\n       ' posted ',           'VOID',         ' void ',        ' draft ',\n          'DRAFT',              nan, 'Posting Status']\nLength: 11, dtype: str\n<StringArray>\n[          'Paid',           'PAID',         ' paid ',           'Held',\n       'Reversed',       'REVERSED',           'HELD',         ' held ',\n              nan, 'Payroll Status',     ' reversed ']\nLength: 11, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nfrom fractions import Fraction\nnum=83147000\nden=289217700\nprint(float(num/den*100))\nprint(Fraction(num,den*100))\nPY\"",
+   "output": "28.748932032859674\n83147/28921770\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 471378,
+  "output": 6413
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 6,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "For Rural Livelihoods, what percentage of its combined eligible amount comes from the salary register? Return a percentage from 0 to 100. Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+ "trap": "Dividing salary spend by the whole ledger instead of Rural Livelihoods spend.",
+ "text": "The Rural Livelihoods cost-centres in the lookup are `cc-rl-od-may`, `CC-RL-KA-KOP`, `CC-RL-RJ-BAR` and `cc-rl-jh-dum`. After normalising cost-centre codes, keeping only Posted field expenses and Paid salary lines, and excluding unmapped codes:\n\n- Field Expenses eligible total for Rural Livelihoods: 206,070,700 INR\n- Salary Register eligible total for Rural Livelihoods: 83,147,000 INR\n- Combined eligible amount: 289,217,700 INR\n\nSalary share = 83,147,000 / 289,217,700 \u00d7 100 \u2248 28.75 %\n\nANSWER: 28.748932032859674",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "national_programme_ledger.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:45:04.157700Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

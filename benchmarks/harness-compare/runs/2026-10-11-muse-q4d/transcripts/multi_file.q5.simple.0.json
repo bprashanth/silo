@@ -1,0 +1,69 @@
+{
+ "job": "multi_file.q5.simple.0",
+ "case": "multi_file",
+ "q": "q5",
+ "harness": "simple",
+ "trial": 0,
+ "want": 77.37,
+ "got": "77.37",
+ "verdict": "correct",
+ "seconds": 336.3,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\n# Load beneficiaries CSV from the data provided? The file is in /data? The user attached beneficiaries.csv as text. But we have file? Probably beneficiaries.csv is in /data? The prompt says attached file: beneficiaries.csv. Might be not saved? Could be we need to read from the text? Better to assume beneficiaries.csv is available at /data/beneficiaries.csv? The instruction says files are in /data: beneficiaries.csv, payments.xlsx. So let's try read /data/beneficiaries.csv\n\nbeneficiaries_path = '/data/beneficiaries.csv'\npayments_path = '/data/payments.xlsx'\n\n# Load beneficiaries\nbeneficiaries = pd.read_csv(beneficiaries_path)\nprint('beneficiaries shape', beneficiaries.shape)\nprint(beneficiaries.head())\n\n# Load payments sheet Disbursements\npayments = pd.read_excel(payments_path, sheet_name='Disbursements')\nprint('payments shape', payments.shape)\nprint(payments.head())\n\n# Clean column names\n# Find Beneficiary ID column\n# Let's inspect columns\nprint('payments columns:', payments.columns.tolist())\n\n# Normalize\n# Ensure Beneficiary ID column exists\n# Trim whitespace\ndef clean_str(s):\n    if pd.isna(s):\n        return s\n    return str(s).strip()\n\n# Clean status\npayments['Status_clean'] = payments['Status'].apply(lambda x: clean_str(x).lower() if pd.notna(x) else '')\npayments['Beneficiary ID_clean'] = payments['Beneficiary ID'].apply(lambda x: clean_str(x) if pd.notna(x) else '')\n\nbeneficiary_ids_set = set(beneficiaries['Beneficiary ID'].astype(str).str.strip())\n\n# Filter\nmask = payments['Beneficiary ID_clean'].isin(beneficiary_ids_set) & (payments['Status_clean'] == 'paid')\nfiltered = payments[mask]\n\nunique_beneficiaries_paid = set(filtered['Beneficiary ID_clean'].unique())\ntotal_beneficiaries = len(beneficiary_ids_set)\nnum_paid = len(unique_beneficiaries_paid)\n\npercentage = (num_paid / total_beneficiaries * 100) if total_beneficiaries else 0\nprint('total beneficiaries', total_beneficiaries)\nprint('unique with paid', num_paid)\nprint('percentage', percentage)\n",
+   "output": "beneficiaries shape (760, 8)\n  Beneficiary ID      Full Name  ...         Programme Enrolment Date\n0      BEN-00001  Lakshmi Barla  ...  Girls' Education     2025-05-31\n1      BEN-00002    Aarav Majhi  ...       Livelihoods     2024-08-14\n2      BEN-00003      Geeta Das  ...       Livelihoods     2025-01-29\n3      BEN-00004    Imran Patil  ...    Water Security     2024-08-02\n4      BEN-00005   Sunita Oraon  ...       Livelihoods     2025-05-09\n\n[5 rows x 8 columns]\npayments shape (1434, 7)\n  Jan Kalyan Programme \u2014 Beneficiary Disbursement Register  ... Unnamed: 6\n0  Join Beneficiary ID to beneficiaries.csv; unma...        ...        NaN\n1  FY 2025\u201326 | Status and amount cells retain fi...        ...        NaN\n2                                                NaN        ...        NaN\n3                                         Payment ID        ...     Status\n4                                     PMT-2025-00001        ...       Paid\n\n[5 rows x 7 columns]\npayments columns: ['Jan Kalyan Programme \u2014 Beneficiary Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n\n[stderr]\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3805, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"index.pyx\", line 167, in pandas._libs.index.IndexEngine.get_loc\n  File \"index.pyx\", line 196, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Status'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<stdin>\", line 33, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 4102, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3812, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Status'\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\n# Read raw without header to inspect\nraw = pd.read_excel(payments_path, sheet_name='Disbursements', header=None)\nprint(raw.head(10))\n",
+   "output": "                                                   0  ...       6\n0  Jan Kalyan Programme \u2014 Beneficiary Disbursemen...  ...     NaN\n1  Join Beneficiary ID to beneficiaries.csv; unma...  ...     NaN\n2  FY 2025\u201326 | Status and amount cells retain fi...  ...     NaN\n3                                                NaN  ...     NaN\n4                                         Payment ID  ...  Status\n5                                     PMT-2025-00001  ...    Paid\n6                                     PMT-2025-00002  ...    Paid\n7                                     PMT-2025-00003  ...    Paid\n8                                     PMT-2025-00004  ...  Failed\n9                                     PMT-2025-00005  ...    paid\n\n[10 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\npayments = pd.read_excel(payments_path, sheet_name='Disbursements', header=4)\nprint(payments.columns.tolist())\nprint(payments.head(10))\n",
+   "output": "['Payment ID', 'Beneficiary ID', 'Payment Date', 'Tranche', 'Donor', 'Amount (INR)', 'Status']\n       Payment ID Beneficiary ID  ... Amount (INR)  Status\n0  PMT-2025-00001      BEN-00001  ...         4000    Paid\n1  PMT-2025-00002      BEN-00001  ...         5000    Paid\n2  PMT-2025-00003      BEN-00003  ...        10000    Paid\n3  PMT-2025-00004      BEN-00003  ...         4000  Failed\n4  PMT-2025-00005      BEN-00005  ...         2500    paid\n5  PMT-2025-00006      BEN-00005  ...         2500    Paid\n6  PMT-2025-00007      BEN-00005  ...         5000    Paid\n7  PMT-2025-00008      BEN-00006  ...      \u20b920,000    Paid\n8  PMT-2025-00009      BEN-00006  ...        10000   PAID \n9  PMT-2025-00010      BEN-00007  ...         4000    paid\n\n[10 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nbeneficiaries_path = '/data/beneficiaries.csv'\npayments_path = '/data/payments.xlsx'\n\nbeneficiaries = pd.read_csv(beneficiaries_path)\npayments = pd.read_excel(payments_path, sheet_name='Disbursements', header=4)\n\n# Ensure columns\n# Clean Beneficiary ID\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\nbeneficiary_ids = set(beneficiaries['Beneficiary ID'].unique())\n\n# Clean payments\npayments['Beneficiary ID'] = payments['Beneficiary ID'].astype(str).str.strip()\npayments['Status'] = payments['Status'].astype(str).str.strip().str.lower()\n\n# Filter status paid and beneficiary exists\nmask = (payments['Status'] == 'paid') & (payments['Beneficiary ID'].isin(beneficiary_ids))\nfiltered = payments[mask]\n\nunique_paid_beneficiaries = set(filtered['Beneficiary ID'].unique())\n\ntotal_beneficiaries = len(beneficiary_ids)\nnum_paid = len(unique_paid_beneficiaries)\n\npercentage = (num_paid / total_beneficiaries * 100) if total_beneficiaries else 0\nprint('total_beneficiaries', total_beneficiaries)\nprint('unique_paid', num_paid)\nprint('percentage', percentage)\n\n# Also check for duplicate beneficiary IDs in CSV\nprint('duplicate beneficiary IDs in CSV?', beneficiaries['Beneficiary ID'].duplicated().any())\n",
+   "output": "total_beneficiaries 760\nunique_paid 588\npercentage 77.36842105263158\nduplicate beneficiary IDs in CSV? False\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\npayments_path = '/data/payments.xlsx'\npayments = pd.read_excel(payments_path, sheet_name='Disbursements', header=4)\nprint(payments.shape)\nprint(payments['Beneficiary ID'].isna().sum())\nprint(payments['Status'].unique()[:20])\n",
+   "output": "(1430, 7)\n7\n['Paid' 'Failed' 'paid' ' PAID ' 'failed' ' FAILED ' nan]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nbeneficiaries = pd.read_csv('/data/beneficiaries.csv')\npayments = pd.read_excel('/data/payments.xlsx', sheet_name='Disbursements', header=4)\n\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\npayments['Beneficiary ID'] = payments['Beneficiary ID'].astype(str).str.strip()\npayments['Status'] = payments['Status'].astype(str).str.strip().str.lower()\n\nbeneficiary_set = set(beneficiaries['Beneficiary ID'])\nmask = payments['Status']=='paid' and payments['Beneficiary ID'].isin(beneficiary_set)\n# Actually compute properly\nmask = (payments['Status']=='paid') & payments['Beneficiary ID'].isin(beneficiary_set)\nfiltered = payments[mask]\nprint(filtered.shape)\nprint(filtered['Beneficiary ID'].nunique())\n# Check any payment with beneficiary not in set\nnot_in = payments[~payments['Beneficiary ID'].isin(beneficiary_set)]\nprint('payments with beneficiary not in csv:', not_in.shape[0])\npaid_not_in = not_in[not_in['Status'].str.lower()=='paid']\nprint('paid not in csv:', paid_not_in.shape[0])\n",
+   "output": "\n[stderr]\nTraceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/generic.py\", line 1577, in __nonzero__\n    raise ValueError(\nValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nbeneficiaries = pd.read_csv('/data/beneficiaries.csv')\npayments = pd.read_excel('/data/payments.xlsx', sheet_name='Disbursements', header=4)\n\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\npayments['Beneficiary ID'] = payments['Beneficiary ID'].astype(str).str.strip()\npayments['Status'] = payments['Status'].astype(str).str.strip().str.lower()\n\nbeneficiary_set = set(beneficiaries['Beneficiary ID'])\nmask = (payments['Status']=='paid') & payments['Beneficiary ID'].isin(beneficiary_set)\nfiltered = payments[mask]\nprint('filtered rows', filtered.shape[0])\nprint('unique beneficiaries with paid', filtered['Beneficiary ID'].nunique())\n\n# payments not in csv\nnot_in = payments[~payments['Beneficiary ID'].isin(beneficiary_set)]\nprint('payments with beneficiary not in csv total', not_in.shape[0])\nprint('paid with beneficiary not in csv', (not_in['Status']=='paid').sum())\n",
+   "output": "filtered rows 1150\nunique beneficiaries with paid 588\npayments with beneficiary not in csv total 99\npaid with beneficiary not in csv 74\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nbeneficiaries = pd.read_csv('/data/beneficiaries.csv')\npayments = pd.read_excel('/data/payments.xlsx', sheet_name='Disbursements', header=4)\n\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\npayments['Beneficiary ID'] = payments['Beneficiary ID'].astype(str).str.strip()\npayments['Status'] = payments['Status'].astype(str).str.strip().str.lower()\n\n# Filter payments\npaid_payments = payments[payments['Status']=='paid']\n# Keep only those with beneficiary in CSV\npaid_valid = paid_payments[paid_payments['Beneficiary ID'].isin(beneficiaries['Beneficiary ID'])]\nunique_ids = paid_valid['Beneficiary ID'].unique()\nprint(len(unique_ids))\nprint(len(beneficiaries))\nprint((len(unique_ids)/len(beneficiaries))*100)\n",
+   "output": "588\n760\n77.36842105263158\n"
+  }
+ ],
+ "usage": {
+  "input": 255900,
+  "output": 4903
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 7,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. What percentage of all beneficiaries listed in the CSV received at least one such paid payment? Round to two decimal places.",
+ "trap": "The denominator is all CSV beneficiaries, not payment rows or only recipients.",
+ "text": "Total beneficiaries in beneficiaries.csv: 760  \nBeneficiaries with at least one paid disbursement after trimming whitespace, ignoring case for status, and excluding IDs not in the CSV: 588  \n\n588 / 760 \u00d7 100 = 77.3684210526 % \u2192 77.37 %\n\nANSWER: 77.37",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/multi_file.q5.simple.0"
+}

@@ -1,0 +1,44 @@
+{
+ "job": "clean.total_spend.simple.0",
+ "case": "clean",
+ "q": "total_spend",
+ "harness": "simple",
+ "trial": 0,
+ "want": 39794400,
+ "got": "39794400",
+ "verdict": "correct",
+ "seconds": 123.1,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "import pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Read Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Ensure Amount column exists\nprint(df.columns.tolist())\ntotal_spend = df['Amount (INR)'].sum()\nprint(total_spend)\n# Also print number of rows for sanity\nprint(len(df))\n",
+   "output": "['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n39794400\n314\n"
+  },
+  {
+   "kind": "python",
+   "input": "import pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nprint(df['Category'].value_counts())\nprint(df.groupby('Category')['Amount (INR)'].sum())\n",
+   "output": "Category\nProgram        242\nAdmin           36\nFundraising     36\nName: count, dtype: int64\nCategory\nAdmin           5238900\nFundraising     2893900\nProgram        31661600\nName: Amount (INR), dtype: int64\n"
+  },
+  {
+   "kind": "python",
+   "input": "import pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Ensure numeric\ndf['Amount (INR)'] = pd.to_numeric(df['Amount (INR)'], errors='coerce')\ntotal = df['Amount (INR)'].sum(skipna=True)\nprint(total)\nprint(type(total))\n",
+   "output": "39794400\n<class 'numpy.int64'>\n"
+  }
+ ],
+ "usage": {
+  "input": 6988,
+  "output": 1597
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 8,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total spend across all transactions (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 314 rows. Summing the `Amount (INR)` column across all categories gives:\n\n* Program: 31,661,600 INR\n* Admin: 5,238,900 INR\n* Fundraising: 2,893,900 INR\n\nTotal spend = 31,661,600 + 5,238,900 + 2,893,900 = 39,794,400 INR.\n\nANSWER: 39794400",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.total_spend.simple.0"
+}

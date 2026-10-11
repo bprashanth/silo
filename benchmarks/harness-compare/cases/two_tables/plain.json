@@ -1,0 +1,12 @@
+[
+ {
+  "id": "q1_plain",
+  "of": "q1",
+  "question": "What is the total approved FY 2025-26 budget, in INR?"
+ },
+ {
+  "id": "q5_plain",
+  "of": "q5",
+  "question": "What percentage of the approved budget have we received from donors so far? Round to two decimals."
+ }
+]

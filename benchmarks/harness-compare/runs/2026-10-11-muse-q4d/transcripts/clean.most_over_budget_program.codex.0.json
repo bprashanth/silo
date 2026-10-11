@@ -1,0 +1,76 @@
+{
+ "job": "clean.most_over_budget_program.codex.0",
+ "case": "clean",
+ "q": "most_over_budget_program",
+ "harness": "codex",
+ "trial": 0,
+ "want": "Maternal & Child Health",
+ "got": "Maternal & Child Health",
+ "verdict": "correct",
+ "seconds": 70.7,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 24\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 15:45 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='asha_ngo_finances_FY25-26.xlsx'; xl=pd.ExcelFile(f); print(xl.sheet_names)\\\"\"",
+   "output": "['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "                     Program  ...  Beneficiaries reached\n0        Education (Shiksha)  ...                 4025.0\n1    Maternal & Child Health  ...                 2570.0\n2  Water & Sanitation (WASH)  ...                10754.0\n3        Women's Livelihoods  ...                 1684.0\n4            Disaster Relief  ...                 2074.0\n\n[5 rows x 4 columns]\n['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.to_string())\\\"\"",
+   "output": "                           Program  Annual budget (INR)  Beneficiaries target  Beneficiaries reached\n0              Education (Shiksha)              9600000                4200.0                 4025.0\n1          Maternal & Child Health              8400000                3100.0                 2570.0\n2        Water & Sanitation (WASH)              6000000               12000.0                10754.0\n3              Women's Livelihoods              5400000                1800.0                 1684.0\n4                  Disaster Relief              2400000                2500.0                 2074.0\n5        Admin (organisation-wide)              5200000                   NaN                    NaN\n6  Fundraising (organisation-wide)              2600000                   NaN                    NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; trans=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); bud=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); spend=trans.groupby('Program')['Amount (INR)'].sum().reset_index(); merged=spend.merge(bud[['Program','Annual budget (INR)']], on='Program', how='inner'); merged['diff']=merged['Amount (INR)']-merged['Annual budget (INR)']; print(merged); print('max', merged.loc[merged['diff'].idxmax()])\\\"\"",
+   "output": "                     Program  Amount (INR)  Annual budget (INR)     diff\n0            Disaster Relief       2807100              2400000   407100\n1        Education (Shiksha)       8370800              9600000 -1229200\n2    Maternal & Child Health       9229600              8400000   829600\n3  Water & Sanitation (WASH)       5402400              6000000  -597600\n4        Women's Livelihoods       5851700              5400000   451700\nmax Program                Maternal & Child Health\nAmount (INR)                           9229600\nAnnual budget (INR)                    8400000\ndiff                                    829600\nName: 2, dtype: object\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 91870,
+  "output": 1345
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 3,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Program with the largest spend minus annual budget, in INR (exact name)",
+ "trap": "",
+ "text": "The total spend per program from Transactions was compared with the Annual budget (INR) from Budget vs Actual.\n\n- Maternal & Child Health spent 9,229,600 INR against a budget of 8,400,000 INR, a difference of 829,600 INR.\n- This is the largest spend minus budget among all programs.\n\nANSWER: Maternal & Child Health",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.most_over_budget_program.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:15:05.533587Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

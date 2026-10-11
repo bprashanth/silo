@@ -1,0 +1,12 @@
+[
+ {
+  "id": "q1_plain",
+  "of": "q1",
+  "question": "What is the total disbursed amount, in INR?"
+ },
+ {
+  "id": "q2_plain",
+  "of": "q2",
+  "question": "How much was disbursed to Maternal & Child Health from April to June 2025?"
+ }
+]

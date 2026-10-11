@@ -1,0 +1,34 @@
+{
+ "job": "clean.total_spend.simple.1",
+ "case": "clean",
+ "q": "total_spend",
+ "harness": "simple",
+ "trial": 1,
+ "want": 39794400,
+ "got": "39794400",
+ "verdict": "correct",
+ "seconds": 38.5,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "import pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Read Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Ensure Amount column is numeric\ntotal_spend = df['Amount (INR)'].sum()\nprint(total_spend)\n# Also print number of rows for sanity\nprint('rows', len(df))\n",
+   "output": "39794400\nrows 314\n"
+  }
+ ],
+ "usage": {
+  "input": 3117,
+  "output": 725
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total spend across all transactions (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 314 records. Summing the **Amount (INR)** column gives a total spend of 39,794,400 INR for the transactions recorded so far.\n\nANSWER: 39794400",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.total_spend.simple.1"
+}

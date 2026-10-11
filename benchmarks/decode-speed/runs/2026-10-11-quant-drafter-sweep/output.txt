@@ -1,0 +1,18 @@
+Q8+draft       ALL     2870 tok    21.3 tok/s
+--> idli+h: 22/22 correct (100%)
+Q8+draft eval wall 1270s
+
+Q4             ALL     2912 tok    12.8 tok/s
+--> idli+h: 22/22 correct (100%)
+Q4 eval wall 2061s
+
+Q4+draft       ALL     2877 tok    35.5 tok/s
+--> idli+h: 22/22 correct (100%)
+Q4+draft eval wall 937s
+
+Q6+draft       ALL     2973 tok    22.9 tok/s
+--> idli+h: 22/22 correct (100%)
+Q6+draft eval wall 1298s
+
+
+[exited with code 0]

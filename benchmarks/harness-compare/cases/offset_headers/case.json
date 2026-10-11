@@ -1,0 +1,57 @@
+{
+  "id": "offset_headers",
+  "description": "A wide programme-by-month workbook with three note rows, merged two-level quarter headers, mixed zero markers, and a portfolio summary.",
+  "files": [
+    "programme_monthly_spend.xlsx"
+  ],
+  "questions": [
+    {
+      "id": "q1",
+      "question": "Using only the programme detail rows (not the PORTFOLIO TOTAL row), what was total spend from April through September 2025, in INR? Treat '-', '–', and blanks as zero.",
+      "answer": 54014000,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "The title rows and two header levels offset the table, while including PORTFOLIO TOTAL doubles the result."
+    },
+    {
+      "id": "q2",
+      "question": "For programme rows whose Lead State is Maharashtra, what was total Q1 FY 2025–26 spend (April, May, and June), in INR? Treat '-', '–', and blanks as zero.",
+      "answer": 9266500,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "A flat one-row header import can lose the quarter-to-month relationship or mistake notes for headers."
+    },
+    {
+      "id": "q3",
+      "question": "How many programme detail rows reported spending greater than zero in August 2025? Treat '-', '–', and blanks as zero and exclude PORTFOLIO TOTAL.",
+      "answer": 11,
+      "kind": "number",
+      "tol_pct": 0.0,
+      "trap": "Counting the summary row or nonnumeric zero markers inflates the programme count."
+    },
+    {
+      "id": "q4",
+      "question": "Which programme had the highest total spend across April through September 2025? Use programme detail rows only and treat '-', '–', and blanks as zero.",
+      "answer": "Jal Jeevan Saathi",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "The merged quarter headers can shift month columns if they are read as an ordinary single header row."
+    },
+    {
+      "id": "q5",
+      "question": "What percentage of total April–September spend occurred in Q2 FY 2025–26 (July, August, and September)? Use detail rows only, treat zero markers as zero, and report to two decimal places.",
+      "answer": 49.52,
+      "kind": "number",
+      "tol_pct": 0.01,
+      "trap": "Using the displayed row totals together with month values doubles the denominator."
+    },
+    {
+      "id": "q6",
+      "question": "Which Funding Partner supported the highest combined April–September spend across its programme detail rows? Treat zero markers as zero and exclude PORTFOLIO TOTAL.",
+      "answer": "Global Health Access Fund",
+      "kind": "name",
+      "tol_pct": 0.0,
+      "trap": "Reading from row 1 or grouping the portfolio summary as a programme obscures the funding-partner totals."
+    }
+  ]
+}

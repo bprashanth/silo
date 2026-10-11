@@ -1,0 +1,8 @@
+model = "muse-glimmer-30b"
+model_provider = "idli"
+approval_policy = "never"
+sandbox_mode = "workspace-write"
+[model_providers.idli]
+name = "idli local"
+base_url = "http://127.0.0.1:8181/v1"
+wire_api = "responses"

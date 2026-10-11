@@ -1,0 +1,106 @@
+{
+ "job": "mixed_units.q4.codex.0",
+ "case": "mixed_units",
+ "q": "q4",
+ "harness": "codex",
+ "trial": 0,
+ "want": "National Health Mission",
+ "got": "National Health Mission",
+ "verdict": "correct",
+ "seconds": 136.4,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 16\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 16:14 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='mixed_units_register.xlsx'; xls=pd.ExcelFile(f); print(xls.sheet_names)\\\"\"",
+   "output": "['Disbursement Register']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register'); print(df.head(20).to_string()); print(df.columns.tolist())\\\"\"",
+   "output": "   Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                 Unnamed: 1               Unnamed: 2 Unnamed: 3                             Unnamed: 4 Unnamed: 5              Unnamed: 6\n0                                          Amount note:  Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                      NaN        NaN                                    NaN        NaN                     NaN\n1                                            Date note:                                               Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                      NaN        NaN                                    NaN        NaN                     NaN\n2                                         Prepared for:                                                                Programme management review \u2014 31 March 2026                      NaN        NaN                                    NaN        NaN                     NaN\n3                                                   NaN                                                                                                        NaN                      NaN        NaN                                    NaN        NaN                     NaN\n4                                             Record ID                                                                                          Disbursement Date                Programme      State                         Donor / Scheme     Amount                 Purpose\n5                                               MU-0001                                                                                                 2025-04-03  Maternal & Child Health  Karnataka  Azim Premji Philanthropic Initiatives     340000      Field team support\n6                                               MU-0002                                                                                                 03/04/2025        Rural Livelihoods  Rajasthan                National Health Mission  \u20b91,20,000  Community mobilisation\n7                                               MU-0003                                                                                                 3 Apr 2025  Maternal & Child Health  Jharkhand                         Tata CSR Trust      1.2 L   Equipment procurement\n8                                               MU-0004                                                                                                 2025-08-01  Maternal & Child Health  Rajasthan            Global Community Foundation   2.5 lakh  Training and workshops\n9                                               MU-0005                                                                                                 28/02/2026         Tribal Education  Rajasthan  Azim Premji Philanthropic Initiatives       1 Cr   Equipment procurement\n10                                              MU-0006                                                                                                18 Jul 2025  Maternal & Child Health  Jharkhand            Global Community Foundation        45k  Direct programme grant\n11                                              MU-0007                                                                                                 2026-02-26        Rural Livelihoods  Karnataka  Azim Premji Philanthropic Initiatives        NaN      Field team support\n12                                              MU-0008                                                                                                 27/02/2026       Water & Sanitation  Karnataka                National Health Mission          -  Direct programme grant\n13                                              MU-0009                                                                                                13 Jul 2025       Water & Sanitation  Rajasthan                National Health Mission        NaN   Equipment procurement\n14                                              MU-0010                                                                                                 2025-07-22       Water & Sanitation     Odisha                National Health Mission      78000   Equipment procurement\n15                                              MU-0011                                                                                                 25/04/2025  Maternal & Child Health  Karnataka            Global Community Foundation  \u20b91,20,000      Field team support\n16                                              MU-0012                                                                                                14 Dec 2025        Rural Livelihoods  Jharkhand  Azim Premji Philanthropic Initiatives      1.2 L      Field team support\n17                                              MU-0013                                                                                                 2025-11-29  Maternal & Child Health  Jharkhand            Global Community Foundation   2.5 lakh   Equipment procurement\n18                                              MU-0014                                                                                                 10/07/2025        Rural Livelihoods  Rajasthan                         Tata CSR Trust       1 Cr  Community mobilisation\n19                                              MU-0015                                                                                                12 Aug 2025         Tribal Education  Karnataka            Global Community Foundation        45k      Field team support\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', skiprows=4); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  Unnamed: 0         Unnamed: 1  ... Unnamed: 5              Unnamed: 6\n0  Record ID  Disbursement Date  ...     Amount                 Purpose\n1    MU-0001         2025-04-03  ...     340000      Field team support\n2    MU-0002         03/04/2025  ...  \u20b91,20,000  Community mobilisation\n3    MU-0003         3 Apr 2025  ...      1.2 L   Equipment procurement\n4    MU-0004         2025-08-01  ...   2.5 lakh  Training and workshops\n\n[5 rows x 7 columns]\n['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=4); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  Unnamed: 0         Unnamed: 1  ... Unnamed: 5              Unnamed: 6\n0  Record ID  Disbursement Date  ...     Amount                 Purpose\n1    MU-0001         2025-04-03  ...     340000      Field team support\n2    MU-0002         03/04/2025  ...  \u20b91,20,000  Community mobilisation\n3    MU-0003         3 Apr 2025  ...      1.2 L   Equipment procurement\n4    MU-0004         2025-08-01  ...   2.5 lakh  Training and workshops\n\n[5 rows x 7 columns]\n['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[4:10])\\\"\"",
+   "output": "           0                  1  ...          5                       6\n4        NaN                NaN  ...        NaN                     NaN\n5  Record ID  Disbursement Date  ...     Amount                 Purpose\n6    MU-0001         2025-04-03  ...     340000      Field team support\n7    MU-0002         03/04/2025  ...  \u20b91,20,000  Community mobilisation\n8    MU-0003         3 Apr 2025  ...      1.2 L   Equipment procurement\n9    MU-0004         2025-08-01  ...   2.5 lakh  Training and workshops\n\n[6 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=5); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n  Record ID Disbursement Date  ...     Amount                 Purpose\n0   MU-0001        2025-04-03  ...     340000      Field team support\n1   MU-0002        03/04/2025  ...  \u20b91,20,000  Community mobilisation\n2   MU-0003        3 Apr 2025  ...      1.2 L   Equipment procurement\n3   MU-0004        2025-08-01  ...   2.5 lakh  Training and workshops\n4   MU-0005        28/02/2026  ...       1 Cr   Equipment procurement\n\n[5 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=5)\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s in ('','-','NA','na','NaN'):\n        return 0\n    # remove rupee symbol and commas\n    s=s.replace('\u20b9','').replace(',','').strip()\n    # handle lakh / L\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*(lakh|L)\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*lakh\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*cr\"'$'\"','',re.I) # placeholder\n    # Cr\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*cr\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*10000000\n    # k\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*k\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*1000\n    # plain number\n    try:\n        return float(s)\n    except:\n        # try extract number\n        m=re.search(r'([0-9]*\\\\.?[0-9]+)', s)\n        if m:\n            return float(m.group(1))\n        return 0\ndf['Amount_num']=df['Amount'].apply(parse_amount)\nprint(df[['Donor / Scheme','Amount','Amount_num']].head(20))\nprint('rows',len(df))\n\\\"\"",
+   "output": "                           Donor / Scheme     Amount  Amount_num\n0   Azim Premji Philanthropic Initiatives     340000    340000.0\n1                 National Health Mission  \u20b91,20,000    120000.0\n2                          Tata CSR Trust      1.2 L    120000.0\n3             Global Community Foundation   2.5 lakh    250000.0\n4   Azim Premji Philanthropic Initiatives       1 Cr  10000000.0\n5             Global Community Foundation        45k     45000.0\n6   Azim Premji Philanthropic Initiatives        NaN         0.0\n7                 National Health Mission          -         0.0\n8                 National Health Mission        NaN         0.0\n9                 National Health Mission      78000     78000.0\n10            Global Community Foundation  \u20b91,20,000    120000.0\n11  Azim Premji Philanthropic Initiatives      1.2 L    120000.0\n12            Global Community Foundation   2.5 lakh    250000.0\n13                         Tata CSR Trust       1 Cr  10000000.0\n14            Global Community Foundation        45k     45000.0\n15            Global Community Foundation        NaN         0.0\n16            Global Community Foundation          -         0.0\n17                         Tata CSR Trust        NaN         0.0\n18                         Tata CSR Trust      78000     78000.0\n19                         Tata CSR Trust  \u20b91,20,000    120000.0\nrows 185\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=5)\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s in ('','-','NA','na','NaN'):\n        return 0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*(lakh|L)\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*lakh\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*cr\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*10000000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*k\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*1000\n    try:\n        return float(s)\n    except:\n        m=re.search(r'([0-9]*\\\\.?[0-9]+)', s)\n        if m:\n            return float(m.group(1))\n        return 0\ndf['Amount_num']=df['Amount'].apply(parse_amount)\ntotals=df.groupby('Donor / Scheme')['Amount_num'].sum().sort_values(ascending=False)\nprint(totals)\n\\\"\"",
+   "output": "Donor / Scheme\nNational Health Mission                  75549000.0\nTata CSR Trust                           64490500.0\nAzim Premji Philanthropic Initiatives    63953000.0\nGlobal Community Foundation              13516000.0\nDonor / Scheme                                  0.0\nName: Amount_num, dtype: float64\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=5); print(df['Donor / Scheme'].isna().sum())\\\"\"",
+   "output": "3\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=5)\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0\n    s=str(v).strip()\n    if s.lower() in ('','-','na','nan'):\n        return 0\n    s=s.replace('\u20b9','').replace(',','').strip()\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*(lakh|L)\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*lakh\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*100000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*cr\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*10000000\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*k\"'$'\"', s, re.I)\n    if m:\n        return float(m.group(1))*1000\n    try:\n        return float(s)\n    except:\n        m=re.search(r'([0-9]*\\\\.?[0-9]+)', s)\n        if m:\n            return float(m.group(1))\n        return 0\ndf['Amount_num']=df['Amount'].apply(parse_amount)\ntotals=df.groupby('Donor / Scheme')['Amount_num'].sum()\nprint(totals.to_dict())\n\\\"\"",
+   "output": "{'Azim Premji Philanthropic Initiatives': 63953000.0, 'Donor / Scheme': 0.0, 'Global Community Foundation': 13516000.0, 'National Health Mission': 75549000.0, 'Tata CSR Trust': 64490500.0}\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 177694,
+  "output": 3078
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 5,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Which donor or scheme has the highest total disbursed amount? Use INR; L/lakh = 100,000, Cr = 10,000,000, k = 1,000, and treat blank, '-' and NA amounts as zero.",
+ "trap": "Comparing formatted amount strings lexicographically.",
+ "text": "The register contains 185 records. After converting L/lakh, Cr and k to rupees and treating blank, \u201c-\u201d and NA as zero, the totals per donor/scheme are:\n\n- National Health Mission \u2013 75,549,000\n- Tata CSR Trust \u2013 64,490,500\n- Azim Premji Philanthropic Initiatives \u2013 63,953,000\n- Global Community Foundation \u2013 13,516,000\n\nNational Health Mission has the highest total disbursed amount.\n\nANSWER: National Health Mission",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q4.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:44:42.771888Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

@@ -1,0 +1,36 @@
+{
+ "job": "clean.largest_funding_gap_funder.simple.1",
+ "case": "clean",
+ "q": "largest_funding_gap_funder",
+ "harness": "simple",
+ "trial": 1,
+ "want": "Azim Premji Foundation",
+ "got": "Azim Premji Foundation",
+ "verdict": "correct",
+ "seconds": 47.9,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\nfunding = pd.read_excel(file_path, sheet_name='Funding')\nprint(funding)\n\n# Compute gap\nfunding['gap'] = funding['Committed FY25-26 (INR)'] - funding['Received to date (INR)']\nprint(funding[['Funder','Committed FY25-26 (INR)','Received to date (INR)','gap']])\nlargest = funding.loc[funding['gap'].idxmax()]\nprint(\"Largest gap funder:\", largest['Funder'], largest['gap'])\n",
+   "output": "Sheets: ['Transactions', 'Budget vs Actual', 'Funding']\n                     Funder           Type  ...  Received to date (INR)  Restricted?\n0         Tata Trusts (CSR)  Corporate CSR  ...                 9902000          Yes\n1    Azim Premji Foundation     Foundation  ...                 4973000          Yes\n2           USAID sub-grant  Institutional  ...                 4804000          Yes\n3         Individual donors     Individual  ...                 2681000           No\n4  Infosys Foundation (CSR)  Corporate CSR  ...                 4390000          Yes\n5          State Govt - NHM     Government  ...                 4186000          Yes\n6     Unrestricted reserves       Internal  ...                 2961000           No\n\n[7 rows x 5 columns]\n                     Funder  ...      gap\n0         Tata Trusts (CSR)  ...  1098000\n1    Azim Premji Foundation  ...  3027000\n2           USAID sub-grant  ...  1696000\n3         Individual donors  ...  1519000\n4  Infosys Foundation (CSR)  ...   610000\n5          State Govt - NHM  ...   314000\n6     Unrestricted reserves  ...    39000\n\n[7 rows x 4 columns]\nLargest gap funder: Azim Premji Foundation 3027000\n"
+  }
+ ],
+ "usage": {
+  "input": 3486,
+  "output": 1044
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 9,
+  "untraced": [
+   8000000.0
+  ],
+  "answer_traced": true,
+  "clean": false
+ },
+ "audit": [],
+ "question": "Funder with the largest committed minus received gap (exact name)",
+ "trap": "",
+ "text": "The Funding sheet shows committed minus received gaps:\n\n- Azim Premji Foundation: 8,000,000 \u2013 4,973,000 = 3,027,000 INR\n- USAID sub-grant: 1,696,000 INR\n- Tata Trusts (CSR): 1,098,000 INR\n- Individual donors: 1,519,000 INR\n- Infosys Foundation (CSR): 610,000 INR\n- State Govt - NHM: 314,000 INR\n- Unrestricted reserves: 39,000 INR\n\nAzim Premji Foundation has the largest committed-received gap.\n\nANSWER: Azim Premji Foundation",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.largest_funding_gap_funder.simple.1"
+}

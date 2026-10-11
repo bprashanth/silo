@@ -1,0 +1,70 @@
+{
+ "job": "two_tables.q3.codex.0",
+ "case": "two_tables",
+ "q": "q3",
+ "harness": "codex",
+ "trial": 0,
+ "want": 5,
+ "got": "5",
+ "verdict": "correct",
+ "seconds": 86.8,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 12\n-rw-rw-r-- 1 beeps beeps 8679 Oct 11 16:58 sahyog_budget_and_receipts.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, sys\npath = 'sahyog_budget_and_receipts.xlsx'\nxls = pd.ExcelFile(path)\nprint('Sheets:', xls.sheet_names)\ndf = pd.read_excel(path, sheet_name='donor-receipts')\nprint(df.head())\nprint(df.columns.tolist())\n# Filter\nmask = df['Donor Type'] == 'Foreign Grant'\ndistinct = df.loc[mask, 'Receipt ID'].nunique()\nprint('Distinct count', distinct)\nPY\"",
+   "output": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\n  File \"/home/beeps/src/github.com/bprashanth/io/app/io/.venv/lib/python3.12/site-packages/pandas/io/excel/_base.py\", line 494, in read_excel\n    data = io.parse(\n           ^^^^^^^^^\n  File \"/home/beeps/src/github.com/bprashanth/io/app/io/.venv/lib/python3.12/site-packages/pandas/io/excel/_base.py\", line 1780, in parse\n    return self._reader.parse(\n           ^^^^^^^^^^^^^^^^^^^\n  File \"/home/beeps/src/github.com/bprashanth/io/app/io/.venv/lib/python3.12/site-packages/pandas/io/excel/_base.py\", line 753, in parse\n    sheet = self.get_sheet_by_name(asheetname)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/beeps/src/github.com/bprashanth/io/app/io/.venv/lib/python3.12/site-packages/pandas/io/excel/_openpyxl.py\", line 589, in get_sheet_by_name\n    self.raise_if_bad_sheet_by_name(name)\n  File \"/home/beeps/src/github.com/bprashanth/io/app/io/.venv/lib/python3.12/site-packages/pandas/io/excel/_base.py\", line 605, in raise_if_bad_sheet_by_name\nSheets: ['Finance FY25-26', 'Read me - notes']\n    raise ValueError(f\"Worksheet named '{name}' not found\")\nValueError: Worksheet named 'donor-receipts' not found\n",
+   "exit_code": 1
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\npath='sahyog_budget_and_receipts.xlsx'\nxls=pd.ExcelFile(path)\nfor s in xls.sheet_names:\n    df=pd.read_excel(path, sheet_name=s)\n    print('===',s,'===')\n    print(df.head())\n    print(df.columns.tolist())\n    print(len(df))\nPY\"",
+   "output": "=== Finance FY25-26 ===\n  SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER  ... Unnamed: 6\n0  FY 2025-26 | Internal management copy | Amount...    ...        NaN\n1                                                NaN    ...        NaN\n2                       A. APPROVED PROGRAMME BUDGET    ...        NaN\n3                                        Budget Code    ...        NaN\n4                                             BG-001    ...        NaN\n\n[5 rows x 7 columns]\n['SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n49\n=== Read me - notes ===\n  Finance team notes                                         Unnamed: 1\n0     Workbook scope  Approved budgets and cleared bank receipts thr...\n1     Layout warning  The Finance sheet contains two separate tables...\n2             Totals  Green and peach rows are display totals; do no...\n3            Amounts  All monetary values are Indian rupees (INR), n...\n4        Prepared by    Programme Finance Unit, Sahyog Rural Initiative\n['Finance team notes', 'Unnamed: 1']\n5\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\npath='sahyog_budget_and_receipts.xlsx'\ndf=pd.read_excel(path, sheet_name='Finance FY25-26', header=None)\nprint(df.shape)\n# print some rows\nfor i in range(df.shape[0]):\n    row = df.iloc[i]\n    # print first few non-null\n    vals = [str(v) for v in row.values if pd.notna(v)]\n    if vals:\n        print(i, vals[:5])\nPY\"",
+   "output": "(50, 7)\n0 ['SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER']\n1 ['FY 2025-26 | Internal management copy | Amounts in INR']\n3 ['A. APPROVED PROGRAMME BUDGET']\n4 ['Budget Code', 'Programme', 'State', 'District', 'Approved Budget (INR)']\n5 ['BG-001', 'Jal Jeevan Saathi', 'Karnataka', 'Raichur', '5000000']\n6 ['BG-002', 'Jal Jeevan Saathi', 'Karnataka', 'Koppal', '2500000']\n7 ['BG-003', 'Jal Jeevan Saathi', 'Odisha', 'Gajapati', '2600000']\n8 ['BG-004', 'Jal Jeevan Saathi', 'Odisha', 'Koraput', '4100000']\n9 ['BG-005', 'Poshan Sakhis', 'Madhya Pradesh', 'Mandla', '2700000']\n10 ['BG-006', 'Poshan Sakhis', 'Madhya Pradesh', 'Dindori', '3500000']\n11 ['BG-007', 'Poshan Sakhis', 'Odisha', 'Rayagada', '5600000']\n12 ['BG-008', 'Digital Learning Centres', 'Rajasthan', 'Barmer', '5400000']\n13 ['BG-009', 'Digital Learning Centres', 'Rajasthan', 'Jaisalmer', '4600000']\n14 ['BG-010', 'Digital Learning Centres', 'Karnataka', 'Yadgir', '3500000']\n15 ['BG-011', 'Climate-Resilient Livelihoods', 'Maharashtra', 'Nandurbar', '4500000']\n16 ['BG-012', 'Climate-Resilient Livelihoods', 'Maharashtra', 'Gadchiroli', '2700000']\n17 ['TOTAL APPROVED']\n21 ['B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025']\n22 ['Receipt ID', 'Credit Date', 'Donor / Scheme', 'Donor Type', 'Programme Tagged']\n23 ['RCPT-25-001', '2025-04-10 00:00:00', 'Tata Trusts CSR', 'CSR', 'Poshan Sakhis']\n24 ['RCPT-25-002', '2025-05-17 00:00:00', 'Azim Premji Philanthropic Initiatives', 'Indian Foundation', 'Climate-Resilient Livelihoods']\n25 ['RCPT-25-003', '2025-06-24 00:00:00', 'Jal Jeevan Mission', 'Government Scheme', 'Poshan Sakhis']\n26 ['RCPT-25-004', '2025-07-07 00:00:00', 'Global Greengrants Fund', 'Foreign Grant', 'Digital Learning Centres']\n27 ['RCPT-25-005', '2025-08-14 00:00:00', 'HDFC Bank Parivartan', 'CSR', 'Jal Jeevan Saathi']\n28 ['RCPT-25-006', '2025-09-21 00:00:00', 'Tata Trusts CSR', 'CSR', 'Digital Learning Centres']\n29 ['RCPT-25-007', '2025-04-04 00:00:00', 'Azim Premji Philanthropic Initiatives', 'Indian Foundation', 'Jal Jeevan Saathi']\n30 ['RCPT-25-008', '2025-05-11 00:00:00', 'Jal Jeevan Mission', 'Government Scheme', 'Poshan Sakhis']\n31 ['RCPT-25-009', '2025-06-18 00:00:00', 'Global Greengrants Fund', 'Foreign Grant', 'Climate-Resilient Livelihoods']\n32 ['RCPT-25-010', '2025-07-25 00:00:00', 'HDFC Bank Parivartan', 'CSR', 'Jal Jeevan Saathi']\n33 ['RCPT-25-011', '2025-08-08 00:00:00', 'Tata Trusts CSR', 'CSR', 'Digital Learning Centres']\n34 ['RCPT-25-012', '2025-09-15 00:00:00', 'Azim Premji Philanthropic Initiatives', 'Indian Foundation', 'Jal Jeevan Saathi']\n35 ['RCPT-25-013', '2025-04-22 00:00:00', 'Jal Jeevan Mission', 'Government Scheme', 'Poshan Sakhis']\n36 ['RCPT-25-014', '2025-05-05 00:00:00', 'Global Greengrants Fund', 'Foreign Grant', 'Climate-Resilient Livelihoods']\n37 ['RCPT-25-015', '2025-06-12 00:00:00', 'HDFC Bank Parivartan', 'CSR', 'Poshan Sakhis']\n38 ['RCPT-25-016', '2025-07-19 00:00:00', 'Tata Trusts CSR', 'CSR', 'Digital Learning Centres']\n39 ['RCPT-25-017', '2025-08-26 00:00:00', 'Azim Premji Philanthropic Initiatives', 'Indian Foundation', 'Jal Jeevan Saathi']\n40 ['RCPT-25-018', '2025-09-09 00:00:00', 'Jal Jeevan Mission', 'Government Scheme', 'Digital Learning Centres']\n41 ['RCPT-25-019', '2025-04-16 00:00:00', 'Global Greengrants Fund', 'Foreign Grant', 'Jal Jeevan Saathi']\n42 ['RCPT-25-020', '2025-05-23 00:00:00', 'HDFC Bank Parivartan', 'CSR', 'Poshan Sakhis']\n43 ['RCPT-25-021', '2025-06-06 00:00:00', 'Tata Trusts CSR', 'CSR', 'Climate-Resilient Livelihoods']\n44 ['RCPT-25-022', '2025-07-13 00:00:00', 'Azim Premji Philanthropic Initiatives', 'Indian Foundation', 'Jal Jeevan Saathi']\n45 ['RCPT-25-023', '2025-08-20 00:00:00', 'Jal Jeevan Mission', 'Government Scheme', 'Digital Learning Centres']\n46 ['RCPT-25-024', '2025-09-03 00:00:00', 'Global Greengrants Fund', 'Foreign Grant', 'Jal Jeevan Saathi']\n47 ['RCPT-25-025', '2025-04-10 00:00:00', 'HDFC Bank Parivartan', 'CSR', 'Poshan Sakhis']\n48 ['RCPT-25-026', '2025-05-17 00:00:00', 'Tata Trusts CSR', 'CSR', 'Climate-Resilient Livelihoods']\n49 ['TOTAL RECEIPTS']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\npath='sahyog_budget_and_receipts.xlsx'\ndf=pd.read_excel(path, sheet_name='Finance FY25-26', header=None)\n# Find header row\nheader_idx = df[df[0]=='B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025'].index[0]\ncol_header_idx = header_idx+1\ndata_start = col_header_idx+1\n# Extract columns\ncols = df.iloc[col_header_idx].tolist()\n# Get data rows until TOTAL RECEIPTS\nsub = df.iloc[data_start:].copy()\nsub = sub[sub[0]\"'!='\"'TOTAL RECEIPTS']\n# Build dataframe\ndata = []\nfor i in range(data_start, len(df)):\n    row = df.iloc[i]\n    if pd.isna(row[0]) or row[0]=='TOTAL RECEIPTS':\n        break\n    data.append(row.tolist())\n# Use first row as header?\n# Let's just parse manually\nreceipts = []\nfor i in range(data_start, len(df)):\n    r = df.iloc[i,0]\n    if pd.isna(r) or r=='TOTAL RECEIPTS':\n        break\n    receipts.append({\n        'Receipt ID': df.iloc[i,0],\n        'Credit Date': df.iloc[i,1],\n        'Donor / Scheme': df.iloc[i,2],\n        'Donor Type': df.iloc[i,3],\n        'Programme Tagged': df.iloc[i,4],\n    })\nimport pandas as pd\nr_df = pd.DataFrame(receipts)\nprint(r_df)\nprint('Distinct count', r_df[r_df['Donor Type']=='Foreign Grant']['Receipt ID'].nunique())\nprint(r_df[r_df['Donor Type']=='Foreign Grant']['Receipt ID'].tolist())\nPY\"",
+   "output": "     Receipt ID Credit Date  ...         Donor Type               Programme Tagged\n0   RCPT-25-001  2025-04-10  ...                CSR                  Poshan Sakhis\n1   RCPT-25-002  2025-05-17  ...  Indian Foundation  Climate-Resilient Livelihoods\n2   RCPT-25-003  2025-06-24  ...  Government Scheme                  Poshan Sakhis\n3   RCPT-25-004  2025-07-07  ...      Foreign Grant       Digital Learning Centres\n4   RCPT-25-005  2025-08-14  ...                CSR              Jal Jeevan Saathi\n5   RCPT-25-006  2025-09-21  ...                CSR       Digital Learning Centres\n6   RCPT-25-007  2025-04-04  ...  Indian Foundation              Jal Jeevan Saathi\n7   RCPT-25-008  2025-05-11  ...  Government Scheme                  Poshan Sakhis\n8   RCPT-25-009  2025-06-18  ...      Foreign Grant  Climate-Resilient Livelihoods\n9   RCPT-25-010  2025-07-25  ...                CSR              Jal Jeevan Saathi\n10  RCPT-25-011  2025-08-08  ...                CSR       Digital Learning Centres\n11  RCPT-25-012  2025-09-15  ...  Indian Foundation              Jal Jeevan Saathi\n12  RCPT-25-013  2025-04-22  ...  Government Scheme                  Poshan Sakhis\n13  RCPT-25-014  2025-05-05  ...      Foreign Grant  Climate-Resilient Livelihoods\n14  RCPT-25-015  2025-06-12  ...                CSR                  Poshan Sakhis\n15  RCPT-25-016  2025-07-19  ...                CSR       Digital Learning Centres\n16  RCPT-25-017  2025-08-26  ...  Indian Foundation              Jal Jeevan Saathi\n17  RCPT-25-018  2025-09-09  ...  Government Scheme       Digital Learning Centres\n18  RCPT-25-019  2025-04-16  ...      Foreign Grant              Jal Jeevan Saathi\n19  RCPT-25-020  2025-05-23  ...                CSR                  Poshan Sakhis\n20  RCPT-25-021  2025-06-06  ...                CSR  Climate-Resilient Livelihoods\n21  RCPT-25-022  2025-07-13  ...  Indian Foundation              Jal Jeevan Saathi\n22  RCPT-25-023  2025-08-20  ...  Government Scheme       Digital Learning Centres\n23  RCPT-25-024  2025-09-03  ...      Foreign Grant              Jal Jeevan Saathi\n24  RCPT-25-025  2025-04-10  ...                CSR                  Poshan Sakhis\n25  RCPT-25-026  2025-05-17  ...                CSR  Climate-Resilient Livelihoods\n\n[26 rows x 5 columns]\nDistinct count 5\n['RCPT-25-004', 'RCPT-25-009', 'RCPT-25-014', 'RCPT-25-019', 'RCPT-25-024']\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 83624,
+  "output": 1287
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 9,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How many distinct Receipt IDs in the donor-receipts table have Donor Type exactly 'Foreign Grant'?",
+ "trap": "Counting budget rows or the receipts total row gives a wrong count.",
+ "text": "The donor-receipts table is in the Finance FY25-26 sheet. Filtering for Donor Type exactly 'Foreign Grant' gives 5 distinct Receipt IDs:\n- RCPT-25-004\n- RCPT-25-009\n- RCPT-25-014\n- RCPT-25-019\n- RCPT-25-024\n\nANSWER: 5",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/two_tables.q3.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "sahyog_budget_and_receipts.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:28:51.066641Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

@@ -1,0 +1,82 @@
+{
+ "job": "two_tables.q1.codex.0",
+ "case": "two_tables",
+ "q": "q1",
+ "harness": "codex",
+ "trial": 0,
+ "want": 46700000,
+ "got": "46700000",
+ "verdict": "correct",
+ "seconds": 67.7,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 16\ndrwxrwxr-x 5 beeps beeps 4096 Oct 11 16:55 .\ndrwx------ 4 beeps beeps   80 Oct 11 16:55 ..\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 16:55 .agents\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 16:55 .codex\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 16:55 .git\n-rw-rw-r-- 1 beeps beeps 8679 Oct 11 16:55 sahyog_budget_and_receipts.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; xl=pd.ExcelFile('sahyog_budget_and_receipts.xlsx'); print(xl.sheet_names)\\\"\"",
+   "output": "['Finance FY25-26', 'Read me - notes']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26'); print(df.head(30).to_string())\\\"\"",
+   "output": "      SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER                     Unnamed: 1                             Unnamed: 2         Unnamed: 3                     Unnamed: 4                    Unnamed: 5      Unnamed: 6\n0   FY 2025-26 | Internal management copy | Amounts in INR                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n1                                                      NaN                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n2                             A. APPROVED PROGRAMME BUDGET                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n3                                              Budget Code                      Programme                                  State           District          Approved Budget (INR)  Community Contribution (INR)             NaN\n4                                                   BG-001              Jal Jeevan Saathi                              Karnataka            Raichur                        5000000                         75000             NaN\n5                                                   BG-002              Jal Jeevan Saathi                              Karnataka             Koppal                        2500000                         50000             NaN\n6                                                   BG-003              Jal Jeevan Saathi                                 Odisha           Gajapati                        2600000                        175000             NaN\n7                                                   BG-004              Jal Jeevan Saathi                                 Odisha            Koraput                        4100000                        150000             NaN\n8                                                   BG-005                  Poshan Sakhis                         Madhya Pradesh             Mandla                        2700000                        175000             NaN\n9                                                   BG-006                  Poshan Sakhis                         Madhya Pradesh            Dindori                        3500000                        175000             NaN\n10                                                  BG-007                  Poshan Sakhis                                 Odisha           Rayagada                        5600000                        200000             NaN\n11                                                  BG-008       Digital Learning Centres                              Rajasthan             Barmer                        5400000                        125000             NaN\n12                                                  BG-009       Digital Learning Centres                              Rajasthan          Jaisalmer                        4600000                         75000             NaN\n13                                                  BG-010       Digital Learning Centres                              Karnataka             Yadgir                        3500000                        175000             NaN\n14                                                  BG-011  Climate-Resilient Livelihoods                            Maharashtra          Nandurbar                        4500000                         75000             NaN\n15                                                  BG-012  Climate-Resilient Livelihoods                            Maharashtra         Gadchiroli                        2700000                        125000             NaN\n16                                          TOTAL APPROVED                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n17                                                     NaN                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n18                                                     NaN                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n19                                                     NaN                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n20        B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025                            NaN                                    NaN                NaN                            NaN                           NaN             NaN\n21                                              Receipt ID                    Credit Date                         Donor / Scheme         Donor Type               Programme Tagged         Amount Received (INR)  Bank Reference\n22                                             RCPT-25-001            2025-04-10 00:00:00                        Tata Trusts CSR                CSR                  Poshan Sakhis                       1650000    UTR202507919\n23                                             RCPT-25-002            2025-05-17 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation  Climate-Resilient Livelihoods                       1200000    UTR202515838\n24                                             RCPT-25-003            2025-06-24 00:00:00                     Jal Jeevan Mission  Government Scheme                  Poshan Sakhis                       1150000    UTR202523757\n25                                             RCPT-25-004            2025-07-07 00:00:00                Global Greengrants Fund      Foreign Grant       Digital Learning Centres                       1525000    UTR202531676\n26                                             RCPT-25-005            2025-08-14 00:00:00                   HDFC Bank Parivartan                CSR              Jal Jeevan Saathi                       1225000    UTR202539595\n27                                             RCPT-25-006            2025-09-21 00:00:00                        Tata Trusts CSR                CSR       Digital Learning Centres                       2175000    UTR202547514\n28                                             RCPT-25-007            2025-04-04 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation              Jal Jeevan Saathi                        500000    UTR202555433\n29                                             RCPT-25-008            2025-05-11 00:00:00                     Jal Jeevan Mission  Government Scheme                  Poshan Sakhis                        550000    UTR202563352\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); print(df.iloc[3:16])\\\"\"",
+   "output": "                               0  ...    6\n3   A. APPROVED PROGRAMME BUDGET  ...  NaN\n4                    Budget Code  ...  NaN\n5                         BG-001  ...  NaN\n6                         BG-002  ...  NaN\n7                         BG-003  ...  NaN\n8                         BG-004  ...  NaN\n9                         BG-005  ...  NaN\n10                        BG-006  ...  NaN\n11                        BG-007  ...  NaN\n12                        BG-008  ...  NaN\n13                        BG-009  ...  NaN\n14                        BG-010  ...  NaN\n15                        BG-011  ...  NaN\n\n[13 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=3); print(df.head(20)); print(df.columns.tolist())\\\"\"",
+   "output": "                        A. APPROVED PROGRAMME BUDGET  ...      Unnamed: 6\n0                                        Budget Code  ...             NaN\n1                                             BG-001  ...             NaN\n2                                             BG-002  ...             NaN\n3                                             BG-003  ...             NaN\n4                                             BG-004  ...             NaN\n5                                             BG-005  ...             NaN\n6                                             BG-006  ...             NaN\n7                                             BG-007  ...             NaN\n8                                             BG-008  ...             NaN\n9                                             BG-009  ...             NaN\n10                                            BG-010  ...             NaN\n11                                            BG-011  ...             NaN\n12                                            BG-012  ...             NaN\n13                                    TOTAL APPROVED  ...             NaN\n14                                               NaN  ...             NaN\n15                                               NaN  ...             NaN\n16                                               NaN  ...             NaN\n17  B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025  ...             NaN\n18                                        Receipt ID  ...  Bank Reference\n19                                       RCPT-25-001  ...    UTR202507919\n\n[20 rows x 7 columns]\n['A. APPROVED PROGRAMME BUDGET', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); rows=[]; \nfor i,r in df.iterrows():\n    code=str(r[0]) if pd.notna(r[0]) else ''\n    if code.startswith('BG-'):\n        rows.append(r[4])\nprint(rows)\nimport numpy as np\ns=sum([x for x in rows if pd.notna(x)])\nprint('sum', s)\\\"\"",
+   "output": "[5000000, 2500000, 2600000, 4100000, 2700000, 3500000, 5600000, 5400000, 4600000, 3500000, 4500000, 2700000]\nsum 46700000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name='Finance FY25-26', header=None); codes=[]; \nfor i,r in df.iterrows():\n    c=r[0]\n    if pd.notna(c) and str(c).startswith('BG-'):\n        codes.append((i,str(c),r[4]))\nprint(codes)\\\"\"",
+   "output": "[(5, 'BG-001', 5000000), (6, 'BG-002', 2500000), (7, 'BG-003', 2600000), (8, 'BG-004', 4100000), (9, 'BG-005', 2700000), (10, 'BG-006', 3500000), (11, 'BG-007', 5600000), (12, 'BG-008', 5400000), (13, 'BG-009', 4600000), (14, 'BG-010', 3500000), (15, 'BG-011', 4500000), (16, 'BG-012', 2700000)]\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 112002,
+  "output": 1053
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 1,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "What is the total approved FY 2025-26 budget in INR across all programme-district rows? Do not add the displayed TOTAL APPROVED row.",
+ "trap": "Adding the displayed total row double-counts the budget.",
+ "text": "The approved budget column for each programme-district row adds up to 46,700,000 INR.\n\nANSWER: 46700000",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/two_tables.q1.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "sahyog_budget_and_receipts.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:25:34.821054Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

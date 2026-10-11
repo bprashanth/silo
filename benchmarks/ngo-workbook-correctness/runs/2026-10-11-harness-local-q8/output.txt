@@ -1,0 +1,17 @@
+doc chars=38051; questions=11; trials=1
+
+=== idli+h (muse-glimmer-30b)
+PASS total_spend                  want=39794400                   got=['39794400'] ['tools=2']
+PASS admin_spend                  want=5238900                    got=['5238900'] ['tools=6']
+PASS program_ratio_pct            want=79.6                       got=['79.6'] ['tools=3']
+PASS jul_2025_spend               want=3685400                    got=['3685400'] ['tools=1']
+PASS usaid_spend                  want=4806600                    got=['4806600'] ['tools=7']
+PASS bihar_health_spend           want=2061700                    got=['2061700'] ['tools=2']
+PASS n_txn_over_1L                want=200                        got=['200'] ['tools=3']
+PASS top_edu_expense_type         want='Supplies & materials'     got=['Supplies & materials'] ['tools=4']
+PASS most_over_budget_program     want='Maternal & Child Health'  got=['Maternal & Child Health'] ['tools=7']
+PASS largest_funding_gap_funder   want='Azim Premji Foundation'   got=['Azim Premji Foundation'] ['tools=1']
+PASS beneficiaries_reached        want=21107                      got=['21107'] ['tools=1']
+--> idli+h: 11/11 correct (100%)
+
+[exited with code 0]

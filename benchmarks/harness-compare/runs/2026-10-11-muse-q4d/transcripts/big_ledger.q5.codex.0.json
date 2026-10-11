@@ -1,0 +1,139 @@
+{
+ "job": "big_ledger.q5.codex.0",
+ "case": "big_ledger",
+ "q": "q5",
+ "harness": "codex",
+ "trial": 0,
+ "want": 28.748932,
+ "got": "28.748932032859674",
+ "verdict": "correct",
+ "seconds": 180.5,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 772\n-rw-rw-r-- 1 beeps beeps 790093 Oct 11 15:32 national_programme_ledger.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, sys\nxls = pd.ExcelFile('national_programme_ledger.xlsx')\nprint('Sheets:', xls.sheet_names)\nfor s in xls.sheet_names:\n    df = pd.read_excel(xls, s, nrows=5)\n    print('\\\\n===', s, '===')\n    print(df.head())\n    print('Columns:', list(df.columns))\nPY\"",
+   "output": "Sheets: ['Field Expenses', 'Salary Register', 'Cost Centre Lookup']\n\n=== Field Expenses ===\n  Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26  ...      Unnamed: 6\n0  Use only transaction IDs beginning FE-. Postin...            ...             NaN\n1                     Prepared by Finance Operations            ...             NaN\n2                                                NaN            ...             NaN\n3                                     Transaction ID            ...  Posting Status\n4                                          FE-000001            ...          Posted\n\n[5 rows x 7 columns]\nColumns: ['Sahyog Foundation \u2014 National Field Expense Ledger FY 2025-26', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n\n=== Salary Register ===\n  Sahyog Foundation \u2014 Consolidated Salary Register FY 2025-26  ...      Unnamed: 6\n0  Use only payroll line IDs beginning PAY-. Paid...           ...             NaN\n1              Confidential \u2014 programme costing copy           ...             NaN\n2                                                NaN           ...             NaN\n3                                                NaN           ...             NaN\n4                                    Payroll Line ID           ...  Payroll Status\n\n[5 rows x 7 columns]\nColumns: ['Sahyog Foundation \u2014 Consolidated Salary Register FY 2025-26', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n\n=== Cost Centre Lookup ===\n           Approved Cost-Centre Mapping \u2014 FY 2025-26  ...               Unnamed: 4\n0  Match codes after trimming spaces and ignoring...  ...                      NaN\n1                                                NaN  ...                      NaN\n2                                   Cost Centre Code  ...           Primary Funder\n3                                      CC-MCH-OD-GAN  ...  National Health Mission\n4                                     CC-MCH-OD-KOR   ...  National Health Mission\n\n[5 rows x 5 columns]\nColumns: ['Approved Cost-Centre Mapping \u2014 FY 2025-26', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nxls = pd.ExcelFile('national_programme_ledger.xlsx')\n# Field Expenses\ndf_fe = pd.read_excel(xls, 'Field Expenses', header=3)\nprint('Field Expenses columns', df_fe.columns.tolist())\nprint(df_fe.head())\nprint(df_fe.shape)\n# Salary Register\ndf_sal = pd.read_excel(xls, 'Salary Register', header=4)\nprint('Salary Register columns', df_sal.columns.tolist())\nprint(df_sal.head())\nprint(df_sal.shape)\n# Cost Centre Lookup\ndf_cc = pd.read_excel(xls, 'Cost Centre Lookup', header=2)\nprint('Cost Centre Lookup columns', df_cc.columns.tolist())\nprint(df_cc.head())\nprint(df_cc.shape)\nPY\"",
+   "output": "Field Expenses columns ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n       Unnamed: 0           Unnamed: 1  ...    Unnamed: 5      Unnamed: 6\n0  Transaction ID     Transaction Date  ...  Amount (INR)  Posting Status\n1       FE-000001  2026-01-05 00:00:00  ...         57600          Posted\n2       FE-000002  2026-02-12 00:00:00  ...          3100            Void\n3       FE-000003  2025-09-03 00:00:00  ...        236500          Posted\n4       FE-000004  2026-02-24 00:00:00  ...         15400          Posted\n\n[5 rows x 7 columns]\n(12013, 7)\nSalary Register columns ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n        Unnamed: 0 Unnamed: 1  ...          Unnamed: 5      Unnamed: 6\n0  Payroll Line ID  Pay Month  ...  Gross Salary (INR)  Payroll Status\n1       PAY-000001   Apr-2025  ...               82000            Paid\n2       PAY-000002   Aug-2025  ...               34900            Paid\n3       PAY-000003    2025-06  ...              102300            Paid\n4       PAY-000004   Sep-2025  ...               88200            Paid\n\n[5 rows x 7 columns]\n(8010, 7)\nCost Centre Lookup columns ['Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4']\n         Unnamed: 0  ...               Unnamed: 4\n0  Cost Centre Code  ...           Primary Funder\n1     CC-MCH-OD-GAN  ...  National Health Mission\n2    CC-MCH-OD-KOR   ...  National Health Mission\n3     CC-MCH-KA-RAI  ...           Tata CSR Trust\n4     CC-MCH-JH-DUM  ...       Global Health Fund\n\n[5 rows x 5 columns]\n(25, 5)\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=None)\nprint(df.iloc[0:10,0:7])\nPY\"",
+   "output": "                                                   0  ...               6\n0  Sahyog Foundation \u2014 National Field Expense Led...  ...             NaN\n1  Use only transaction IDs beginning FE-. Postin...  ...             NaN\n2                     Prepared by Finance Operations  ...             NaN\n3                                                NaN  ...             NaN\n4                                     Transaction ID  ...  Posting Status\n5                                          FE-000001  ...          Posted\n6                                          FE-000002  ...            Void\n7                                          FE-000003  ...          Posted\n8                                          FE-000004  ...          Posted\n9                                          FE-000005  ...          Posted\n\n[10 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=None)\nprint(df.iloc[4])\nPY\"",
+   "output": "0      Transaction ID\n1    Transaction Date\n2         Cost Centre\n3        Expense Head\n4      Vendor / Payee\n5        Amount (INR)\n6      Posting Status\nName: 4, dtype: object\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=None)\nprint(df.iloc[0:10,0:7])\nPY\"",
+   "output": "                                                   0  ...               6\n0  Sahyog Foundation \u2014 Consolidated Salary Regist...  ...             NaN\n1  Use only payroll line IDs beginning PAY-. Paid...  ...             NaN\n2              Confidential \u2014 programme costing copy  ...             NaN\n3                                                NaN  ...             NaN\n4                                                NaN  ...             NaN\n5                                    Payroll Line ID  ...  Payroll Status\n6                                         PAY-000001  ...            Paid\n7                                         PAY-000002  ...            Paid\n8                                         PAY-000003  ...            Paid\n9                                         PAY-000004  ...            Paid\n\n[10 rows x 7 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=None)\nprint(df.iloc[5])\nPY\"",
+   "output": "0       Payroll Line ID\n1             Pay Month\n2           Employee ID\n3                  Role\n4           Cost Centre\n5    Gross Salary (INR)\n6        Payroll Status\nName: 5, dtype: object\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=None)\nprint(df.iloc[0:10,0:5])\nPY\"",
+   "output": "                                                   0  ...                           4\n0          Approved Cost-Centre Mapping \u2014 FY 2025-26  ...                         NaN\n1  Match codes after trimming spaces and ignoring...  ...                         NaN\n2                                                NaN  ...                         NaN\n3                                   Cost Centre Code  ...              Primary Funder\n4                                      CC-MCH-OD-GAN  ...     National Health Mission\n5                                     CC-MCH-OD-KOR   ...     National Health Mission\n6                                      CC-MCH-KA-RAI  ...              Tata CSR Trust\n7                                      CC-MCH-JH-DUM  ...          Global Health Fund\n8                                       cc-rl-od-may  ...  Deendayal Antyodaya Yojana\n9                                       CC-RL-KA-KOP  ...             HDFC Parivartan\n\n[10 rows x 5 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ndf = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=None)\nprint(df.iloc[3])\nPY\"",
+   "output": "0    Cost Centre Code\n1           Programme\n2            District\n3               State\n4      Primary Funder\nName: 3, dtype: str\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nimport numpy as np\n\nfe = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nsal = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5)\ncc = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3)\n\n# Clean column names\nfe.columns = [c.strip() for c in fe.columns]\nsal.columns = [c.strip() for c in sal.columns]\ncc.columns = [c.strip() for c in cc.columns]\n\nprint('FE cols', fe.columns.tolist())\nprint('SAL cols', sal.columns.tolist())\nprint('CC cols', cc.columns.tolist())\n\n# Normalize cost centre codes\ndef norm(s):\n    if pd.isna(s):\n        return ''\n    return str(s).strip().lower()\n\n# Build lookup map\ncc['Cost Centre Code_norm'] = cc['Cost Centre Code'].apply(norm)\ncc['Programme_norm'] = cc['Programme'].apply(lambda x: str(x).strip().lower() if pd.notna(x) else '')\nlookup = {row['Cost Centre Code_norm']: row for _, row in cc.iterrows()}\n\n# Filter Rural Livelihoods codes\ntarget_prog = 'rural livelihoods'\nrural_codes = set()\nfor code_norm, row in lookup.items():\n    if row['Programme_norm'] == target_prog:\n        rural_codes.add(code_norm)\nprint('Rural codes count', len(rural_codes))\nprint(list(rural_codes)[:10])\n\n# Process Field Expenses\nfe['Cost Centre_norm'] = fe['Cost Centre'].apply(norm)\nfe['Posting Status_norm'] = fe['Posting Status'].apply(lambda x: str(x).strip().lower() if pd.notna(x) else '')\nfe['Amount (INR)'] = pd.to_numeric(fe['Amount (INR)'], errors='coerce')\nmask_fe = (fe['Posting Status_norm'] == 'posted') & (fe['Cost Centre_norm'].isin(rural_codes))\nfe_total = fe.loc[mask_fe, 'Amount (INR)'].sum()\nprint('Field total', fe_total)\n\n# Process Salary\nsal['Cost Centre_norm'] = sal['Cost Centre'].apply(norm)\nsal['Payroll Status_norm'] = sal['Payroll Status'].apply(lambda x: str(x).strip().lower() if pd.notna(x) else '')\nsal['Gross Salary (INR)'] = pd.to_numeric(sal['Gross Salary (INR)'], errors='coerce')\nmask_sal = (sal['Payroll Status_norm'] == 'paid') & (sal['Cost Centre_norm'].isin(rural_codes))\nsal_total = sal.loc[mask_sal, 'Gross Salary (INR)'].sum()\nprint('Salary total', sal_total)\n\ncombined = fe_total + sal_total\npct = (sal_total / combined * 100) if combined else 0\nprint('Combined', combined)\nprint('Pct', pct)\nPY\"",
+   "output": "FE cols ['Transaction ID', 'Transaction Date', 'Cost Centre', 'Expense Head', 'Vendor / Payee', 'Amount (INR)', 'Posting Status']\nSAL cols ['Payroll Line ID', 'Pay Month', 'Employee ID', 'Role', 'Cost Centre', 'Gross Salary (INR)', 'Payroll Status']\nCC cols ['Cost Centre Code', 'Programme', 'District', 'State', 'Primary Funder']\nRural codes count 4\n['cc-rl-rj-bar', 'cc-rl-ka-kop', 'cc-rl-jh-dum', 'cc-rl-od-may']\nField total 172132800.0\nSalary total 68775300.0\nCombined 240908100.0\nPct 28.548355161158966\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nfe = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nsal = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5)\ncc = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3)\nfe.columns = [c.strip() for c in fe.columns]\nsal.columns = [c.strip() for c in sal.columns]\ncc.columns = [c.strip() for c in cc.columns]\ndef norm(s):\n    return str(s).strip().lower() if pd.notna(s) else ''\ncc['Cost Centre Code_norm'] = cc['Cost Centre Code'].apply(norm)\ncc['Programme_norm'] = cc['Programme'].apply(lambda x: norm(x))\ntarget = 'rural livelihoods'\nrural_codes = set(cc.loc[cc['Programme_norm']==target, 'Cost Centre Code_norm'])\nfe['Cost Centre_norm'] = fe['Cost Centre'].apply(norm)\nfe['Posting Status_norm'] = fe['Posting Status'].apply(lambda x: norm(x))\nfe['Amount (INR)'] = pd.to_numeric(fe['Amount (INR)'], errors='coerce')\nmask_fe = (fe['Posting Status_norm']=='posted') & (fe['Cost Centre_norm'].isin(rural_codes))\nfe_total = fe.loc[mask_fe,'Amount (INR)'].sum()\nsal['Cost Centre_norm'] = sal['Cost Centre'].apply(norm)\nsal['Payroll Status_norm'] = sal['Payroll Status'].apply(lambda x: norm(x))\nsal['Gross Salary (INR)'] = pd.to_numeric(sal['Gross Salary (INR)'], errors='coerce')\nmask_sal = (sal['Payroll Status_norm']=='paid') & (sal['Cost Centre_norm'].isin(rural_codes))\nsal_total = sal.loc[mask_sal,'Gross Salary (INR)'].sum()\npct = sal_total/(fe_total+sal_total)*100\nprint(fe_total, sal_total, pct)\nPY\"",
+   "output": "172132800.0 68775300.0 28.548355161158966\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\ncc = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3)\ncc.columns = [c.strip() for c in cc.columns]\nprint(cc[['Cost Centre Code','Programme']].dropna())\nPY\"",
+   "output": "   Cost Centre Code                  Programme\n0     CC-MCH-OD-GAN  Maternal and Child Health\n1    CC-MCH-OD-KOR   Maternal and Child Health\n2     CC-MCH-KA-RAI  Maternal and Child Health\n3     CC-MCH-JH-DUM  Maternal and Child Health\n4      cc-rl-od-may          Rural Livelihoods\n5      CC-RL-KA-KOP          Rural Livelihoods\n6      CC-RL-RJ-BAR          Rural Livelihoods\n7     cc-rl-jh-dum           Rural Livelihoods\n8      CC-TE-OD-KOR           Tribal Education\n9      CC-TE-OD-MAY           Tribal Education\n10     CC-TE-RJ-BAR           Tribal Education\n11     cc-te-jh-wes           Tribal Education\n12    CC-WS-OD-GAN        Water and Sanitation\n13     CC-WS-KA-RAI       Water and Sanitation\n14     CC-WS-RJ-BAR       Water and Sanitation\n15     CC-WS-JH-WES       Water and Sanitation\n16     CC-NS-OD-GAN         Nutrition Security\n17     CC-NS-KA-KOP         Nutrition Security\n18     cc-ns-rj-bar         Nutrition Security\n19     CC-NS-JH-DUM         Nutrition Security\n20     CC-CR-OD-KOR         Climate Resilience\n21     CC-CR-KA-RAI         Climate Resilience\n22     CC-CR-RJ-BAR         Climate Resilience\n23    CC-CR-JH-WES          Climate Resilience\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nfe = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nprint(fe['Amount (INR)'].head(20))\nPY\"",
+   "output": "0         57600\n1          3100\n2        236500\n3         15400\n4         54300\n5         23400\n6         92300\n7        131400\n8        \u20b92,000\n9         64000\n10         2300\n11       128100\n12       138800\n13       77,600\n14       338800\n15         4200\n16         5100\n17    \u20b95,40,200\n18        38900\n19       335700\nName: Amount (INR), dtype: object\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nsal = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5)\nprint(sal['Gross Salary (INR)'].head(30))\nPY\"",
+   "output": "0       82000\n1       34900\n2      102300\n3       88200\n4       88600\n5     \u20b980,900\n6       63000\n7       60300\n8       81700\n9       77800\n10     27,400\n11      65100\n12      63800\n13      32900\n14    \u20b973,300\n15      41400\n16      78900\n17      38500\n18      35000\n19      38000\n20      83700\n21      27700\n22      48600\n23    \u20b957,200\n24    112,600\n25      58300\n26      41600\n27     136400\n28     119300\n29     109900\nName: Gross Salary (INR), dtype: object\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, re\ndef clean_amount(x):\n    if pd.isna(x):\n        return None\n    s = str(x)\n    s = s.replace('\u20b9','').replace(',','').strip()\n    # remove any non-digit\n    s = re.sub(r'[\"'^'\"\\\\d.]','',s)\n    try:\n        return float(s)\n    except:\n        return None\n\nfe = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nsal = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5)\ncc = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3)\nfe.columns = [c.strip() for c in fe.columns]\nsal.columns = [c.strip() for c in sal.columns]\ncc.columns = [c.strip() for c in cc.columns]\n\ndef norm(s):\n    return str(s).strip().lower() if pd.notna(s) else ''\ncc['Cost Centre Code_norm'] = cc['Cost Centre Code'].apply(norm)\ncc['Programme_norm'] = cc['Programme'].apply(norm)\ntarget = 'rural livelihoods'\nrural_codes = set(cc.loc[cc['Programme_norm']==target, 'Cost Centre Code_norm'])\n\nfe['Cost Centre_norm'] = fe['Cost Centre'].apply(norm)\nfe['Posting Status_norm'] = fe['Posting Status'].apply(norm)\nfe['Amount_clean'] = fe['Amount (INR)'].apply(clean_amount)\nmask_fe = (fe['Posting Status_norm']=='posted') & (fe['Cost Centre_norm'].isin(rural_codes))\nfe_total = fe.loc[mask_fe,'Amount_clean'].sum()\n\nsal['Cost Centre_norm'] = sal['Cost Centre'].apply(norm)\nsal['Payroll Status_norm'] = sal['Payroll Status'].apply(norm)\nsal['Salary_clean'] = sal['Gross Salary (INR)'].apply(clean_amount)\nmask_sal = (sal['Payroll Status_norm']=='paid') & (sal['Cost Centre_norm'].isin(rural_codes))\nsal_total = sal.loc[mask_sal,'Salary_clean'].sum()\n\npct = sal_total/(fe_total+sal_total)*100 if fe_total+sal_total else 0\nprint('fe_total', fe_total)\nprint('sal_total', sal_total)\nprint('pct', pct)\nPY\"",
+   "output": "fe_total 206070700.0\nsal_total 83147000.0\npct 28.748932032859674\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, re\ndef clean_amount(x):\n    if pd.isna(x): return None\n    s = str(x)\n    s = re.sub(r'[\"'^'\"\\\\d.]','', s)\n    try: return float(s)\n    except: return None\nfe = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Field Expenses', header=4)\nsal = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Salary Register', header=5)\ncc = pd.read_excel('national_programme_ledger.xlsx', sheet_name='Cost Centre Lookup', header=3)\nfor df in [fe,sal,cc]:\n    df.columns = [c.strip() for c in df.columns]\ndef norm(s): return str(s).strip().lower() if pd.notna(s) else ''\ncc['code_n']=cc['Cost Centre Code'].apply(norm)\ncc['prog_n']=cc['Programme'].apply(norm)\nrural=set(cc.loc[cc['prog_n']=='rural livelihoods','code_n'])\nfe['cn']=fe['Cost Centre'].apply(norm)\nfe['st']=fe['Posting Status'].apply(norm)\nfe['amt']=fe['Amount (INR)'].apply(clean_amount)\nmask_fe= (fe['st']=='posted') & fe['cn'].isin(rural)\nfe_tot=fe.loc[mask_fe,'amt'].sum()\nsal['cn']=sal['Cost Centre'].apply(norm)\nsal['st']=sal['Payroll Status'].apply(norm)\nsal['amt']=sal['Gross Salary (INR)'].apply(clean_amount)\nmask_sal=(sal['st']=='paid') & sal['cn'].isin(rural)\nsal_tot=sal.loc[mask_sal,'amt'].sum()\nprint(fe_tot, sal_tot, sal_tot/(fe_tot+sal_tot)*100)\nPY\"",
+   "output": "206070700.0 83147000.0 28.748932032859674\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 272440,
+  "output": 4712
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 8,
+  "untraced": [
+   289217700.0,
+   289217700.0
+  ],
+  "answer_traced": true,
+  "clean": false
+ },
+ "audit": [],
+ "question": "For Rural Livelihoods, what percentage of its combined eligible amount comes from the salary register? Return a percentage from 0 to 100. Normalize cost-centre codes by trimming spaces and matching case-insensitively to the Cost Centre Lookup; exclude codes absent from the lookup. Include only Posted field expenses and Paid salary lines, matching statuses after trimming spaces and ignoring case.",
+ "trap": "Dividing salary spend by the whole ledger instead of Rural Livelihoods spend.",
+ "text": "The Rural Livelihoods programme maps to four cost-centre codes after normalising and trimming:\n`cc-rl-od-may`, `cc-rl-ka-kop`, `cc-rl-rj-bar`, `cc-rl-jh-dum`\n\n* Field Expenses \u2013 Posting Status = Posted, cost centre in set, amount cleaned of \u20b9/commas  \n  total = 206,070,700 INR\n* Salary Register \u2013 Payroll Status = Paid, cost centre in set, gross salary cleaned  \n  total = 83,147,000 INR\n\nCombined eligible = 206,070,700 + 83,147,000 = 289,217,700 INR  \nSalary share = 83,147,000 / 289,217,700 \u00d7 100 \u2248 28.7489 %\n\nANSWER: 28.748932032859674",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/big_ledger.q5.codex.0/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "national_programme_ledger.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T10:02:44.701269Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

@@ -1,0 +1,64 @@
+{
+ "job": "clean.largest_funding_gap_funder.codex.1",
+ "case": "clean",
+ "q": "largest_funding_gap_funder",
+ "harness": "codex",
+ "trial": 1,
+ "want": "Azim Premji Foundation",
+ "got": "Azim Premji Foundation",
+ "verdict": "correct",
+ "seconds": 40.4,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -R'",
+   "output": ".:\nasha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='asha_ngo_finances_FY25-26.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); print(df.head(100).to_string())\\\"\"",
+   "output": "                     Funder           Type  Committed FY25-26 (INR)  Received to date (INR) Restricted?\n0         Tata Trusts (CSR)  Corporate CSR                 11000000                 9902000         Yes\n1    Azim Premji Foundation     Foundation                  8000000                 4973000         Yes\n2           USAID sub-grant  Institutional                  6500000                 4804000         Yes\n3         Individual donors     Individual                  4200000                 2681000          No\n4  Infosys Foundation (CSR)  Corporate CSR                  5000000                 4390000         Yes\n5          State Govt - NHM     Government                  4500000                 4186000         Yes\n6     Unrestricted reserves       Internal                  3000000                 2961000          No\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); df['gap']=df['Committed FY25-26 (INR)']-df['Received to date (INR)']; print(df[['Funder','Committed FY25-26 (INR)','Received to date (INR)','gap']].to_string(index=False))\\\"\"",
+   "output": "                  Funder  Committed FY25-26 (INR)  Received to date (INR)     gap\n       Tata Trusts (CSR)                 11000000                 9902000 1098000\n  Azim Premji Foundation                  8000000                 4973000 3027000\n         USAID sub-grant                  6500000                 4804000 1696000\n       Individual donors                  4200000                 2681000 1519000\nInfosys Foundation (CSR)                  5000000                 4390000  610000\n        State Govt - NHM                  4500000                 4186000  314000\n   Unrestricted reserves                  3000000                 2961000   39000\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 63851,
+  "output": 703
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 9,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Funder with the largest committed minus received gap (exact name)",
+ "trap": "",
+ "text": "The Funding sheet shows the gap for each funder.\n\n- Azim Premji Foundation: 8,000,000 committed \u2013 4,973,000 received = 3,027,000\n- Tata Trusts (CSR): 1,098,000\n- USAID sub-grant: 1,696,000\n- Individual donors: 1,519,000\n- Infosys Foundation (CSR): 610,000\n- State Govt - NHM: 314,000\n- Unrestricted reserves: 39,000\n\nAzim Premji Foundation has the largest committed minus received gap.\n\nANSWER: Azim Premji Foundation",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.largest_funding_gap_funder.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:58:50.500380Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

@@ -1,0 +1,89 @@
+{
+ "job": "subtotals.q3.simple.1",
+ "case": "subtotals",
+ "q": "q3",
+ "harness": "simple",
+ "trial": 1,
+ "want": 20,
+ "got": "20",
+ "verdict": "correct",
+ "seconds": 308.1,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport os\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\n# Read first sheet\ndf = pd.read_excel(file_path, sheet_name=0)\nprint(df.head(20))\nprint(df.columns.tolist())\n",
+   "output": "Sheets: ['Expense Ledger']\n        SevaSetu Foundation \u2014 Monthly Expense Ledger  ...                     Unnamed: 8\n0   FY 2025\u201326 | Actual expenditure | Amounts in INR  ...                            NaN\n1                                                NaN  ...                            NaN\n2                                     Transaction ID  ...                        Remarks\n3                                         APRIL 2025  ...                            NaN\n4                                        EXP-25-0001  ...    District team reimbursement\n5                                        EXP-25-0002  ...    District team reimbursement\n6                                        EXP-25-0003  ...      Supporting vouchers filed\n7                                        EXP-25-0004  ...          Direct vendor payment\n8                                        EXP-25-0005  ...          Direct vendor payment\n9                                        EXP-25-0006  ...      Supporting vouchers filed\n10                                       EXP-25-0007  ...  Approved against monthly plan\n11                                       EXP-25-0008  ...      Supporting vouchers filed\n12                                       EXP-25-0009  ...                            NaN\n13                                       EXP-25-0010  ...    District team reimbursement\n14                                       EXP-25-0011  ...                            NaN\n15                                       EXP-25-0012  ...          Direct vendor payment\n16                                       EXP-25-0013  ...  Approved against monthly plan\n17                                       EXP-25-0014  ...                            NaN\n18                                       EXP-25-0015  ...      Supporting vouchers filed\n19                                       EXP-25-0016  ...                            NaN\n\n[20 rows x 9 columns]\n['SevaSetu Foundation \u2014 Monthly Expense Ledger', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\n# Try reading with header=None to see raw rows\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\nprint(df_raw.iloc[0:30, 0:9])\n",
+   "output": "                                                   0  ...                              8\n0       SevaSetu Foundation \u2014 Monthly Expense Ledger  ...                            NaN\n1   FY 2025\u201326 | Actual expenditure | Amounts in INR  ...                            NaN\n2                                                NaN  ...                            NaN\n3                                     Transaction ID  ...                        Remarks\n4                                         APRIL 2025  ...                            NaN\n5                                        EXP-25-0001  ...    District team reimbursement\n6                                        EXP-25-0002  ...    District team reimbursement\n7                                        EXP-25-0003  ...      Supporting vouchers filed\n8                                        EXP-25-0004  ...          Direct vendor payment\n9                                        EXP-25-0005  ...          Direct vendor payment\n10                                       EXP-25-0006  ...      Supporting vouchers filed\n11                                       EXP-25-0007  ...  Approved against monthly plan\n12                                       EXP-25-0008  ...      Supporting vouchers filed\n13                                       EXP-25-0009  ...                            NaN\n14                                       EXP-25-0010  ...    District team reimbursement\n15                                       EXP-25-0011  ...                            NaN\n16                                       EXP-25-0012  ...          Direct vendor payment\n17                                       EXP-25-0013  ...  Approved against monthly plan\n18                                       EXP-25-0014  ...                            NaN\n19                                       EXP-25-0015  ...      Supporting vouchers filed\n20                                       EXP-25-0016  ...                            NaN\n21                                  Total \u2013 Apr 2025  ...                            NaN\n22                                               NaN  ...                            NaN\n23                                          MAY 2025  ...                            NaN\n24                                       EXP-25-0017  ...  Approved against monthly plan\n25                                       EXP-25-0018  ...      Supporting vouchers filed\n26                                       EXP-25-0019  ...    District team reimbursement\n27                                       EXP-25-0020  ...          Direct vendor payment\n28                                       EXP-25-0021  ...                            NaN\n29                                       EXP-25-0022  ...  Approved against monthly plan\n\n[30 rows x 9 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\n# Let's print rows 4 to 10 with all columns\nfor i in range(4, 12):\n    row = df_raw.iloc[i]\n    print(i, row.tolist())\n",
+   "output": "4 ['APRIL 2025', nan, nan, nan, nan, nan, nan, nan, nan]\n5 ['EXP-25-0001', datetime.datetime(2025, 4, 23, 0, 0), 'Jal Jeevan Saathi', 'Nashik', 'Maharashtra', 'Azim Premji Foundation', 'Training and community meetings', 65900, 'District team reimbursement']\n6 ['EXP-25-0002', datetime.datetime(2025, 4, 26, 0, 0), 'Jal Jeevan Saathi', 'Nashik', 'Maharashtra', 'Global Green Fund', 'Travel and local conveyance', 86400, 'District team reimbursement']\n7 ['EXP-25-0003', datetime.datetime(2025, 4, 7, 0, 0), 'Shiksha Udaan', 'Barmer', 'Rajasthan', 'Jal Jeevan Mission', 'Equipment and minor works', 188000, 'Supporting vouchers filed']\n8 ['EXP-25-0004', datetime.datetime(2025, 4, 15, 0, 0), 'Poshan Shakti', 'Nandurbar', 'Maharashtra', 'Tata Trusts CSR', 'Monitoring and surveys', 47700, 'Direct vendor payment']\n9 ['EXP-25-0005', datetime.datetime(2025, 4, 18, 0, 0), 'Shiksha Udaan', 'Barmer', 'Rajasthan', 'Azim Premji Foundation', 'Travel and local conveyance', 87700, 'Direct vendor payment']\n10 ['EXP-25-0006', datetime.datetime(2025, 4, 28, 0, 0), 'Jal Jeevan Saathi', 'Nashik', 'Maharashtra', 'Tata Trusts CSR', 'Programme materials', 273500, 'Supporting vouchers filed']\n11 ['EXP-25-0007', datetime.datetime(2025, 4, 15, 0, 0), 'Mahila Ajeevika', 'Gaya', 'Bihar', 'HDFC Bank Parivartan', 'Training and community meetings', 48800, 'Approved against monthly plan']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\n# Identify rows where column 0 starts with 'EXP-'\n# Also ensure Programme column (2) is 'Poshan Shakti'\ncount = 0\nrows_found = []\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        programme = row[2]\n        if programme == 'Poshan Shakti':\n            count += 1\n            rows_found.append((idx, col0, row[1], programme))\n# Print some examples\nprint('Count:', count)\nprint('Sample rows:', rows_found[:10])\n",
+   "output": "Count: 20\nSample rows: [(8, 'EXP-25-0004', datetime.datetime(2025, 4, 15, 0, 0), 'Poshan Shakti'), (14, 'EXP-25-0010', datetime.datetime(2025, 4, 26, 0, 0), 'Poshan Shakti'), (19, 'EXP-25-0015', datetime.datetime(2025, 4, 12, 0, 0), 'Poshan Shakti'), (29, 'EXP-25-0022', datetime.datetime(2025, 5, 7, 0, 0), 'Poshan Shakti'), (32, 'EXP-25-0025', datetime.datetime(2025, 5, 5, 0, 0), 'Poshan Shakti'), (36, 'EXP-25-0029', datetime.datetime(2025, 5, 31, 0, 0), 'Poshan Shakti'), (37, 'EXP-25-0030', datetime.datetime(2025, 5, 23, 0, 0), 'Poshan Shakti'), (51, 'EXP-25-0041', datetime.datetime(2025, 6, 13, 0, 0), 'Poshan Shakti'), (54, 'EXP-25-0044', datetime.datetime(2025, 6, 23, 0, 0), 'Poshan Shakti'), (55, 'EXP-25-0045', datetime.datetime(2025, 6, 13, 0, 0), 'Poshan Shakti')]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\nprogrammes = set()\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        prog = row[2]\n        if isinstance(prog, str):\n            programmes.add(prog.strip())\nprint('Unique programmes:', programmes)\n# Check for variations with Poshan\nposhan_variants = [p for p in programmes if 'Poshan' in p]\nprint('Poshan variants:', poshan_variants)\n",
+   "output": "Unique programmes: {'Krishi Pragati', 'Mahila Ajeevika', 'Swasthya Sathi', 'Jal Jeevan Saathi', 'Poshan Shakti', 'Shiksha Udaan'}\nPoshan variants: ['Poshan Shakti']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\ncount = 0\nids = []\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        programme = row[2]\n        if programme == 'Poshan Shakti':\n            count += 1\n            ids.append(col0)\nprint('Count:', count)\nprint('IDs:', ids)\n",
+   "output": "Count: 20\nIDs: ['EXP-25-0004', 'EXP-25-0010', 'EXP-25-0015', 'EXP-25-0022', 'EXP-25-0025', 'EXP-25-0029', 'EXP-25-0030', 'EXP-25-0041', 'EXP-25-0044', 'EXP-25-0045', 'EXP-25-0046', 'EXP-25-0053', 'EXP-25-0058', 'EXP-25-0068', 'EXP-25-0070', 'EXP-25-0075', 'EXP-25-0076', 'EXP-25-0084', 'EXP-25-0086', 'EXP-25-0089']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\n# Find header row\nheader_idx = None\nfor idx, row in df_raw.iterrows():\n    if row[0] == 'Transaction ID':\n        header_idx = idx\n        break\n\nprint('Header idx', header_idx)\n# Build dataframe from header_idx+2 onward? Let's inspect\nprint(df_raw.iloc[header_idx:header_idx+5])\n",
+   "output": "Header idx 3\n                0  ...                            8\n3  Transaction ID  ...                      Remarks\n4      APRIL 2025  ...                          NaN\n5     EXP-25-0001  ...  District team reimbursement\n6     EXP-25-0002  ...  District team reimbursement\n7     EXP-25-0003  ...    Supporting vouchers filed\n\n[5 rows x 9 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\ncounts = {}\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        prog = row[2]\n        if isinstance(prog, str):\n            prog = prog.strip()\n            counts[prog] = counts.get(prog, 0) + 1\n\nprint(counts)\n",
+   "output": "{'Jal Jeevan Saathi': 12, 'Shiksha Udaan': 11, 'Poshan Shakti': 20, 'Mahila Ajeevika': 18, 'Krishi Pragati': 17, 'Swasthya Sathi': 18}\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\nposhan_rows = []\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        prog = row[2]\n        if isinstance(prog, str):\n            prog_clean = prog.strip()\n            if prog_clean == 'Poshan Shakti':\n                poshan_rows.append((idx, col0, prog_clean))\n\nprint('Count:', len(poshan_rows))\n# Check any variants\nvariants = set()\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        prog = row[2]\n        if isinstance(prog, str) and 'Poshan' in prog:\n            variants.add(repr(prog))\nprint('Variants:', variants)\n",
+   "output": "Count: 20\nVariants: {\"'Poshan Shakti'\"}\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\nprint('Total rows:', len(df_raw))\n# Find last row with EXP-\nlast_idx = 0\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        last_idx = idx\nprint('Last EXP row idx:', last_idx)\nprint(df_raw.iloc[last_idx-5:last_idx+5, 0:3])\n",
+   "output": "Total rows: 119\nLast EXP row idx: 115\n                                 0                    1                  2\n110                    EXP-25-0091  2025-09-28 00:00:00      Shiksha Udaan\n111                    EXP-25-0092  2025-09-02 00:00:00     Swasthya Sathi\n112                    EXP-25-0093  2025-09-07 00:00:00      Shiksha Udaan\n113                    EXP-25-0094  2025-09-25 00:00:00  Jal Jeevan Saathi\n114                    EXP-25-0095  2025-09-19 00:00:00    Mahila Ajeevika\n115                    EXP-25-0096  2025-09-26 00:00:00     Krishi Pragati\n116               Total \u2013 Sep 2025                  NaN                NaN\n117                            NaN                  NaN                NaN\n118  GRAND TOTAL \u2014 APR TO SEP 2025                  NaN                NaN\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\ncount = 0\nfor idx, row in df_raw.iterrows():\n    col0 = row[0]\n    if isinstance(col0, str) and col0.startswith('EXP-'):\n        programme = row[2]\n        if programme == 'Poshan Shakti':\n            count += 1\n\nprint(count)\n",
+   "output": "20\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/monthly_expense_ledger.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\nindices = []\nfor idx, row in df_raw.iterrows():\n    if row[0] == 'Transaction ID':\n        indices.append(idx)\nprint(indices)\n",
+   "output": "[3]\n"
+  }
+ ],
+ "usage": {
+  "input": 48179,
+  "output": 4312
+ },
+ "finish": "max_steps",
+ "receipt": {
+  "stated": 1,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How many underlying expense transactions (rows with an EXP- transaction ID, not subtotal rows) were recorded for Poshan Shakti?",
+ "trap": "Counting visual month blocks or summary rows instead of transaction rows gives the wrong count.",
+ "text": "The ledger contains 20 rows with an `EXP-` Transaction ID where the Programme column is *Poshan Shakti*.\n\nANSWER: 20",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/subtotals.q3.simple.1"
+}

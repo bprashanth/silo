@@ -1,0 +1,54 @@
+{
+ "job": "multi_file.q4.simple.0",
+ "case": "multi_file",
+ "q": "q4",
+ "harness": "simple",
+ "trial": 0,
+ "want": "Health & Nutrition",
+ "got": "Health & Nutrition",
+ "verdict": "correct",
+ "seconds": 143.1,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\n# Load beneficiaries\nbeneficiaries_path = '/data/beneficiaries.csv'\nbeneficiaries = pd.read_csv(beneficiaries_path)\n\n# Load payments\npayments_path = '/data/payments.xlsx'\n# sheet name? Preview says Sheet: Disbursements\ntry:\n    payments = pd.read_excel(payments_path, sheet_name='Disbursements')\nexcept Exception as e:\n    # fallback to first sheet\n    payments = pd.read_excel(payments_path, sheet_name=0)\n\n# Standardize column names\npayments.columns = [c.strip() for c in payments.columns]\nbeneficiaries.columns = [c.strip() for c in beneficiaries.columns]\n\n# Clean Beneficiary ID\npayments['Beneficiary ID'] = payments['Beneficiary ID'].astype(str).str.strip()\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\n\n# Filter status Paid (trim whitespace, ignore case)\npayments['Status'] = payments['Status'].astype(str).str.strip().str.lower()\npaid_mask = payments['Status'] == 'paid'\npayments_paid = payments[paid_mask].copy()\n\n# Exclude payment rows whose Beneficiary ID is absent from CSV\nvalid_ids = set(beneficiaries['Beneficiary ID'].unique())\npayments_paid = payments_paid[payments_paid['Beneficiary ID'].isin(valid_ids)]\n\n# Ensure Amount is numeric\npayments_paid['Amount (INR)'] = pd.to_numeric(payments_paid['Amount (INR)'], errors='coerce')\n\n# Join to beneficiaries to get Programme\nmerged = payments_paid.merge(beneficiaries[['Beneficiary ID','Programme']], on='Beneficiary ID', how='inner')\n\n# Sum by programme\nsum_by_prog = merged.groupby('Programme')['Amount (INR)'].sum().sort_values(ascending=False)\n\nprint(sum_by_prog)\nprint('Highest programme:', sum_by_prog.idxmax())\nprint('Amount:', sum_by_prog.max())\n",
+   "output": "\n[stderr]\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3805, in get_loc\n    return self._engine.get_loc(casted_key)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"index.pyx\", line 167, in pandas._libs.index.IndexEngine.get_loc\n  File \"index.pyx\", line 196, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7081, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7089, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'Beneficiary ID'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"<stdin>\", line 22, in <module>\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/frame.py\", line 4102, in __getitem__\n    indexer = self.columns.get_loc(key)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/site-packages/pandas/core/indexes/base.py\", line 3812, in get_loc\n    raise KeyError(key) from err\nKeyError: 'Beneficiary ID'\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\nxl = pd.ExcelFile(payments_path)\nprint('Sheets:', xl.sheet_names)\n\n# Load first sheet\ndf = pd.read_excel(payments_path, sheet_name=0)\nprint('Columns:', df.columns.tolist())\nprint(df.head())\n",
+   "output": "Sheets: ['Disbursements']\nColumns: ['Jan Kalyan Programme \u2014 Beneficiary Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n  Jan Kalyan Programme \u2014 Beneficiary Disbursement Register  ... Unnamed: 6\n0  Join Beneficiary ID to beneficiaries.csv; unma...        ...        NaN\n1  FY 2025\u201326 | Status and amount cells retain fi...        ...        NaN\n2                                                NaN        ...        NaN\n3                                         Payment ID        ...     Status\n4                                     PMT-2025-00001        ...       Paid\n\n[5 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\ndf_raw = pd.read_excel(payments_path, sheet_name=0, header=None)\nprint(df_raw.head(20))\n",
+   "output": "                                                    0  ...       6\n0   Jan Kalyan Programme \u2014 Beneficiary Disbursemen...  ...     NaN\n1   Join Beneficiary ID to beneficiaries.csv; unma...  ...     NaN\n2   FY 2025\u201326 | Status and amount cells retain fi...  ...     NaN\n3                                                 NaN  ...     NaN\n4                                          Payment ID  ...  Status\n5                                      PMT-2025-00001  ...    Paid\n6                                      PMT-2025-00002  ...    Paid\n7                                      PMT-2025-00003  ...    Paid\n8                                      PMT-2025-00004  ...  Failed\n9                                      PMT-2025-00005  ...    paid\n10                                     PMT-2025-00006  ...    Paid\n11                                     PMT-2025-00007  ...    Paid\n12                                     PMT-2025-00008  ...    Paid\n13                                     PMT-2025-00009  ...   PAID \n14                                     PMT-2025-00010  ...    paid\n15                                     PMT-2025-00011  ...    Paid\n16                                     PMT-2025-00012  ...    Paid\n17                                     PMT-2025-00013  ...    Paid\n18                                     PMT-2025-00014  ...    Paid\n19                                     PMT-2025-00015  ...    paid\n\n[20 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\npayments_path = '/data/payments.xlsx'\ndf_raw = pd.read_excel(payments_path, sheet_name=0, header=None)\nheader_row = df_raw.iloc[4].tolist()\nprint(header_row)\n# preview data rows\ndata = df_raw.iloc[5:].copy()\ndata.columns = header_row\nprint(data.head(10))\nprint(data.columns.tolist())\n",
+   "output": "['Payment ID', 'Beneficiary ID', 'Payment Date', 'Tranche', 'Donor', 'Amount (INR)', 'Status']\n        Payment ID Beneficiary ID  ... Amount (INR)  Status\n5   PMT-2025-00001      BEN-00001  ...         4000    Paid\n6   PMT-2025-00002      BEN-00001  ...         5000    Paid\n7   PMT-2025-00003      BEN-00003  ...        10000    Paid\n8   PMT-2025-00004      BEN-00003  ...         4000  Failed\n9   PMT-2025-00005      BEN-00005  ...         2500    paid\n10  PMT-2025-00006      BEN-00005  ...         2500    Paid\n11  PMT-2025-00007      BEN-00005  ...         5000    Paid\n12  PMT-2025-00008      BEN-00006  ...      \u20b920,000    Paid\n13  PMT-2025-00009      BEN-00006  ...        10000   PAID \n14  PMT-2025-00010      BEN-00007  ...         4000    paid\n\n[10 rows x 7 columns]\n['Payment ID', 'Beneficiary ID', 'Payment Date', 'Tranche', 'Donor', 'Amount (INR)', 'Status']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\npayments_path = '/data/payments.xlsx'\ndf_raw = pd.read_excel(payments_path, sheet_name=0, header=None)\nheader_row = df_raw.iloc[4].tolist()\ndata = df_raw.iloc[5:].copy()\ndata.columns = header_row\n\n# Drop rows where Payment ID is NaN\ndata = data[data['Payment ID'].notna()].copy()\n\n# Clean Beneficiary ID\ndata['Beneficiary ID'] = data['Beneficiary ID'].astype(str).str.strip()\n\n# Clean Status\ndata['Status'] = data['Status'].astype(str).str.strip().str.lower()\npaid_mask = data['Status'] == 'paid'\ndata_paid = data[paid_mask].copy()\n\n# Clean Amount (INR) - remove \u20b9 and commas\ndef clean_amount(x):\n    if pd.isna(x):\n        return None\n    s = str(x).strip()\n    # remove currency symbols and commas\n    s = re.sub(r'[^\\d.]', '', s)\n    try:\n        return float(s)\n    except:\n        return None\n\ndata_paid['Amount (INR)'] = data_paid['Amount (INR)'].apply(clean_amount)\ndata_paid = data_paid.dropna(subset=['Amount (INR)'])\n\n# Load beneficiaries\nbeneficiaries = pd.read_csv('/data/beneficiaries.csv')\nbeneficiaries['Beneficiary ID'] = beneficiaries['Beneficiary ID'].astype(str).str.strip()\n\nvalid_ids = set(beneficiaries['Beneficiary ID'].unique())\ndata_paid = data_paid[data_paid['Beneficiary ID'].isin(valid_ids)]\n\n# Merge\nmerged = data_paid.merge(beneficiaries[['Beneficiary ID','Programme']], on='Beneficiary ID', how='inner')\n\nsum_by_prog = merged.groupby('Programme')['Amount (INR)'].sum().sort_values(ascending=False)\nprint(sum_by_prog)\nprint('Highest:', sum_by_prog.idxmax(), sum_by_prog.max())\n",
+   "output": "Programme\nHealth & Nutrition    3507000.0\nLivelihoods           3369000.0\nGirls' Education      2175500.0\nWater Security        2024000.0\nName: Amount (INR), dtype: float64\nHighest: Health & Nutrition 3507000.0\n"
+  }
+ ],
+ "usage": {
+  "input": 165928,
+  "output": 2302
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 5,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Join payments.xlsx to beneficiaries.csv on Beneficiary ID; include only status Paid after trimming whitespace and ignoring case, and exclude payment rows whose Beneficiary ID is absent from the CSV. Which programme received the highest total paid amount?",
+ "trap": "Ranking requires the beneficiary join and exclusion of orphan and failed rows.",
+ "text": "The payments sheet has a header row at row 5, so the table was read from row 6 onward. After trimming whitespace, lower-casing `Status`, keeping only `paid` rows, cleaning `Amount (INR)` values such as \u201c\u20b920,000\u201d, and dropping payments whose `Beneficiary ID` is not present in `beneficiaries.csv`, the paid amounts were joined to the beneficiaries on `Beneficiary ID` to obtain the Programme.\n\nTotal paid amount by Programme:\n\n* Health & Nutrition    3,507,000\n* Livelihoods           3,369,000\n* Girls' Education      2,175,500\n* Water Security        2,024,000\n\nHealth & Nutrition is the top programme by total paid amount.\n\nANSWER: Health & Nutrition",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/multi_file.q4.simple.0"
+}

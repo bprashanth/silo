@@ -1,0 +1,97 @@
+{
+ "id": "clean",
+ "description": "Baseline: the tidy synthetic workbook from ngo-workbook-correctness (one table per sheet, headers in row 1, no totals). Truth from tg-bridge/eval_direct.truth().",
+ "files": [
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "questions": [
+  {
+   "id": "total_spend",
+   "question": "Total spend across all transactions (INR)",
+   "answer": 39794400,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "admin_spend",
+   "question": "Total spend in the Admin category (INR)",
+   "answer": 5238900,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "program_ratio_pct",
+   "question": "Program-category spend as a percentage of total spend (one decimal)",
+   "answer": 79.6,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "jul_2025_spend",
+   "question": "Total spend in Jul 2025 (INR)",
+   "answer": 3685400,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "usaid_spend",
+   "question": "Total spend funded by 'USAID sub-grant' (INR)",
+   "answer": 4806600,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "bihar_health_spend",
+   "question": "Spend on 'Maternal & Child Health' in Bihar (INR)",
+   "answer": 2061700,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "n_txn_over_1L",
+   "question": "Number of transactions with amount greater than 100000",
+   "answer": 200,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "top_edu_expense_type",
+   "question": "Expense type with the highest spend within 'Education (Shiksha)' (exact name)",
+   "answer": "Supplies & materials",
+   "kind": "name",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "most_over_budget_program",
+   "question": "Program with the largest spend minus annual budget, in INR (exact name)",
+   "answer": "Maternal & Child Health",
+   "kind": "name",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "largest_funding_gap_funder",
+   "question": "Funder with the largest committed minus received gap (exact name)",
+   "answer": "Azim Premji Foundation",
+   "kind": "name",
+   "tol_pct": 1.0,
+   "trap": ""
+  },
+  {
+   "id": "beneficiaries_reached",
+   "question": "Total beneficiaries reached across all programs",
+   "answer": 21107,
+   "kind": "number",
+   "tol_pct": 1.0,
+   "trap": ""
+  }
+ ]
+}

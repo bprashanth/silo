@@ -1,0 +1,84 @@
+{
+ "job": "clean.bihar_health_spend.codex.1",
+ "case": "clean",
+ "q": "bihar_health_spend",
+ "harness": "codex",
+ "trial": 1,
+ "want": 2061700,
+ "got": "2061700",
+ "verdict": "correct",
+ "seconds": 64.9,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 28\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 17:25 .\ndrwx------ 4 beeps beeps    80 Oct 11 17:25 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:25 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:25 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:25 .git\n-rw-rw-r-- 1 beeps beeps 21477 Oct 11 17:25 asha_ngo_finances_FY25-26.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='asha_ngo_finances_FY25-26.xlsx'; xl=pd.ExcelFile(f); print('Sheets:', xl.sheet_names)\\\"\"",
+   "output": "Sheets: ['Transactions', 'Budget vs Actual', 'Funding']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); print(df.head(20).to_string()); print('\\\\nColumns:', df.columns.tolist())\\\"\"",
+   "output": "    Txn ID       Date     Month                    Program Category          Expense type                   Region            Funding source  Amount (INR)\n0   TX0001 2025-04-02  Apr 2025        Education (Shiksha)  Program        Staff salaries                Karnataka           USAID sub-grant        160300\n1   TX0002 2025-04-17  Apr 2025        Education (Shiksha)  Program  Supplies & materials                Karnataka         Tata Trusts (CSR)        194000\n2   TX0003 2025-04-03  Apr 2025        Education (Shiksha)  Program  Supplies & materials                Karnataka  Infosys Foundation (CSR)        167300\n3   TX0004 2025-04-08  Apr 2025    Maternal & Child Health  Program  Training & workshops                Karnataka  Infosys Foundation (CSR)        102700\n4   TX0005 2025-04-02  Apr 2025    Maternal & Child Health  Program  Supplies & materials                Karnataka  Infosys Foundation (CSR)        178800\n5   TX0006 2025-04-10  Apr 2025    Maternal & Child Health  Program          Field travel                   Odisha  Infosys Foundation (CSR)        223700\n6   TX0007 2025-04-10  Apr 2025    Maternal & Child Health  Program  Training & workshops                   Odisha         Tata Trusts (CSR)        101700\n7   TX0008 2025-04-21  Apr 2025    Maternal & Child Health  Program  Supplies & materials                    Bihar         Tata Trusts (CSR)        178100\n8   TX0009 2025-04-20  Apr 2025  Water & Sanitation (WASH)  Program  Supplies & materials              Maharashtra          State Govt - NHM        132600\n9   TX0010 2025-04-25  Apr 2025  Water & Sanitation (WASH)  Program        Partner grants              Maharashtra  Infosys Foundation (CSR)        128500\n10  TX0011 2025-04-12  Apr 2025  Water & Sanitation (WASH)  Program        Partner grants                   Odisha    Azim Premji Foundation        177300\n11  TX0012 2025-04-10  Apr 2025        Women's Livelihoods  Program  Training & workshops              Maharashtra           USAID sub-grant         69700\n12  TX0013 2025-04-10  Apr 2025        Women's Livelihoods  Program  Training & workshops                Karnataka         Tata Trusts (CSR)        147200\n13  TX0014 2025-04-06  Apr 2025        Women's Livelihoods  Program        Partner grants                   Odisha         Individual donors        121200\n14  TX0015 2025-04-18  Apr 2025            Disaster Relief  Program  Training & workshops                    Bihar           USAID sub-grant         27100\n15  TX0016 2025-04-20  Apr 2025            Disaster Relief  Program          Field travel              Maharashtra         Tata Trusts (CSR)         56200\n16  TX0017 2025-04-09  Apr 2025            Disaster Relief  Program          Field travel                Karnataka         Tata Trusts (CSR)         63000\n17  TX0018 2025-04-10  Apr 2025            Disaster Relief  Program  Training & workshops              Maharashtra           USAID sub-grant         57800\n18  TX0019 2025-04-22  Apr 2025            Disaster Relief  Program        Partner grants                Karnataka         Individual donors         57200\n19  TX0020 2025-04-04  Apr 2025          Organisation-wide    Admin         IT & software  Head office (Bengaluru)              Unrestricted        143100\n\nColumns: ['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); mask = df['Program'].str.strip().eq('Maternal & Child Health') & df['Region'].str.strip().eq('Bihar'); sub=df[mask]; print('rows', len(sub)); print(sub[['Txn ID','Region','Program','Amount (INR)']].to_string(index=False)); total=sub['Amount (INR)'].sum(); print('total', total)\\\"\"",
+   "output": "rows 11\nTxn ID Region                 Program  Amount (INR)\nTX0008  Bihar Maternal & Child Health        178100\nTX0082  Bihar Maternal & Child Health        148500\nTX0084  Bihar Maternal & Child Health        232300\nTX0085  Bihar Maternal & Child Health         85200\nTX0189  Bihar Maternal & Child Health         92300\nTX0217  Bihar Maternal & Child Health        269500\nTX0246  Bihar Maternal & Child Health        265700\nTX0270  Bihar Maternal & Child Health        141600\nTX0271  Bihar Maternal & Child Health        157700\nTX0273  Bihar Maternal & Child Health        233500\nTX0295  Bihar Maternal & Child Health        257300\ntotal 2061700\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Budget vs Actual'); print(df.head(20).to_string()); print('\\\\nColumns:', df.columns.tolist())\\\"\"",
+   "output": "                           Program  Annual budget (INR)  Beneficiaries target  Beneficiaries reached\n0              Education (Shiksha)              9600000                4200.0                 4025.0\n1          Maternal & Child Health              8400000                3100.0                 2570.0\n2        Water & Sanitation (WASH)              6000000               12000.0                10754.0\n3              Women's Livelihoods              5400000                1800.0                 1684.0\n4                  Disaster Relief              2400000                2500.0                 2074.0\n5        Admin (organisation-wide)              5200000                   NaN                    NaN\n6  Fundraising (organisation-wide)              2600000                   NaN                    NaN\n\nColumns: ['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Funding'); print(df.head(30).to_string()); print('\\\\nColumns:', df.columns.tolist())\\\"\"",
+   "output": "                     Funder           Type  Committed FY25-26 (INR)  Received to date (INR) Restricted?\n0         Tata Trusts (CSR)  Corporate CSR                 11000000                 9902000         Yes\n1    Azim Premji Foundation     Foundation                  8000000                 4973000         Yes\n2           USAID sub-grant  Institutional                  6500000                 4804000         Yes\n3         Individual donors     Individual                  4200000                 2681000          No\n4  Infosys Foundation (CSR)  Corporate CSR                  5000000                 4390000         Yes\n5          State Govt - NHM     Government                  4500000                 4186000         Yes\n6     Unrestricted reserves       Internal                  3000000                 2961000          No\n\nColumns: ['Funder', 'Type', 'Committed FY25-26 (INR)', 'Received to date (INR)', 'Restricted?']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions'); g=df.groupby(['Program','Region'])['Amount (INR)'].sum().reset_index(); print(g[g['Program']=='Maternal & Child Health'])\\\"\"",
+   "output": "                    Program       Region  Amount (INR)\n8   Maternal & Child Health        Bihar       2061700\n9   Maternal & Child Health    Karnataka       2753700\n10  Maternal & Child Health  Maharashtra       1387600\n11  Maternal & Child Health       Odisha       3026600\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 111499,
+  "output": 1205
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [
+  "network_attempt"
+ ],
+ "question": "Spend on 'Maternal & Child Health' in Bihar (INR)",
+ "trap": "",
+ "text": "The Transactions sheet shows 11 entries for Maternal & Child Health in Bihar.\n\nTotal spend = 2,061,700 INR.\n\nANSWER: 2061700",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/clean.bihar_health_spend.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "asha_ngo_finances_FY25-26.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T11:55:27.128479Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

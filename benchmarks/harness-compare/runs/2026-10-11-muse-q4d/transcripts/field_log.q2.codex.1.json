@@ -1,0 +1,76 @@
+{
+ "job": "field_log.q2.codex.1",
+ "case": "field_log",
+ "q": "q2",
+ "harness": "codex",
+ "trial": 1,
+ "want": 964,
+ "got": "964",
+ "verdict": "correct",
+ "seconds": 83.1,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 40\n-rw-rw-r-- 1 beeps beeps 37850 Oct 11 17:31 field_visit_log.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('field_visit_log.xlsx'); print(df.columns.tolist()); print(df.head())\\\"\"",
+   "output": "['Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n  Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log  ...                 Unnamed: 11\n0  Data note: village spelling/case/spacing varie...      ...                         NaN\n1  Reporting period: April\u2013September 2025 | Amoun...      ...                         NaN\n2                                                NaN      ...                         NaN\n3                                           Visit ID      ...  Travel Reimbursement (INR)\n4                                       FL-2025-0001      ...                         500\n\n[5 rows x 12 columns]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('field_visit_log.xlsx', header=None); print(df.iloc[0:10,0:12].to_string())\\\"\"",
+   "output": "                                                                                              0                    1               2            3           4         5                   6              7            8                 9                   10                          11\n0                                         Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log                  NaN             NaN          NaN         NaN       NaN                 NaN            NaN          NaN               NaN                 NaN                         NaN\n1  Data note: village spelling/case/spacing varies; duplicate Visit IDs are field resubmissions.                  NaN             NaN          NaN         NaN       NaN                 NaN            NaN          NaN               NaN                 NaN                         NaN\n2                                       Reporting period: April\u2013September 2025 | Amounts are INR                  NaN             NaN          NaN         NaN       NaN                 NaN            NaN          NaN               NaN                 NaN                         NaN\n3                                                                                            NaN                  NaN             NaN          NaN         NaN       NaN                 NaN            NaN          NaN               NaN                 NaN                         NaN\n4                                                                                       Visit ID           Visit Date    Field Worker        State    District   Village           Programme  Women Reached  Men Reached  Children Reached  Follow-up Required  Travel Reimbursement (INR)\n5                                                                                   FL-2025-0001  2025-05-10 00:00:00    Ramesh Tekam  Maharashtra  Gadchiroli  bhilgaon      Water Security             34           12                27                  No                         500\n6                                                                                   FL-2025-0001  2025-05-10 00:00:00    Ramesh Tekam  Maharashtra  Gadchiroli  bHILGAON      Water Security             34           12                27                  No                         500\n7                                                                                   FL-2025-0002  2025-07-21 00:00:00    Ramesh Tekam  Maharashtra  Gadchiroli  Bhilgaon  Health & Nutrition             18            5                 4                  No                        3250\n8                                                                                   FL-2025-0003  2025-08-14 00:00:00   Kavita Jadhav  Maharashtra  Gadchiroli  bHILGAON  Health & Nutrition             19            7                31                  No                        3350\n9                                                                                   FL-2025-0004  2025-09-09 00:00:00  Sushila Korram  Maharashtra  Gadchiroli  BHILGAON    Girls' Education             23           14                19                  No                      \u20b92,400\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\nimport re\ndf = pd.read_excel('field_visit_log.xlsx', header=None)\nheader = df.iloc[4]\ndata = df.iloc[5:].copy()\ndata.columns = header\n# Keep only rows with Visit ID not null\ndata = data[data['Visit ID'].notna()]\n# Normalize village names\ndef norm(s):\n    if pd.isna(s): return ''\n    s = str(s).strip()\n    s = re.sub(r'\\\\s+', ' ', s)\n    return s.lower()\ndata['Village_norm'] = data['Village'].apply(norm)\n# Deduplicate Visit ID keeping first occurrence\ndata = data.drop_duplicates(subset=['Visit ID'], keep='first')\n# Filter\nmask = (\n    data['State'].astype(str).str.strip().str.lower() == 'odisha'\n) & (\n    data['Programme'].astype(str).str.strip().str.lower() == 'health & nutrition'\n)\nfiltered = data[mask]\ntotal_women = pd.to_numeric(filtered['Women Reached'], errors='coerce').sum()\nprint('rows', len(filtered))\nprint(filtered[['Visit ID','State','Programme','Women Reached']].head())\nprint('total', total_women)\n\\\"\n\"",
+   "output": "rows 47\n4        Visit ID   State           Programme Women Reached\n85   FL-2025-0074  Odisha  Health & Nutrition            19\n130  FL-2025-0112  Odisha  Health & Nutrition            25\n137  FL-2025-0117  Odisha  Health & Nutrition             5\n144  FL-2025-0123  Odisha  Health & Nutrition            17\n150  FL-2025-0129  Odisha  Health & Nutrition             8\ntotal 964\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\ndf = pd.read_excel('field_visit_log.xlsx', header=None)\nheader = df.iloc[4]\ndata = df.iloc[5:].copy()\ndata.columns = header\ndata = data[data['Visit ID'].notna()]\ndup = data[data.duplicated(subset=['Visit ID'], keep=False)]\nprint('duplicate Visit IDs count', dup['Visit ID'].nunique())\nprint(dup[['Visit ID','Village','State','Programme']].head(20))\n\\\"\n\"",
+   "output": "duplicate Visit IDs count 58\n4        Visit ID      Village        State           Programme\n5    FL-2025-0001     bhilgaon  Maharashtra      Water Security\n6    FL-2025-0001     bHILGAON  Maharashtra      Water Security\n12   FL-2025-0007     Bhilgaon  Maharashtra  Health & Nutrition\n13   FL-2025-0007     bhilgaon  Maharashtra  Health & Nutrition\n33   FL-2025-0027     bHILGAON  Maharashtra    Girls' Education\n34   FL-2025-0027    Bhilgaon   Maharashtra    Girls' Education\n40   FL-2025-0033     bhilgaon  Maharashtra      Water Security\n41   FL-2025-0033     bHILGAON  Maharashtra      Water Security\n45   FL-2025-0037     bhilgaon  Maharashtra  Health & Nutrition\n46   FL-2025-0037     bHILGAON  Maharashtra  Health & Nutrition\n50   FL-2025-0041     bhilgaon  Maharashtra    Girls' Education\n51   FL-2025-0041     bHILGAON  Maharashtra    Girls' Education\n59   FL-2025-0049     BHILGAON  Maharashtra  Health & Nutrition\n60   FL-2025-0049     Bhilgaon  Maharashtra  Health & Nutrition\n88   FL-2025-0077     mUNIGUDA       Odisha         Livelihoods\n89   FL-2025-0077    Muniguda        Odisha         Livelihoods\n107  FL-2025-0094    Lamtaput        Odisha         Livelihoods\n108  FL-2025-0094     LAMTAPUT       Odisha         Livelihoods\n111  FL-2025-0097     lamtaput       Odisha         Livelihoods\n112  FL-2025-0097     lAMTAPUT       Odisha         Livelihoods\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\ndf = pd.read_excel('field_visit_log.xlsx', header=None)\nheader = df.iloc[4]\ndata = df.iloc[5:].copy()\ndata.columns = header\ndata = data[data['Visit ID'].notna()].drop_duplicates(subset=['Visit ID'], keep='first')\nmask = data['State'].str.strip().str.lower()=='odisha'\nmask &= data['Programme'].str.strip()=='Health & Nutrition'\nprint(mask.sum())\nprint(data[mask]['Women Reached'].sum())\n\\\"\n\"",
+   "output": "47\n964\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 96654,
+  "output": 1663
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. How many women were reached by Health & Nutrition visits in Odisha?",
+ "trap": "Summing all Odisha attendees or retaining resubmitted visits is wrong.",
+ "text": "After normalising village names and keeping the first occurrence of each Visit ID, there are 47 Health & Nutrition visits in Odisha.\n\nTotal women reached\n- 964\n\nANSWER: 964",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/field_log.q2.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "field_visit_log.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:01:58.579801Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

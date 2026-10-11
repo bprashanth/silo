@@ -1,0 +1,71 @@
+{
+ "job": "mixed_units.q1_plain.simple.1",
+ "case": "mixed_units",
+ "q": "q1_plain",
+ "harness": "simple",
+ "trial": 1,
+ "want": 217508500,
+ "got": "217508500",
+ "verdict": "correct",
+ "seconds": 195.8,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/mixed_units_register.xlsx'\n# List sheet names\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\n# Read Disbursement Register sheet raw\ndf_raw = pd.read_excel(file_path, sheet_name='Disbursement Register', header=None)\nprint(df_raw.head(20))\n",
+   "output": "Sheets: ['Disbursement Register']\n                                                    0  ...                       6\n0   Sahyog Foundation \u2014 FY 2025-26 Disbursement Re...  ...                     NaN\n1                                        Amount note:  ...                     NaN\n2                                          Date note:  ...                     NaN\n3                                       Prepared for:  ...                     NaN\n4                                                 NaN  ...                     NaN\n5                                           Record ID  ...                 Purpose\n6                                             MU-0001  ...      Field team support\n7                                             MU-0002  ...  Community mobilisation\n8                                             MU-0003  ...   Equipment procurement\n9                                             MU-0004  ...  Training and workshops\n10                                            MU-0005  ...   Equipment procurement\n11                                            MU-0006  ...  Direct programme grant\n12                                            MU-0007  ...      Field team support\n13                                            MU-0008  ...  Direct programme grant\n14                                            MU-0009  ...   Equipment procurement\n15                                            MU-0010  ...   Equipment procurement\n16                                            MU-0011  ...      Field team support\n17                                            MU-0012  ...      Field team support\n18                                            MU-0013  ...   Equipment procurement\n19                                            MU-0014  ...  Community mobilisation\n\n[20 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/mixed_units_register.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Disbursement Register', header=5)\nprint(df.head())\nprint(df.columns.tolist())\nprint(len(df))\n# Check tail\nprint(df.tail())\n",
+   "output": "  Record ID Disbursement Date  ...     Amount                 Purpose\n0   MU-0001        2025-04-03  ...     340000      Field team support\n1   MU-0002        03/04/2025  ...  \u20b91,20,000  Community mobilisation\n2   MU-0003        3 Apr 2025  ...      1.2 L   Equipment procurement\n3   MU-0004        2025-08-01  ...   2.5 lakh  Training and workshops\n4   MU-0005        28/02/2026  ...       1 Cr   Equipment procurement\n\n[5 rows x 7 columns]\n['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n185\n    Record ID Disbursement Date  ... Amount                 Purpose\n180   MU-0176        02/11/2025  ...   1 Cr      Field team support\n181   MU-0177        3 Jun 2025  ...    45k   Equipment procurement\n182   MU-0178        2025-08-23  ...    NaN      Field team support\n183   MU-0179        06/06/2025  ...      -  Training and workshops\n184   MU-0180        4 Feb 2026  ...    NaN  Training and workshops\n\n[5 rows x 7 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/mixed_units_register.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Disbursement Register', header=5)\namounts = df['Amount'].astype(str).tolist()\n# Show unique non-null\nuniq = pd.Series(amounts).value_counts()\nprint(uniq.head(100))\n",
+   "output": "nan          43\n\u20b91,20,000    20\n1.2 L        20\n2.5 lakh     20\n1 Cr         20\n45k          20\n-            20\n78000         7\n875000        5\n340000        4\n165000        3\nAmount        2\n32500         1\nName: count, dtype: int64\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/mixed_units_register.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Disbursement Register', header=5)\n# Ensure we only process rows where Record ID looks like MU-...\ndf = df[df['Record ID'].astype(str).str.startswith('MU-')]\nprint(len(df))\n# Get unique amount strings\nvals = df['Amount'].astype(str).unique()\nprint(vals)\n",
+   "output": "180\n['340000' '\u20b91,20,000' '1.2 L' '2.5 lakh' '1 Cr' '45k' 'nan' '-' '78000'\n '875000' '165000' '32500']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/mixed_units_register.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Disbursement Register', header=5)\ndf = df[df['Record ID'].astype(str).str.startswith('MU-')].copy()\n\ndef parse_amount(val):\n    if pd.isna(val):\n        return 0\n    s = str(val).strip()\n    if s in ['', '-', 'NA', 'nan', 'None']:\n        return 0\n    # Remove currency symbol, commas\n    s_clean = s.replace('\u20b9', '').replace(',', '').strip()\n    # Handle patterns\n    # e.g., 1.2 L, 2.5 lakh, 1 Cr, 45k, 340000\n    # Also maybe '1.2 L' with space\n    # Use regex\n    # Match number and optional unit\n    m = re.match(r'^([0-9]*\\.?[0-9]+)\\s*([a-zA-Z]+)?$', s_clean)\n    if m:\n        num = float(m.group(1))\n        unit = m.group(2)\n        if not unit:\n            return int(num)\n        unit_lower = unit.lower()\n        if unit_lower in ['l', 'lakh', 'lakhs']:\n            return int(num * 100000)\n        if unit_lower in ['cr', 'crore', 'crores']:\n            return int(num * 10000000)\n        if unit_lower in ['k', 'thousand']:\n            return int(num * 1000)\n        # unknown unit\n        return int(num)\n    else:\n        # Try to parse numeric with commas already removed\n        try:\n            return int(float(s_clean))\n        except:\n            return 0\n\ndf['Amount INR'] = df['Amount'].apply(parse_amount)\nprint(df[['Record ID','Amount','Amount INR']].head(20))\nprint('Total', df['Amount INR'].sum())\n",
+   "output": "   Record ID     Amount  Amount INR\n0    MU-0001     340000      340000\n1    MU-0002  \u20b91,20,000      120000\n2    MU-0003      1.2 L      120000\n3    MU-0004   2.5 lakh      250000\n4    MU-0005       1 Cr    10000000\n5    MU-0006        45k       45000\n6    MU-0007        NaN           0\n7    MU-0008          -           0\n8    MU-0009        NaN           0\n9    MU-0010      78000       78000\n10   MU-0011  \u20b91,20,000      120000\n11   MU-0012      1.2 L      120000\n12   MU-0013   2.5 lakh      250000\n13   MU-0014       1 Cr    10000000\n14   MU-0015        45k       45000\n15   MU-0016        NaN           0\n16   MU-0017          -           0\n17   MU-0018        NaN           0\n18   MU-0019      78000       78000\n19   MU-0020  \u20b91,20,000      120000\nTotal 217508500\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/mixed_units_register.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Disbursement Register', header=5)\ndf = df[df['Record ID'].astype(str).str.startswith('MU-')].copy()\n\ndef parse_amount(val):\n    if pd.isna(val):\n        return 0\n    s = str(val).strip()\n    if s.lower() in ['', '-', 'na', 'nan', 'none']:\n        return 0\n    # Remove currency symbols and commas\n    s_clean = s.replace('\u20b9', '').replace(',', '').strip()\n    # Some values may have spaces\n    # Try regex for number + unit\n    m = re.match(r'^([0-9]*\\.?[0-9]+)\\s*([a-zA-Z]+)?$', s_clean)\n    if m:\n        num = float(m.group(1))\n        unit = m.group(2)\n        if not unit:\n            # maybe plain number\n            return int(num)\n        unit_lower = unit.lower()\n        if unit_lower.startswith('l'):  # lakh\n            return int(num * 100000)\n        if unit_lower.startswith('cr'):\n            return int(num * 10000000)\n        if unit_lower.startswith('k'):\n            return int(num * 1000)\n        # unknown\n        return int(num)\n    # fallback try numeric\n    try:\n        return int(float(s_clean))\n    except:\n        return 0\n\ndf['Amount INR'] = df['Amount'].apply(parse_amount)\n\n# Summary counts\nprint(df['Amount'].value_counts(dropna=False))\nprint('Rows:', len(df))\nprint('Total INR:', df['Amount INR'].sum())\n# Check for any unparsed non-zero strings\nunparsed = df[~df['Amount'].astype(str).str.match(r'^[0-9\u20b9,\\.\\s]*[a-zA-Z]*$')]\nprint('Potential unparsed rows:', len(unparsed))\nprint(unparsed[['Record ID','Amount']].head())\n",
+   "output": "Amount\nNaN          40\n\u20b91,20,000    20\n1.2 L        20\n2.5 lakh     20\n1 Cr         20\n45k          20\n-            20\n78000         7\n875000        5\n340000        4\n165000        3\n32500         1\nName: count, dtype: int64\nRows: 180\nTotal INR: 217508500\nPotential unparsed rows: 20\n   Record ID Amount\n7    MU-0008      -\n16   MU-0017      -\n25   MU-0026      -\n34   MU-0035      -\n43   MU-0044      -\n"
+  }
+ ],
+ "usage": {
+  "input": 15765,
+  "output": 3663
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 32,
+  "untraced": [
+   1000000000000.0,
+   10000000000.0,
+   2400000.0,
+   2400000.0,
+   5000000.0,
+   200000000.0,
+   900000.0,
+   1360000.0,
+   546000.0,
+   4375000.0,
+   495000.0
+  ],
+  "answer_traced": true,
+  "clean": false
+ },
+ "audit": [],
+ "question": "What is the total disbursed amount, in INR?",
+ "trap": "plain variant of q1",
+ "text": "The Disbursement Register contains 180 records with mixed units. After normalising L/lakh \u2192 100,000, Cr \u2192 10,000,000, k \u2192 1,000 and treating blank/\u2018-\u2019/NA as zero:\n\n* \u20b91,20,000 \u00d720 = 2,400,000\n* 1.2 L \u00d720 = 2,400,000\n* 2.5 lakh \u00d720 = 5,000,000\n* 1 Cr \u00d720 = 200,000,000\n* 45k \u00d720 = 900,000\n* 340000 \u00d74 = 1,360,000\n* 78000 \u00d77 = 546,000\n* 875000 \u00d75 = 4,375,000\n* 165000 \u00d73 = 495,000\n* 32500 \u00d71 = 32,500\n* 40 NaN / 20 \u2018-\u2019 = 0\n\nTotal = 217,508,500 INR\n\nANSWER: 217508500",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/mixed_units.q1_plain.simple.1"
+}

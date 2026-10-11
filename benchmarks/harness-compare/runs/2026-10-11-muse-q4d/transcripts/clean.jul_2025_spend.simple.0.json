@@ -1,0 +1,39 @@
+{
+ "job": "clean.jul_2025_spend.simple.0",
+ "case": "clean",
+ "q": "jul_2025_spend",
+ "harness": "simple",
+ "trial": 0,
+ "want": 3685400,
+ "got": "3685400",
+ "verdict": "correct",
+ "seconds": 74.3,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Load Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n\n# Ensure Date is datetime\ndf['Date'] = pd.to_datetime(df['Date'], errors='coerce')\n\n# Filter for July 2025\njuly_mask = (df['Date'].dt.year == 2025) & (df['Date'].dt.month == 7)\njuly_df = df[july_mask]\n\ntotal_spend = july_df['Amount (INR)'].sum()\n\nprint(f\"Rows in July 2025: {len(july_df)}\")\nprint(f\"Total spend July 2025 INR: {total_spend}\")\nprint(july_df.head())\n",
+   "output": "Rows in July 2025: 27\nTotal spend July 2025 INR: 3685400\n    Txn ID       Date  ...          Funding source Amount (INR)\n76  TX0077 2025-07-12  ...  Azim Premji Foundation       187400\n77  TX0078 2025-07-08  ...       Individual donors       240500\n78  TX0079 2025-07-22  ...        State Govt - NHM       108600\n79  TX0080 2025-07-17  ...       Individual donors       152700\n80  TX0081 2025-07-11  ...       Tata Trusts (CSR)       114000\n\n[5 rows x 9 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Check Month column values\nprint(df['Month'].unique()[:20])\n# Filter by Month == 'Jul 2025'\nmask = df['Month'] == 'Jul 2025'\njuly_df2 = df[mask]\nprint(len(july_df2), july_df2['Amount (INR)'].sum())\n",
+   "output": "['Apr 2025' 'May 2025' 'Jun 2025' 'Jul 2025' 'Aug 2025' 'Sep 2025'\n 'Oct 2025' 'Nov 2025' 'Dec 2025' 'Jan 2026' 'Feb 2026' 'Mar 2026']\n27 3685400\n"
+  }
+ ],
+ "usage": {
+  "input": 5475,
+  "output": 1051
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total spend in Jul 2025 (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 27 records with `Month == 'Jul 2025'`. \n\nTotal Amount (INR) for July 2025 = 3,685,400\n\nANSWER: 3685400",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.jul_2025_spend.simple.0"
+}

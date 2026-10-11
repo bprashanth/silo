@@ -1,0 +1,76 @@
+{
+ "job": "two_tables.q3.codex.1",
+ "case": "two_tables",
+ "q": "q3",
+ "harness": "codex",
+ "trial": 1,
+ "want": 5,
+ "got": "5",
+ "verdict": "correct",
+ "seconds": 70.8,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -l'",
+   "output": "total 12\n-rw-rw-r-- 1 beeps beeps 8679 Oct 11 18:44 sahyog_budget_and_receipts.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; xl = pd.ExcelFile('sahyog_budget_and_receipts.xlsx'); print(xl.sheet_names)\\\"\"",
+   "output": "['Finance FY25-26', 'Read me - notes']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df = pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name=0); print(df.head()); print(df.columns.tolist())\\\"\"",
+   "output": "  SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER  ... Unnamed: 6\n0  FY 2025-26 | Internal management copy | Amount...    ...        NaN\n1                                                NaN    ...        NaN\n2                       A. APPROVED PROGRAMME BUDGET    ...        NaN\n3                                        Budget Code    ...        NaN\n4                                             BG-001    ...        NaN\n\n[5 rows x 7 columns]\n['SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name=0, header=None); print(df.shape); print(df.iloc[:100,0].tolist())\\\"\"",
+   "output": "(50, 7)\n['SAHYOG RURAL INITIATIVE \u2014 PROGRAMME FINANCE REGISTER', 'FY 2025-26 | Internal management copy | Amounts in INR', nan, 'A. APPROVED PROGRAMME BUDGET', 'Budget Code', 'BG-001', 'BG-002', 'BG-003', 'BG-004', 'BG-005', 'BG-006', 'BG-007', 'BG-008', 'BG-009', 'BG-010', 'BG-011', 'BG-012', 'TOTAL APPROVED', nan, nan, nan, 'B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025', 'Receipt ID', 'RCPT-25-001', 'RCPT-25-002', 'RCPT-25-003', 'RCPT-25-004', 'RCPT-25-005', 'RCPT-25-006', 'RCPT-25-007', 'RCPT-25-008', 'RCPT-25-009', 'RCPT-25-010', 'RCPT-25-011', 'RCPT-25-012', 'RCPT-25-013', 'RCPT-25-014', 'RCPT-25-015', 'RCPT-25-016', 'RCPT-25-017', 'RCPT-25-018', 'RCPT-25-019', 'RCPT-25-020', 'RCPT-25-021', 'RCPT-25-022', 'RCPT-25-023', 'RCPT-25-024', 'RCPT-25-025', 'RCPT-25-026', 'TOTAL RECEIPTS']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name=0, header=None); print(df.iloc[20:50, :].to_string())\\\"\"",
+   "output": "                                                   0                    1                                      2                  3                              4                      5               6\n20                                               NaN                  NaN                                    NaN                NaN                            NaN                    NaN             NaN\n21  B. DONOR RECEIPTS \u2014 CREDITS CLEARED APR\u2013SEP 2025                  NaN                                    NaN                NaN                            NaN                    NaN             NaN\n22                                        Receipt ID          Credit Date                         Donor / Scheme         Donor Type               Programme Tagged  Amount Received (INR)  Bank Reference\n23                                       RCPT-25-001  2025-04-10 00:00:00                        Tata Trusts CSR                CSR                  Poshan Sakhis                1650000    UTR202507919\n24                                       RCPT-25-002  2025-05-17 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation  Climate-Resilient Livelihoods                1200000    UTR202515838\n25                                       RCPT-25-003  2025-06-24 00:00:00                     Jal Jeevan Mission  Government Scheme                  Poshan Sakhis                1150000    UTR202523757\n26                                       RCPT-25-004  2025-07-07 00:00:00                Global Greengrants Fund      Foreign Grant       Digital Learning Centres                1525000    UTR202531676\n27                                       RCPT-25-005  2025-08-14 00:00:00                   HDFC Bank Parivartan                CSR              Jal Jeevan Saathi                1225000    UTR202539595\n28                                       RCPT-25-006  2025-09-21 00:00:00                        Tata Trusts CSR                CSR       Digital Learning Centres                2175000    UTR202547514\n29                                       RCPT-25-007  2025-04-04 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation              Jal Jeevan Saathi                 500000    UTR202555433\n30                                       RCPT-25-008  2025-05-11 00:00:00                     Jal Jeevan Mission  Government Scheme                  Poshan Sakhis                 550000    UTR202563352\n31                                       RCPT-25-009  2025-06-18 00:00:00                Global Greengrants Fund      Foreign Grant  Climate-Resilient Livelihoods                 525000    UTR202571271\n32                                       RCPT-25-010  2025-07-25 00:00:00                   HDFC Bank Parivartan                CSR              Jal Jeevan Saathi                 575000    UTR202579190\n33                                       RCPT-25-011  2025-08-08 00:00:00                        Tata Trusts CSR                CSR       Digital Learning Centres                2450000    UTR202587109\n34                                       RCPT-25-012  2025-09-15 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation              Jal Jeevan Saathi                 425000    UTR202595028\n35                                       RCPT-25-013  2025-04-22 00:00:00                     Jal Jeevan Mission  Government Scheme                  Poshan Sakhis                 575000    UTR202602947\n36                                       RCPT-25-014  2025-05-05 00:00:00                Global Greengrants Fund      Foreign Grant  Climate-Resilient Livelihoods                1150000    UTR202610866\n37                                       RCPT-25-015  2025-06-12 00:00:00                   HDFC Bank Parivartan                CSR                  Poshan Sakhis                1750000    UTR202618785\n38                                       RCPT-25-016  2025-07-19 00:00:00                        Tata Trusts CSR                CSR       Digital Learning Centres                1325000    UTR202626704\n39                                       RCPT-25-017  2025-08-26 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation              Jal Jeevan Saathi                1350000    UTR202634623\n40                                       RCPT-25-018  2025-09-09 00:00:00                     Jal Jeevan Mission  Government Scheme       Digital Learning Centres                 875000    UTR202642542\n41                                       RCPT-25-019  2025-04-16 00:00:00                Global Greengrants Fund      Foreign Grant              Jal Jeevan Saathi                1300000    UTR202650461\n42                                       RCPT-25-020  2025-05-23 00:00:00                   HDFC Bank Parivartan                CSR                  Poshan Sakhis                 600000    UTR202658380\n43                                       RCPT-25-021  2025-06-06 00:00:00                        Tata Trusts CSR                CSR  Climate-Resilient Livelihoods                1775000    UTR202666299\n44                                       RCPT-25-022  2025-07-13 00:00:00  Azim Premji Philanthropic Initiatives  Indian Foundation              Jal Jeevan Saathi                 700000    UTR202674218\n45                                       RCPT-25-023  2025-08-20 00:00:00                     Jal Jeevan Mission  Government Scheme       Digital Learning Centres                 875000    UTR202682137\n46                                       RCPT-25-024  2025-09-03 00:00:00                Global Greengrants Fund      Foreign Grant              Jal Jeevan Saathi                1250000    UTR202690056\n47                                       RCPT-25-025  2025-04-10 00:00:00                   HDFC Bank Parivartan                CSR                  Poshan Sakhis                1350000    UTR202697975\n48                                       RCPT-25-026  2025-05-17 00:00:00                        Tata Trusts CSR                CSR  Climate-Resilient Livelihoods                2150000    UTR202705894\n49                                    TOTAL RECEIPTS                  NaN                                    NaN                NaN                            NaN                    NaN             NaN\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('sahyog_budget_and_receipts.xlsx', sheet_name=0, header=None); header_idx=22; cols=df.iloc[header_idx]; data=df.iloc[header_idx+1:].copy(); data.columns=cols; # filter\nprint(data.head())\nmask=data['Donor Type']=='Foreign Grant'\nprint(mask.sum())\nprint(data[mask]['Receipt ID'].unique().tolist())\nprint(len(data[mask]['Receipt ID'].unique()))\n\\\"\"",
+   "output": "22   Receipt ID          Credit Date  ... Amount Received (INR) Bank Reference\n23  RCPT-25-001  2025-04-10 00:00:00  ...               1650000   UTR202507919\n24  RCPT-25-002  2025-05-17 00:00:00  ...               1200000   UTR202515838\n25  RCPT-25-003  2025-06-24 00:00:00  ...               1150000   UTR202523757\n26  RCPT-25-004  2025-07-07 00:00:00  ...               1525000   UTR202531676\n27  RCPT-25-005  2025-08-14 00:00:00  ...               1225000   UTR202539595\n\n[5 rows x 7 columns]\n5\n['RCPT-25-004', 'RCPT-25-009', 'RCPT-25-014', 'RCPT-25-019', 'RCPT-25-024']\n5\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 95078,
+  "output": 1011
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How many distinct Receipt IDs in the donor-receipts table have Donor Type exactly 'Foreign Grant'?",
+ "trap": "Counting budget rows or the receipts total row gives a wrong count.",
+ "text": "I checked the donor-receipts table in `sahyog_budget_and_receipts.xlsx`. There are 5 distinct Receipt IDs with Donor Type exactly 'Foreign Grant'.\n\nANSWER: 5",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/two_tables.q3.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "sahyog_budget_and_receipts.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T13:14:23.834695Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

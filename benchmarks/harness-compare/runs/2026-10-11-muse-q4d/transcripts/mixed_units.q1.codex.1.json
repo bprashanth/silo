@@ -1,0 +1,148 @@
+{
+ "job": "mixed_units.q1.codex.1",
+ "case": "mixed_units",
+ "q": "q1",
+ "harness": "codex",
+ "trial": 1,
+ "want": 217508500,
+ "got": "217508500",
+ "verdict": "correct",
+ "seconds": 205.2,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 20\ndrwxrwxr-x 5 beeps beeps  4096 Oct 11 17:54 .\ndrwx------ 4 beeps beeps    80 Oct 11 17:54 ..\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:54 .agents\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:54 .codex\ndr-xr-xr-x 2 beeps beeps    40 Oct 11 17:54 .git\n-rw-rw-r-- 1 beeps beeps 12395 Oct 11 17:54 mixed_units_register.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='mixed_units_register.xlsx'; xls=pd.ExcelFile(f); print(xls.sheet_names)\\\"\"",
+   "output": "['Disbursement Register']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register'); print(df.head(20)); print(df.columns.tolist())\\\"\"",
+   "output": "   Sahyog Foundation \u2014 FY 2025-26 Disbursement Register  ...              Unnamed: 6\n0                                        Amount note:    ...                     NaN\n1                                          Date note:    ...                     NaN\n2                                       Prepared for:    ...                     NaN\n3                                                 NaN    ...                     NaN\n4                                           Record ID    ...                 Purpose\n5                                             MU-0001    ...      Field team support\n6                                             MU-0002    ...  Community mobilisation\n7                                             MU-0003    ...   Equipment procurement\n8                                             MU-0004    ...  Training and workshops\n9                                             MU-0005    ...   Equipment procurement\n10                                            MU-0006    ...  Direct programme grant\n11                                            MU-0007    ...      Field team support\n12                                            MU-0008    ...  Direct programme grant\n13                                            MU-0009    ...   Equipment procurement\n14                                            MU-0010    ...   Equipment procurement\n15                                            MU-0011    ...      Field team support\n16                                            MU-0012    ...      Field team support\n17                                            MU-0013    ...   Equipment procurement\n18                                            MU-0014    ...  Community mobilisation\n19                                            MU-0015    ...      Field team support\n\n[20 rows x 7 columns]\n['Sahyog Foundation \u2014 FY 2025-26 Disbursement Register', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[0:10,0:7].to_string(header=False,index=False))\\\"\"",
+   "output": "Sahyog Foundation \u2014 FY 2025-26 Disbursement Register                                                                                                       NaN                     NaN       NaN                                   NaN       NaN                    NaN\n                                        Amount note: Numbers are INR. L and lakh mean 100,000; Cr means 10,000,000; k means 1,000. Blank, '-' and NA are zero.                     NaN       NaN                                   NaN       NaN                    NaN\n                                          Date note:                                              Dates use YYYY-MM-DD, DD/MM/YYYY (day first), or D Mon YYYY.                     NaN       NaN                                   NaN       NaN                    NaN\n                                       Prepared for:                                                               Programme management review \u2014 31 March 2026                     NaN       NaN                                   NaN       NaN                    NaN\n                                                 NaN                                                                                                       NaN                     NaN       NaN                                   NaN       NaN                    NaN\n                                           Record ID                                                                                         Disbursement Date               Programme     State                        Donor / Scheme    Amount                Purpose\n                                             MU-0001                                                                                                2025-04-03 Maternal & Child Health Karnataka Azim Premji Philanthropic Initiatives    340000     Field team support\n                                             MU-0002                                                                                                03/04/2025       Rural Livelihoods Rajasthan               National Health Mission \u20b91,20,000 Community mobilisation\n                                             MU-0003                                                                                                3 Apr 2025 Maternal & Child Health Jharkhand                        Tata CSR Trust     1.2 L  Equipment procurement\n                                             MU-0004                                                                                                2025-08-01 Maternal & Child Health Rajasthan           Global Community Foundation  2.5 lakh Training and workshops\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\nheader=df.iloc[4]\ndata=df.iloc[5:]\n# map columns by header names\ncols = {i: header[i] for i in range(len(header)) if pd.notna(header[i])}\n# find amount column index\namt_idx = None\nfor i, name in cols.items():\n    if 'amount' in str(name).lower():\n        amt_idx=i\n        break\nprint('amount idx', amt_idx, cols[amt_idx])\n# parse\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0.0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0.0\n    # remove \u20b9 , commas\n    s=re.sub(r'[\u20b9,]', '', s)\n    s=s.strip()\n    # match number with suffix\n    m=re.match(r'\"'^([0-9]*'\"\\\\.?[0-9]+)\\\\s*([a-zA-Z]+)?\"'$'\"', s, re.I)\n    if not m:\n        # try extract number\n        try:\n            return float(re.sub(r'[\"'^0-9'\"\\\\.]', '', s)) if s else 0.0\n        except:\n            return 0.0\n    num=float(m.group(1))\n    suf=m.group(2)\n    if not suf:\n        return num\n    suf=suf.lower()\n    if suf in ['l','lakh','lakhs']:\n        return num*100000\n    if suf=='cr' or suf=='crore' or suf=='crores':\n        return num*10000000\n    if suf=='k':\n        return num*1000\n    # handle 'lakh' inside word?\n    if 'lakh' in suf:\n        return num*100000\n    if 'cr' in suf:\n        return num*10000000\n    return num\n\nvals=[]\nfor _,row in data.iterrows():\n    v=row[amt_idx]\n    vals.append(parse_amount(v))\ntotal=sum(vals)\nprint('count', len(vals))\nprint('total', total)\nprint(vals[:20])\n\\\"\"",
+   "output": "Traceback (most recent call last):\n  File \"<string>\", line 14, in <module>\nKeyError: None\n",
+   "exit_code": 1
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[4].tolist())\\\"\"",
+   "output": "[nan, nan, nan, nan, nan, nan, nan]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[4:6].to_string())\\\"\"",
+   "output": "           0                  1          2      3               4       5        6\n4        NaN                NaN        NaN    NaN             NaN     NaN      NaN\n5  Record ID  Disbursement Date  Programme  State  Donor / Scheme  Amount  Purpose\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(df.iloc[5].tolist())\\\"\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\nheader_row=5\ndata_start=6\ncols=df.iloc[header_row].tolist()\nprint(cols)\namt_idx=cols.index('Amount')\nprint('amt_idx', amt_idx)\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0.0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA':\n        return 0.0\n    s=re.sub(r'[\u20b9,]', '', s)\n    s=s.strip()\n    # remove spaces\n    # find number and suffix\n    m=re.search(r'([0-9]*\\\\.?[0-9]+)\\\\s*([a-zA-Z]+)?', s)\n    if not m:\n        try:\n            return float(re.sub(r'[\"'^0-9'\"\\\\.]', '', s))\n        except:\n            return 0.0\n    num=float(m.group(1))\n    suf=m.group(2)\n    if not suf:\n        return num\n    suf=suf.lower()\n    if 'lakh' in suf:\n        return num*100000\n    if suf.startswith('cr'):\n        return num*10000000\n    if suf=='k':\n        return num*1000\n    return num\n\nvals=[]\nfor i in range(data_start, len(df)):\n    v=df.iat[i, amt_idx]\n    vals.append(parse_amount(v))\ntotal=sum(vals)\nprint('rows', len(vals))\nprint('total', total)\n\\\"\"",
+   "output": "['Record ID', 'Disbursement Date', 'Programme', 'State', 'Donor / Scheme', 'Amount', 'Purpose']\namt_idx 5\nrows 185\ntotal 215108524.0\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); amt_idx=5; vals=df.iloc[6:, amt_idx].dropna().unique()[:50]; print(list(vals))\\\"\"",
+   "output": "[340000, '\u20b91,20,000', '1.2 L', '2.5 lakh', '1 Cr', '45k', '-', 78000, 875000, 'Amount', 165000, 32500]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); amt_idx=5; print(df.iloc[6:30, [0, amt_idx]].to_string(header=False,index=False))\\\"\"",
+   "output": "MU-0001    340000\nMU-0002 \u20b91,20,000\nMU-0003     1.2 L\nMU-0004  2.5 lakh\nMU-0005      1 Cr\nMU-0006       45k\nMU-0007       NaN\nMU-0008         -\nMU-0009       NaN\nMU-0010     78000\nMU-0011 \u20b91,20,000\nMU-0012     1.2 L\nMU-0013  2.5 lakh\nMU-0014      1 Cr\nMU-0015       45k\nMU-0016       NaN\nMU-0017         -\nMU-0018       NaN\nMU-0019     78000\nMU-0020 \u20b91,20,000\nMU-0021     1.2 L\nMU-0022  2.5 lakh\nMU-0023      1 Cr\nMU-0024       45k\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); print(len(df))\\\"\"",
+   "output": "191\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); ids=df.iloc[6:,0].tolist(); print(ids[:30]); print(len(set(ids)))\\\"\"",
+   "output": "['MU-0001', 'MU-0002', 'MU-0003', 'MU-0004', 'MU-0005', 'MU-0006', 'MU-0007', 'MU-0008', 'MU-0009', 'MU-0010', 'MU-0011', 'MU-0012', 'MU-0013', 'MU-0014', 'MU-0015', 'MU-0016', 'MU-0017', 'MU-0018', 'MU-0019', 'MU-0020', 'MU-0021', 'MU-0022', 'MU-0023', 'MU-0024', 'MU-0025', 'MU-0026', 'MU-0027', 'MU-0028', 'MU-0029', 'MU-0030']\n182\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\nheader_row=5\ndata_start=6\ncols=df.iloc[header_row].tolist()\namt_idx=cols.index('Amount')\ndef parse_amount(v):\n    if pd.isna(v):\n        return 0.0\n    s=str(v).strip()\n    if s=='' or s=='-' or s.upper()=='NA' or s.lower()=='amount':\n        return 0.0\n    # remove currency symbol\n    s=re.sub(r'[\u20b9]', '', s)\n    # extract suffix\n    m=re.search(r'([0-9.,]+)\\\\s*([a-zA-Z]+)?', s)\n    if not m:\n        return 0.0\n    num_str=m.group(1)\n    suf=m.group(2) or ''\n    suf=suf.lower()\n    # if suffix present, remove commas from num_str then parse\n    # If no suffix, maybe commas are thousand separators\n    # Remove commas\n    num_str_clean=num_str.replace(',','')\n    try:\n        num=float(num_str_clean)\n    except:\n        return 0.0\n    if 'lakh' in suf or suf=='l':\n        return num*100000\n    if suf.startswith('cr'):\n        return num*10000000\n    if suf=='k':\n        return num*1000\n    # no suffix -> plain number\n    return num\n\nvals=[]\nfor i in range(data_start, len(df)):\n    v=df.iat[i, amt_idx]\n    # stop if record id is NaN\n    if pd.isna(df.iat[i,0]):\n        continue\n    vals.append(parse_amount(v))\ntotal=sum(vals)\nprint('rows parsed', len(vals))\nprint('total', total)\n# sample\nprint(vals[:30])\n\\\"\"",
+   "output": "rows parsed 182\ntotal 217508500.0\n[340000.0, 120000.0, 120000.0, 250000.0, 10000000.0, 45000.0, 0.0, 0.0, 0.0, 78000.0, 120000.0, 120000.0, 250000.0, 10000000.0, 45000.0, 0.0, 0.0, 0.0, 78000.0, 120000.0, 120000.0, 250000.0, 10000000.0, 45000.0, 0.0, 0.0, 0.0, 78000.0, 120000.0, 120000.0]\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd, re\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\namt_idx=5\nvals=df.iloc[6:, amt_idx].astype(str).tolist()\nuniq=set(vals)\nprint(len(uniq))\nprint(sorted(uniq)[:100])\n\\\"\"",
+   "output": "13\nTraceback (most recent call last):\n  File \"<string>\", line 7, in <module>\nTypeError: '<' not supported between instances of 'float' and 'str'\n",
+   "exit_code": 1
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None); amt_idx=5; vals=[str(v) for v in df.iloc[6:, amt_idx].tolist()]; uniq=set(vals); print(uniq)\\\"\"",
+   "output": "{'165000', '2.5 lakh', 'Amount', '\u20b91,20,000', '1.2 L', '875000', '32500', '340000', '78000', '45k', '-', 'nan', '1 Cr'}\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nimport pandas as pd\ndf=pd.read_excel('mixed_units_register.xlsx', sheet_name='Disbursement Register', header=None)\namt_idx=5\nvals=df.iloc[6:, amt_idx].tolist()\nfrom collections import Counter\nc=Counter()\nfor v in vals:\n    s=str(v).strip()\n    if pd.isna(v):\n        key='nan'\n    else:\n        key=s\n    c[key]+=1\nprint(c)\n\\\"\"",
+   "output": "Counter({'nan': 43, '\u20b91,20,000': 20, '1.2 L': 20, '2.5 lakh': 20, '1 Cr': 20, '45k': 20, '-': 20, '78000': 7, '875000': 5, '340000': 4, '165000': 3, 'Amount': 2, '32500': 1})\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"\nvals = {\n'340000':340000,\n'\u20b91,20,000':120000,\n'1.2 L':120000,\n'2.5 lakh':250000,\n'1 Cr':10000000,\n'45k':45000,\n'78000':78000,\n'875000':875000,\n'165000':165000,\n'32500':32500,\n}\ncounts = {\n'340000':4,\n'\u20b91,20,000':20,\n'1.2 L':20,\n'2.5 lakh':20,\n'1 Cr':20,\n'45k':20,\n'78000':7,\n'875000':5,\n'165000':3,\n'32500':1,\n}\ntotal=sum(vals[k]*counts[k] for k in vals)\nprint(total)\n\\\"\"",
+   "output": "217508500\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 296559,
+  "output": 4010
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 2,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "What is the total disbursed amount? Use INR; L/lakh = 100,000, Cr = 10,000,000, k = 1,000, and treat blank, '-' and NA amounts as zero.",
+ "trap": "Treating lakh/crore suffixes as literal numbers or dropping formatted strings.",
+ "text": "The register has 182 records. After converting L/lakh, Cr and k to rupees and treating blank, '-' and NA as zero, the sum is 217,508,500 INR.\n\nANSWER: 217508500",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/mixed_units.q1.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "mixed_units_register.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:24:07.342283Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

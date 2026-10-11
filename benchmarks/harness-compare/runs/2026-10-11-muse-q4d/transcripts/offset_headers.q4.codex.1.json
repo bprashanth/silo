@@ -1,0 +1,64 @@
+{
+ "job": "offset_headers.q4.codex.1",
+ "case": "offset_headers",
+ "q": "q4",
+ "harness": "codex",
+ "trial": 1,
+ "want": "Jal Jeevan Saathi",
+ "got": "Jal Jeevan Saathi",
+ "verdict": "correct",
+ "seconds": 86.0,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'ls -la'",
+   "output": "total 12\ndrwxrwxr-x 5 beeps beeps 4096 Oct 11 18:23 .\ndrwx------ 4 beeps beeps   80 Oct 11 18:23 ..\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 18:23 .agents\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 18:23 .codex\ndr-xr-xr-x 2 beeps beeps   40 Oct 11 18:23 .git\n-rw-rw-r-- 1 beeps beeps 7004 Oct 11 18:23 programme_monthly_spend.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; f='/home/beeps/.local/share/idli-bench/codex/offset_headers.q4.codex.1/ws/programme_monthly_spend.xlsx'; x=pd.ExcelFile(f); print(x.sheet_names)\\\"\"",
+   "output": "['Monthly Spend']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 -c \\\"import pandas as pd; df=pd.read_excel('programme_monthly_spend.xlsx', sheet_name='Monthly Spend'); print(df.head(20).to_string()); print(df.columns.tolist())\\\"\"",
+   "output": "                                                                 JanSahyog Collective \u2014 Programme Monthly Spend         Unnamed: 1      Unnamed: 2                          Unnamed: 3     Unnamed: 4 Unnamed: 5 Unnamed: 6     Unnamed: 7 Unnamed: 8 Unnamed: 9            Unnamed: 10\n0                                            Prepared by: Grants & Finance Team | Internal management statement                NaN             NaN                                 NaN            NaN        NaN        NaN            NaN        NaN        NaN                    NaN\n1   Reporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero                NaN             NaN                                 NaN            NaN        NaN        NaN            NaN        NaN        NaN                    NaN\n2                                                                                                Programme Code          Programme      Lead State                     Funding Partner  Q1 FY 2025\u201326        NaN        NaN  Q2 FY 2025\u201326        NaN        NaN  Six-month Total (INR)\n3                                                                                                           NaN                NaN             NaN                                 NaN       Apr 2025   May 2025   Jun 2025       Jul 2025   Aug 2025   Sep 2025                    NaN\n4                                                                                                        PRG-01  Jal Jeevan Saathi     Maharashtra                  Jal Jeevan Mission         812500    1628000    1427000         964000    1273000    1068000                7172500\n5                                                                                                        PRG-02      Poshan Shakti     Maharashtra                     Tata Trusts CSR         840000    1134000    1081000         511000        NaN     758000                4324000\n6                                                                                                        PRG-03      Shiksha Udaan       Rajasthan              Azim Premji Foundation         577000     770500     529500         928500     470000     683500                3959000\n7                                                                                                        PRG-04     Swasthya Sathi          Odisha           Global Health Access Fund         722500          \u2013     719000        1118000    1487000     877000                4923500\n8                                                                                                        PRG-05    Mahila Ajeevika           Bihar                HDFC Bank Parivartan         849000     930000     624500         544000     591500          -                3539000\n9                                                                                                        PRG-06     Krishi Pragati          Odisha               NABARD Watershed Fund         795000     862500     835500         803500    1014500    1201000                5512000\n10                                                                                                       PRG-07       Bal Suraksha       Jharkhand                     Tata Trusts CSR         621500     656000        NaN         780000     663500     750000                3471000\n11                                                                                                       PRG-08      Digital Sakhi  Madhya Pradesh                HDFC Bank Parivartan         762500     509000     918000         784500     834000     693000                4501000\n12                                                                                                       PRG-09          Gram Urja       Rajasthan                   Global Green Fund         550000     919000    1059500         702000    1202000     565000                4997500\n13                                                                                                       PRG-10    Adivasi Adhikar     Maharashtra              Azim Premji Foundation         598500     903000     842500              -     605500     483500                3433000\n14                                                                                                       PRG-11  Nayi Disha Skills           Bihar  National Skill Development Mission         637000     648500     458500         784500     624500     435000                3588000\n15                                                                                                       PRG-12     Maa aur Shishu       Jharkhand           Global Health Access Fund            NaN     950000    1096000         761500     639500    1146500                4593500\n16                                                                                                          NaN                NaN             NaN                                 NaN            NaN        NaN        NaN            NaN        NaN        NaN                    NaN\n17                                                                                              PORTFOLIO TOTAL                NaN             NaN                                 NaN        7765500    9910500    9591000        8681500    9405000    8660500               54014000\n['JanSahyog Collective \u2014 Programme Monthly Spend', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10']\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\nimport numpy as np\nf='programme_monthly_spend.xlsx'\ndf=pd.read_excel(f, sheet_name='Monthly Spend', header=None)\n# Find header rows\n# Row 2 (index 2) has Programme Code etc\n# Row 3 has month names\nheader_row = 2\nmonth_row = 3\n# Build column names\ncols = df.iloc[header_row].tolist()\nmonths = df.iloc[month_row].tolist()\n# Combine\n# Columns: 0 Programme Code,1 Programme,2 Lead State,3 Funding Partner,4 Q1,5,6,7 Q2,8,9,10 Six-month total\n# Actually months map to columns 4,5,6,7,8,9\ncol_names = []\nfor i in range(len(cols)):\n    if i==0:\n        col_names.append('Programme Code')\n    elif i==1:\n        col_names.append('Programme')\n    elif i==2:\n        col_names.append('Lead State')\n    elif i==3:\n        col_names.append('Funding Partner')\n    elif i in [4,5,6,7,8,9]:\n        # month name from month_row\n        m = months[i]\n        col_names.append(str(m) if pd.notna(m) else f'col{i}')\n    else:\n        col_names.append(cols[i])\nprint(col_names)\n# Extract data rows from 4 to 15\ndata = df.iloc[4:16]\n# Build dict\nrecords=[]\nfor idx,row in data.iterrows():\n    prog_code = row[0]\n    prog_name = row[1]\n    if pd.isna(prog_code) or prog_code is None or str(prog_code).strip()=='':\n        continue\n    if prog_code=='PORTFOLIO TOTAL':\n        continue\n    # months columns 4-9\n    vals=[]\n    for col_idx in [4,5,6,7,8,9]:\n        v=row[col_idx]\n        # treat '-', '\u2013', blank as zero\n        if pd.isna(v):\n            vals.append(0)\n        else:\n            s=str(v).strip()\n            if s in ['-','\u2013','']:\n                vals.append(0)\n            else:\n                try:\n                    vals.append(float(v))\n                except:\n                    vals.append(0)\n    total=sum(vals)\n    records.append((prog_code, prog_name, total, vals))\n# Sort\nrecords.sort(key=lambda x:x[2], reverse=True)\nfor r in records:\n    print(r)\nprint('Highest:', records[0])\nPY\"",
+   "output": "['Programme Code', 'Programme', 'Lead State', 'Funding Partner', 'Q1 FY 2025\u201326', 'col5', 'col6', 'Q2 FY 2025\u201326', 'col8', 'col9', nan]\n('PRG-01', 'Jal Jeevan Saathi', 7172500.0, [812500.0, 1628000.0, 1427000.0, 964000.0, 1273000.0, 1068000.0])\n('PRG-06', 'Krishi Pragati', 5512000.0, [795000.0, 862500.0, 835500.0, 803500.0, 1014500.0, 1201000.0])\n('PRG-09', 'Gram Urja', 4997500.0, [550000.0, 919000.0, 1059500.0, 702000.0, 1202000.0, 565000.0])\n('PRG-04', 'Swasthya Sathi', 4923500.0, [722500.0, 0, 719000.0, 1118000.0, 1487000.0, 877000.0])\n('PRG-08', 'Digital Sakhi', 4501000.0, [762500.0, 509000.0, 918000.0, 784500.0, 834000.0, 693000.0])\n('PRG-02', 'Poshan Shakti', 4324000.0, [840000.0, 1134000.0, 1081000.0, 511000.0, 0, 758000.0])\n('PRG-03', 'Shiksha Udaan', 3959000.0, [577000.0, 770500.0, 529500.0, 928500.0, 470000.0, 683500.0])\n('PRG-11', 'Nayi Disha Skills', 3588000.0, [637000.0, 648500.0, 458500.0, 784500.0, 624500.0, 435000.0])\n('PRG-05', 'Mahila Ajeevika', 3539000.0, [849000.0, 930000.0, 624500.0, 544000.0, 591500.0, 0])\n('PRG-07', 'Bal Suraksha', 3471000.0, [621500.0, 656000.0, 0, 780000.0, 663500.0, 750000.0])\n('PRG-10', 'Adivasi Adhikar', 3433000.0, [598500.0, 903000.0, 842500.0, 0, 605500.0, 483500.0])\nHighest: ('PRG-01', 'Jal Jeevan Saathi', 7172500.0, [812500.0, 1628000.0, 1427000.0, 964000.0, 1273000.0, 1068000.0])\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 67362,
+  "output": 1592
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 4,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Which programme had the highest total spend across April through September 2025? Use programme detail rows only and treat '-', '\u2013', and blanks as zero.",
+ "trap": "The merged quarter headers can shift month columns if they are read as an ordinary single header row.",
+ "text": "The file contains 12 programme detail rows for April to September 2025.\n\nTotals for the period, treating '-' / '\u2013' / blank as zero:\n- Jal Jeevan Saathi: 7,172,500\n- Krishi Pragati: 5,512,000\n- Gram Urja: 4,997,500\n\nJal Jeevan Saathi has the highest total spend across April through September 2025.\n\nANSWER: Jal Jeevan Saathi",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/offset_headers.q4.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "programme_monthly_spend.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:53:27.273096Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

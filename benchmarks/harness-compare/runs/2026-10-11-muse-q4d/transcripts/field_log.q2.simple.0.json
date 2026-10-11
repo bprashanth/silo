@@ -1,0 +1,89 @@
+{
+ "job": "field_log.q2.simple.0",
+ "case": "field_log",
+ "q": "q2",
+ "harness": "simple",
+ "trial": 0,
+ "want": 964,
+ "got": "964",
+ "verdict": "correct",
+ "seconds": 445.0,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport os\n\nfile_path = '/data/field_visit_log.xlsx'\n# List sheets\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log')\nprint(df.head(20))\nprint(df.columns.tolist())\nprint(df.shape)\n",
+   "output": "Sheets: ['Field Visit Log']\n   Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log  ...                 Unnamed: 11\n0   Data note: village spelling/case/spacing varie...      ...                         NaN\n1   Reporting period: April\u2013September 2025 | Amoun...      ...                         NaN\n2                                                 NaN      ...                         NaN\n3                                            Visit ID      ...  Travel Reimbursement (INR)\n4                                        FL-2025-0001      ...                         500\n5                                        FL-2025-0001      ...                         500\n6                                        FL-2025-0002      ...                        3250\n7                                        FL-2025-0003      ...                        3350\n8                                        FL-2025-0004      ...                      \u20b92,400\n9                                        FL-2025-0005      ...                        2300\n10                                       FL-2025-0006      ...                      3,200 \n11                                       FL-2025-0007      ...                        3700\n12                                       FL-2025-0007      ...                        3700\n13                                       FL-2025-0008      ...                      \u20b91,700\n14                                       FL-2025-0009      ...                        3750\n15                                       FL-2025-0010      ...                        3050\n16                                       FL-2025-0011      ...                        2350\n17                                       FL-2025-0012      ...                      2,850 \n18                                       FL-2025-0013      ...                      \u20b94,000\n19                                       FL-2025-0014      ...                        1200\n\n[20 rows x 12 columns]\n['Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n(547, 12)\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\n# Read without header to find where header is\ndf_raw = pd.read_excel(file_path, sheet_name='Field Visit Log', header=None)\nprint(df_raw.iloc[0:10, 0:12])\n",
+   "output": "                                                  0   ...                          11\n0  Sahyog Rural Initiatives \u2014 Beneficiary Field V...  ...                         NaN\n1  Data note: village spelling/case/spacing varie...  ...                         NaN\n2  Reporting period: April\u2013September 2025 | Amoun...  ...                         NaN\n3                                                NaN  ...                         NaN\n4                                           Visit ID  ...  Travel Reimbursement (INR)\n5                                       FL-2025-0001  ...                         500\n6                                       FL-2025-0001  ...                         500\n7                                       FL-2025-0002  ...                        3250\n8                                       FL-2025-0003  ...                        3350\n9                                       FL-2025-0004  ...                      \u20b92,400\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\nprint(df.columns.tolist())\nprint(df.head(10))\n",
+   "output": "['Visit ID', 'Visit Date', 'Field Worker', 'State', 'District', 'Village', 'Programme', 'Women Reached', 'Men Reached', 'Children Reached', 'Follow-up Required', 'Travel Reimbursement (INR)']\n       Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0  FL-2025-0001 2025-05-10  ...                 No                        500\n1  FL-2025-0001 2025-05-10  ...                 No                        500\n2  FL-2025-0002 2025-07-21  ...                 No                       3250\n3  FL-2025-0003 2025-08-14  ...                 No                       3350\n4  FL-2025-0004 2025-09-09  ...                 No                     \u20b92,400\n5  FL-2025-0005 2025-04-21  ...                no                        2300\n6  FL-2025-0006 2025-05-16  ...                Yes                     3,200 \n7  FL-2025-0007 2025-05-06  ...                 No                       3700\n8  FL-2025-0007 2025-05-06  ...                 No                       3700\n9  FL-2025-0008 2025-05-27  ...                 No                     \u20b91,700\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\n\n# Clean column names\ndf.columns = [c.strip() for c in df.columns]\n\n# Drop rows where Visit ID is NaN\ndf = df.dropna(subset=['Visit ID'])\n\n# Normalize village names: trim outer whitespace, collapse internal whitespace, case-insensitive for comparison\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v).strip()\n    s = re.sub(r'\\s+', ' ', s)\n    return s.lower()\n\ndf['Village_normalized'] = df['Village'].apply(normalize_village)\n\n# Deduplicate Visit ID by keeping first spreadsheet occurrence\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\n\n# For debugging: check Programme unique values\nprint(\"Unique Programmes:\", df_dedup['Programme'].dropna().unique())\n\n# Filter for Health & Nutrition visits in Odisha\n# Normalize state for comparison case-insensitive\ndef normalize_state(s):\n    if pd.isna(s):\n        return ''\n    return str(s).strip().lower()\n\ndf_dedup['State_normalized'] = df_dedup['State'].apply(normalize_state)\n\nmask = (\n    df_dedup['Programme'].astype(str).str.strip().str.lower() == 'health & nutrition'\n) & (\n    df_dedup['State_normalized'] == 'odisha'\n)\n\nfiltered = df_dedup[mask]\n\n# Ensure Women Reached is numeric\nfiltered['Women Reached'] = pd.to_numeric(filtered['Women Reached'], errors='coerce')\n\ntotal_women = filtered['Women Reached'].sum(skipna=True)\nprint(\"Filtered rows:\", len(filtered))\nprint(filtered[['Visit ID','State','Programme','Women Reached']].head(20))\nprint(\"Total women:\", total_women)\n",
+   "output": "Unique Programmes: ['Water Security' 'Health & Nutrition' \"Girls' Education\" 'Livelihoods']\nFiltered rows: 47\n         Visit ID   State           Programme  Women Reached\n80   FL-2025-0074  Odisha  Health & Nutrition           19.0\n125  FL-2025-0112  Odisha  Health & Nutrition           25.0\n132  FL-2025-0117  Odisha  Health & Nutrition            5.0\n139  FL-2025-0123  Odisha  Health & Nutrition           17.0\n145  FL-2025-0129  Odisha  Health & Nutrition            8.0\n147  FL-2025-0131  Odisha  Health & Nutrition           36.0\n149  FL-2025-0133  Odisha  Health & Nutrition           27.0\n155  FL-2025-0138  Odisha  Health & Nutrition           21.0\n161  FL-2025-0144  Odisha  Health & Nutrition           33.0\n188  FL-2025-0166  Odisha  Health & Nutrition            7.0\n207  FL-2025-0183  Odisha  Health & Nutrition           20.0\n213  FL-2025-0189  Odisha  Health & Nutrition           22.0\n231  FL-2025-0203  Odisha  Health & Nutrition           12.0\n264  FL-2025-0231  Odisha  Health & Nutrition           18.0\n272  FL-2025-0237  Odisha  Health & Nutrition           18.0\n274  FL-2025-0239  Odisha  Health & Nutrition           24.0\n279  FL-2025-0243  Odisha  Health & Nutrition           23.0\n297  FL-2025-0258  Odisha  Health & Nutrition           20.0\n299  FL-2025-0260  Odisha  Health & Nutrition           31.0\n305  FL-2025-0265  Odisha  Health & Nutrition           35.0\nTotal women: 964.0\n\n[stderr]\n<stdin>:37: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n<stdin>:48: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd, re\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\nprint(\"Rows before dedup:\", len(df))\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Rows after dedup:\", len(df_dedup))\n# Check duplicates\ndups = df[df.duplicated(subset=['Visit ID'], keep=False)]\nprint(\"Duplicate Visit IDs count:\", dups['Visit ID'].nunique())\n# Show example duplicates\nprint(dups[['Visit ID','Village','Programme']].head(20))\n",
+   "output": "Rows before dedup: 538\nRows after dedup: 480\nDuplicate Visit IDs count: 58\n         Visit ID      Village           Programme\n0    FL-2025-0001     bhilgaon      Water Security\n1    FL-2025-0001     bHILGAON      Water Security\n7    FL-2025-0007     Bhilgaon  Health & Nutrition\n8    FL-2025-0007     bhilgaon  Health & Nutrition\n28   FL-2025-0027     bHILGAON    Girls' Education\n29   FL-2025-0027    Bhilgaon     Girls' Education\n35   FL-2025-0033     bhilgaon      Water Security\n36   FL-2025-0033     bHILGAON      Water Security\n40   FL-2025-0037     bhilgaon  Health & Nutrition\n41   FL-2025-0037     bHILGAON  Health & Nutrition\n45   FL-2025-0041     bhilgaon    Girls' Education\n46   FL-2025-0041     bHILGAON    Girls' Education\n54   FL-2025-0049     BHILGAON  Health & Nutrition\n55   FL-2025-0049     Bhilgaon  Health & Nutrition\n83   FL-2025-0077     mUNIGUDA         Livelihoods\n84   FL-2025-0077    Muniguda          Livelihoods\n102  FL-2025-0094    Lamtaput          Livelihoods\n103  FL-2025-0094     LAMTAPUT         Livelihoods\n106  FL-2025-0097     lamtaput         Livelihoods\n107  FL-2025-0097     lAMTAPUT         Livelihoods\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\n# Normalize columns\ndf['Programme_clean'] = df['Programme'].astype(str).str.strip()\ndf['State_clean'] = df['State'].astype(str).str.strip().str.lower()\n# Deduplicate\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\n# Filter\nmask = (df_dedup['Programme_clean'].str.lower() == 'health & nutrition') & (df_dedup['State_clean'] == 'odisha')\nfiltered = df_dedup[mask]\nfiltered['Women Reached_num'] = pd.to_numeric(filtered['Women Reached'], errors='coerce')\ntotal = filtered['Women Reached_num'].sum()\nprint(\"Count rows:\", len(filtered))\nprint(\"Total women:\", total)\n# Also check sum of women reached for all Odisha Health & Nutrition before dedup\ndf['Women Reached_num'] = pd.to_numeric(df['Women Reached'], errors='coerce')\nmask_before = (df['Programme'].astype(str).str.strip().str.lower() == 'health & nutrition') & (df['State'].astype(str).str.strip().str.lower() == 'odisha')\ntotal_before = df[mask_before]['Women Reached_num'].sum()\nprint(\"Total before dedup:\", total_before)\n",
+   "output": "Count rows: 47\nTotal women: 964.0\nTotal before dedup: 1022.0\n\n[stderr]\n<stdin>:15: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\n# Find Visit IDs with conflicting Programme or Women Reached\ndup_ids = df['Visit ID'][df.duplicated('Visit ID', keep=False)].unique()\nconflicts = []\nfor vid in dup_ids:\n    rows = df[df['Visit ID']==vid]\n    programmes = rows['Programme'].dropna().unique()\n    women = rows['Women Reached'].dropna().unique()\n    if len(programmes)>1 or len(women)>1:\n        conflicts.append((vid, programmes, women))\nprint(\"Number of conflicting duplicates:\", len(conflicts))\nprint(conflicts[:10])\n",
+   "output": "Number of conflicting duplicates: 0\n[]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\n# Check Women Reached values\nprint(df['Women Reached'].head(30).tolist())\nprint(df['Women Reached'].dtype)\n# Check for non-numeric\nnon_numeric = df[~df['Women Reached'].astype(str).str.match(r'^\\s*\\d+\\s*$')]['Women Reached'].unique()\nprint(\"Non-numeric examples:\", non_numeric[:20])\n",
+   "output": "[34.0, 34.0, 18.0, 19.0, 23.0, 17.0, 35.0, 15.0, 15.0, 29.0, 13.0, 11.0, 25.0, 35.0, 35.0, 15.0, 13.0, 13.0, 28.0, 18.0, 16.0, 22.0, 29.0, 19.0, 35.0, 29.0, 9.0, 14.0, 7.0, 7.0]\nfloat64\nNon-numeric examples: [34. 18. 19. 23. 17. 35. 15. 29. 13. 11. 25. 28. 16. 22.  9. 14.  7. 32.\n 10.  5.]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\nstates = df_dedup['State'].dropna().unique()\nprint(states)\nprint([s for s in states if 'odisha' in str(s).lower()])\n",
+   "output": "['Maharashtra' 'Odisha' 'Karnataka']\n['Odisha']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\ndup_ids = df['Visit ID'][df.duplicated('Visit ID', keep=False)].unique()\nconflicting_state = []\nfor vid in dup_ids:\n    rows = df[df['Visit ID']==vid]\n    states = rows['State'].dropna().unique()\n    programmes = rows['Programme'].dropna().unique()\n    if len(states)>1 or len(programmes)>1:\n        conflicting_state.append((vid, states, programmes))\nprint(\"Conflicts:\", conflicting_state)\n",
+   "output": "Conflicts: []\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\n# Check Women Reached column for any non-numeric strings\nprint(df['Women Reached'].apply(type).value_counts())\n# Show unique values that are not numeric\ndef is_num(x):\n    try:\n        float(x)\n        return True\n    except:\n        return False\nbad = df[~df['Women Reached'].apply(is_num)]\nprint(\"Bad rows count:\", len(bad))\nprint(bad[['Visit ID','Women Reached']].head())\n",
+   "output": "Women Reached\n<class 'float'>    538\nName: count, dtype: int64\nBad rows count: 0\nEmpty DataFrame\nColumns: [Visit ID, Women Reached]\nIndex: []\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf = df.dropna(subset=['Visit ID'])\nprogrammes = df['Programme'].astype(str).unique()\nprint(programmes)\n# Show counts\nprint(df['Programme'].value_counts(dropna=False))\n",
+   "output": "['Water Security' 'Health & Nutrition' \"Girls' Education\" 'Livelihoods']\nProgramme\nHealth & Nutrition    171\nGirls' Education      124\nLivelihoods           124\nWater Security        119\nName: count, dtype: int64\n"
+  }
+ ],
+ "usage": {
+  "input": 53342,
+  "output": 7244
+ },
+ "finish": "max_steps",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. How many women were reached by Health & Nutrition visits in Odisha?",
+ "trap": "Summing all Odisha attendees or retaining resubmitted visits is wrong.",
+ "text": "ANSWER: 964",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/field_log.q2.simple.0"
+}

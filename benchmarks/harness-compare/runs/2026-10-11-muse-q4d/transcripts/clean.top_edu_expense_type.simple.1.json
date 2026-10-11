@@ -1,0 +1,49 @@
+{
+ "job": "clean.top_edu_expense_type.simple.1",
+ "case": "clean",
+ "q": "top_edu_expense_type",
+ "harness": "simple",
+ "trial": 1,
+ "want": "Supplies & materials",
+ "got": "Supplies & materials",
+ "verdict": "correct",
+ "seconds": 156.1,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Load Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n\n# Filter for Education (Shiksha)\nedu = df[df['Program'] == 'Education (Shiksha)']\n\n# Sum amount by Expense type\nsum_by_type = edu.groupby('Expense type')['Amount (INR)'].sum().reset_index()\nsum_by_type = sum_by_type.sort_values('Amount (INR)', ascending=False)\n\nprint(sum_by_type)\n\n# Get top expense type\ntop_type = sum_by_type.iloc[0]['Expense type']\ntop_amount = sum_by_type.iloc[0]['Amount (INR)']\nprint(f\"Top expense type: {top_type}, amount: {top_amount}\")\n",
+   "output": "           Expense type  Amount (INR)\n3  Supplies & materials       2473400\n2        Staff salaries       2157300\n1        Partner grants       1414500\n0          Field travel       1392900\n4  Training & workshops        932700\nTop expense type: Supplies & materials, amount: 2473400\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nprint(df['Category'].unique())\nprint(df[df['Program']=='Education (Shiksha)']['Category'].unique())\n",
+   "output": "['Program' 'Admin' 'Fundraising']\n['Program']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nedu = df[df['Program']=='Education (Shiksha)']\nprint(edu['Category'].value_counts())\n# If filter Category Program\nedu_prog = edu[edu['Category']=='Program']\nsum_by_type = edu_prog.groupby('Expense type')['Amount (INR)'].sum().reset_index().sort_values('Amount (INR)', ascending=False)\nprint(sum_by_type)\n",
+   "output": "Category\nProgram    44\nName: count, dtype: int64\n           Expense type  Amount (INR)\n3  Supplies & materials       2473400\n2        Staff salaries       2157300\n1        Partner grants       1414500\n0          Field travel       1392900\n4  Training & workshops        932700\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Transactions')\nedu = df[df['Program']=='Education (Shiksha)']\nprint(edu[['Expense type','Category','Amount (INR)']].head(20))\n# check if any non Program\nprint(edu[edu['Category']!='Program'])\n",
+   "output": "             Expense type Category  Amount (INR)\n0          Staff salaries  Program        160300\n1    Supplies & materials  Program        194000\n2    Supplies & materials  Program        167300\n25           Field travel  Program        274800\n26   Supplies & materials  Program        132800\n27   Supplies & materials  Program        224300\n28   Training & workshops  Program        114800\n50           Field travel  Program        110900\n51         Staff salaries  Program        224300\n52   Supplies & materials  Program        204100\n53         Partner grants  Program        148700\n76   Supplies & materials  Program        187400\n77         Staff salaries  Program        240500\n78   Supplies & materials  Program        108600\n79           Field travel  Program        152700\n80         Staff salaries  Program        114000\n103          Field travel  Program        110300\n104        Staff salaries  Program        140100\n105        Staff salaries  Program        124100\n128        Staff salaries  Program        149000\nEmpty DataFrame\nColumns: [Txn ID, Date, Month, Program, Category, Expense type, Region, Funding source, Amount (INR)]\nIndex: []\n"
+  }
+ ],
+ "usage": {
+  "input": 9970,
+  "output": 1847
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 6,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Expense type with the highest spend within 'Education (Shiksha)' (exact name)",
+ "trap": "",
+ "text": "The Transactions sheet shows 44 Education (Shiksha) records, all with Category = Program. Aggregating Amount (INR) by Expense type:\n\n* Supplies & materials \u2013 2,473,400 INR\n* Staff salaries \u2013 2,157,300 INR\n* Partner grants \u2013 1,414,500 INR\n* Field travel \u2013 1,392,900 INR\n* Training & workshops \u2013 932,700 INR\n\nSupplies & materials is the largest expense type for Education (Shiksha).\n\nANSWER: Supplies & materials",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.top_edu_expense_type.simple.1"
+}

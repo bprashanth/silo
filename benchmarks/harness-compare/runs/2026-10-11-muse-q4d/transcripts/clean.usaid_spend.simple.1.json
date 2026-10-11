@@ -1,0 +1,39 @@
+{
+ "job": "clean.usaid_spend.simple.1",
+ "case": "clean",
+ "q": "usaid_spend",
+ "harness": "simple",
+ "trial": 1,
+ "want": 4806600,
+ "got": "4806600",
+ "verdict": "correct",
+ "seconds": 73.4,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n# Read Transactions sheet\ndf = pd.read_excel(file_path, sheet_name='Transactions')\n# Filter for USAID sub-grant\nmask = df['Funding source'] == 'USAID sub-grant'\ntotal = df.loc[mask, 'Amount (INR)'].sum()\nprint('Rows matching:', mask.sum())\nprint('Total:', total)\n# Also print sample\nprint(df[mask].head())\n",
+   "output": "Rows matching: 40\nTotal: 4806600\n    Txn ID       Date     Month  ...       Region   Funding source Amount (INR)\n0   TX0001 2025-04-02  Apr 2025  ...    Karnataka  USAID sub-grant       160300\n11  TX0012 2025-04-10  Apr 2025  ...  Maharashtra  USAID sub-grant        69700\n14  TX0015 2025-04-18  Apr 2025  ...        Bihar  USAID sub-grant        27100\n17  TX0018 2025-04-10  Apr 2025  ...  Maharashtra  USAID sub-grant        57800\n27  TX0028 2025-05-19  May 2025  ...        Bihar  USAID sub-grant       224300\n\n[5 rows x 9 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\ndf = pd.read_excel('/data/asha_ngo_finances_FY25-26.xlsx', sheet_name='Transactions')\n# Check unique funding sources\nprint(df['Funding source'].unique())\n# Sum by funding source\nsums = df.groupby('Funding source')['Amount (INR)'].sum().sort_values(ascending=False)\nprint(sums)\n",
+   "output": "['USAID sub-grant' 'Tata Trusts (CSR)' 'Infosys Foundation (CSR)'\n 'State Govt - NHM' 'Azim Premji Foundation' 'Individual donors'\n 'Unrestricted']\nFunding source\nUnrestricted                8132800\nTata Trusts (CSR)           6535400\nInfosys Foundation (CSR)    6157400\nAzim Premji Foundation      5451800\nIndividual donors           4838000\nUSAID sub-grant             4806600\nState Govt - NHM            3872400\nName: Amount (INR), dtype: int64\n"
+  }
+ ],
+ "usage": {
+  "input": 5467,
+  "output": 936
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 1,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Total spend funded by 'USAID sub-grant' (INR)",
+ "trap": "",
+ "text": "The Transactions sheet contains 40 rows funded by USAID sub-grant. Summing the Amount (INR) column for those rows gives:\n\nANSWER: 4806600",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.usaid_spend.simple.1"
+}

@@ -1,0 +1,24 @@
+{
+ "job": "mixed_units.q5.simple.0",
+ "case": "mixed_units",
+ "q": "q5",
+ "harness": "simple",
+ "trial": 0,
+ "want": 19.882441,
+ "got": null,
+ "verdict": "missing",
+ "seconds": 351.8,
+ "actions": [],
+ "usage": {},
+ "finish": "error: <HTTPError 500: 'Internal Server Error'>",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": false,
+  "clean": false
+ },
+ "audit": [],
+ "question": "What percentage of the total disbursed amount went to Karnataka? Return a percentage from 0 to 100. Use INR; L/lakh = 100,000, Cr = 10,000,000, k = 1,000, and treat blank, '-' and NA amounts as zero.",
+ "trap": "Returning a fraction instead of a percentage or omitting crore rows.",
+ "text": ""
+}

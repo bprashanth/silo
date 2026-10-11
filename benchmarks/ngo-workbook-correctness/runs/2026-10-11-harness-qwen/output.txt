@@ -1,0 +1,13 @@
+=== qwen+h (qwen/qwen3.5-9b)
+PASS total_spend                  want=39794400                   got=['39794400'] ['tools=1']
+FAIL admin_spend                  want=5238900                    got=[None] ['no answer (finish=stop, tool calls=2)']
+FAIL program_ratio_pct            want=79.6                       got=[None] ['no answer (finish=stop, tool calls=2)']
+PASS jul_2025_spend               want=3685400                    got=['3685400'] ['tools=1']
+PASS usaid_spend                  want=4806600                    got=['4806600'] ['tools=1']
+PASS bihar_health_spend           want=2061700                    got=['2061700'] ['tools=1']
+PASS n_txn_over_1L                want=200                        got=['200'] ['tools=1']
+PASS top_edu_expense_type         want='Supplies & materials'     got=['Supplies & materials'] ['tools=1']
+PASS most_over_budget_program     want='Maternal & Child Health'  got=['Maternal & Child Health'] ['tools=1']
+PASS largest_funding_gap_funder   want='Azim Premji Foundation'   got=['Azim Premji Foundation'] ['tools=1']
+PASS beneficiaries_reached        want=21107                      got=['21107'] ['tools=1']
+--> qwen+h: 9/11 correct (82%)

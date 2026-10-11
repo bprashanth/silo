@@ -1,0 +1,89 @@
+{
+ "job": "field_log.q3.simple.0",
+ "case": "field_log",
+ "q": "q3",
+ "harness": "simple",
+ "trial": 0,
+ "want": 131,
+ "got": "131",
+ "verdict": "correct",
+ "seconds": 449.5,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\n# Read the Field Visit Log sheet\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log')\nprint(\"Columns:\", df.columns.tolist())\nprint(df.head(10))\n",
+   "output": "Sheets: ['Field Visit Log']\nColumns: ['Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11']\n  Sahyog Rural Initiatives \u2014 Beneficiary Field Visit Log  ...                 Unnamed: 11\n0  Data note: village spelling/case/spacing varie...      ...                         NaN\n1  Reporting period: April\u2013September 2025 | Amoun...      ...                         NaN\n2                                                NaN      ...                         NaN\n3                                           Visit ID      ...  Travel Reimbursement (INR)\n4                                       FL-2025-0001      ...                         500\n5                                       FL-2025-0001      ...                         500\n6                                       FL-2025-0002      ...                        3250\n7                                       FL-2025-0003      ...                        3350\n8                                       FL-2025-0004      ...                      \u20b92,400\n9                                       FL-2025-0005      ...                        2300\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name='Field Visit Log', header=None)\nprint(df_raw.iloc[0:10, 0:12])\n",
+   "output": "                                                  0   ...                          11\n0  Sahyog Rural Initiatives \u2014 Beneficiary Field V...  ...                         NaN\n1  Data note: village spelling/case/spacing varie...  ...                         NaN\n2  Reporting period: April\u2013September 2025 | Amoun...  ...                         NaN\n3                                                NaN  ...                         NaN\n4                                           Visit ID  ...  Travel Reimbursement (INR)\n5                                       FL-2025-0001  ...                         500\n6                                       FL-2025-0001  ...                         500\n7                                       FL-2025-0002  ...                        3250\n8                                       FL-2025-0003  ...                        3350\n9                                       FL-2025-0004  ...                      \u20b92,400\n\n[10 rows x 12 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\nprint(df.head(20))\nprint(df.columns.tolist())\n",
+   "output": "        Visit ID Visit Date  ... Follow-up Required Travel Reimbursement (INR)\n0   FL-2025-0001 2025-05-10  ...                 No                        500\n1   FL-2025-0001 2025-05-10  ...                 No                        500\n2   FL-2025-0002 2025-07-21  ...                 No                       3250\n3   FL-2025-0003 2025-08-14  ...                 No                       3350\n4   FL-2025-0004 2025-09-09  ...                 No                     \u20b92,400\n5   FL-2025-0005 2025-04-21  ...                no                        2300\n6   FL-2025-0006 2025-05-16  ...                Yes                     3,200 \n7   FL-2025-0007 2025-05-06  ...                 No                       3700\n8   FL-2025-0007 2025-05-06  ...                 No                       3700\n9   FL-2025-0008 2025-05-27  ...                 No                     \u20b91,700\n10  FL-2025-0009 2025-07-11  ...                Yes                       3750\n11  FL-2025-0010 2025-07-04  ...                no                        3050\n12  FL-2025-0011 2025-09-21  ...                 No                       2350\n13  FL-2025-0012 2025-08-13  ...                Yes                     2,850 \n14  FL-2025-0013 2025-04-07  ...                Yes                     \u20b94,000\n15  FL-2025-0014 2025-08-30  ...                 No                       1200\n16  FL-2025-0015 2025-07-08  ...                 No                       2050\n17  FL-2025-0016 2025-05-28  ...                no                        2850\n18  FL-2025-0017 2025-04-04  ...                Yes                       2600\n19  FL-2025-0018 2025-04-30  ...                 No                       \u20b9550\n\n[20 rows x 12 columns]\n['Visit ID', 'Visit Date', 'Field Worker', 'State', 'District', 'Village', 'Programme', 'Women Reached', 'Men Reached', 'Children Reached', 'Follow-up Required', 'Travel Reimbursement (INR)']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\n\n# Clean column names strip\ndf.columns = [c.strip() for c in df.columns]\n\n# Show some district values\nprint(df['District'].unique()[:50])\nprint(\"Total rows:\", len(df))\nprint(df['Visit ID'].isna().sum())\n",
+   "output": "['Gadchiroli' 'Rayagada' 'Koraput' 'Nandurbar' 'Raichur' 'Koppal' nan]\nTotal rows: 543\n5\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\n\n# Clean village name normalization for completeness\ndef normalize_village(v):\n    if pd.isna(v):\n        return ''\n    s = str(v).strip()\n    s = re.sub(r'\\s+', ' ', s)\n    return s.lower()\n\ndf['Village_norm'] = df['Village'].apply(normalize_village)\n\n# Drop rows with missing Visit ID\ndf_clean = df.dropna(subset=['Visit ID'])\n\n# Deduplicate Visit ID keeping first occurrence (original order)\ndf_dedup = df_clean.drop_duplicates(subset=['Visit ID'], keep='first')\n\n# Count visits in Gadchiroli district (case-insensitive, trim)\ndef normalize_district(d):\n    if pd.isna(d):\n        return ''\n    return str(d).strip().lower()\n\ndf_dedup['District_norm'] = df_dedup['District'].apply(normalize_district)\n\ncount_gadchiroli = df_dedup[df_dedup['District_norm'] == 'gadchiroli'].shape[0]\nprint(\"Total retained visits:\", df_dedup.shape[0])\nprint(\"Gadchiroli count:\", count_gadchiroli)\n\n# Also show number of distinct Visit IDs in Gadchiroli\nprint(df_dedup[df_dedup['District_norm']=='gadchiroli']['Visit ID'].nunique())\n",
+   "output": "Total retained visits: 480\nGadchiroli count: 131\n131\n\n[stderr]\n<stdin>:31: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport re\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf_clean = df.dropna(subset=['Visit ID'])\ndf_dedup = df_clean.drop_duplicates(subset=['Visit ID'], keep='first')\n\ndef norm(s):\n    if pd.isna(s): return ''\n    return str(s).strip().lower()\n\ndf_dedup['District_norm'] = df_dedup['District'].apply(norm)\nprint(df_dedup['District_norm'].value_counts())\n",
+   "output": "District_norm\ngadchiroli    131\nkoraput        77\nrayagada       75\nraichur        67\nnandurbar      65\nkoppal         65\nName: count, dtype: int64\n\n[stderr]\n<stdin>:15: SettingWithCopyWarning: \nA value is trying to be set on a copy of a slice from a DataFrame.\nTry using .loc[row_indexer,col_indexer] = value instead\n\nSee the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf_clean = df.dropna(subset=['Visit ID'])\n\n# Find Visit IDs with multiple rows and differing district\ndup_ids = df_clean['Visit ID'][df_clean['Visit ID'].duplicated(keep=False)]\ndup_df = df_clean[df_clean['Visit ID'].isin(dup_ids)]\n# Check if any Visit ID has more than one distinct district\nconflicts = []\nfor vid, group in dup_df.groupby('Visit ID'):\n    districts = group['District'].dropna().unique()\n    if len(districts) > 1:\n        conflicts.append((vid, districts.tolist()))\nprint(\"Number of duplicate Visit IDs:\", dup_df['Visit ID'].nunique())\nprint(\"Conflicts in district:\", conflicts[:10])\n",
+   "output": "Number of duplicate Visit IDs: 58\nConflicts in district: []\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf_clean = df.dropna(subset=['Visit ID']).copy()\ndf_clean = df_clean.reset_index(drop=False)  # original index\n# Find duplicates\ndup_ids = df_clean['Visit ID'][df_clean['Visit ID'].duplicated(keep=False)].unique()\nissues = []\nfor vid in dup_ids:\n    sub = df_clean[df_clean['Visit ID']==vid].sort_values('index')\n    districts = sub['District'].tolist()\n    # check if first district is null but later not\n    if pd.isna(districts[0]) and not pd.isna(districts[1]):\n        issues.append((vid, districts))\nprint(\"Number of duplicate IDs with first district missing:\", len(issues))\nprint(issues[:10])\n",
+   "output": "Number of duplicate IDs with first district missing: 0\n[]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf_clean = df.dropna(subset=['Visit ID'])\nprint(\"Rows with Visit ID:\", len(df_clean))\nprint(\"Distinct Visit IDs:\", df_clean['Visit ID'].nunique())\n# After dedup keep first\ndf_dedup = df_clean.drop_duplicates(subset=['Visit ID'], keep='first')\nprint(\"Rows after dedup:\", len(df_dedup))\n",
+   "output": "Rows with Visit ID: 538\nDistinct Visit IDs: 480\nRows after dedup: 480\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf_clean = df.dropna(subset=['Visit ID'])\n# get unique district values raw\nunique_districts = df_clean['District'].astype(str).unique()\nprint(sorted(set([d for d in unique_districts if d != 'nan'])))\n# Check for whitespace\nfor d in df_clean['District'].dropna().unique():\n    if str(d) != str(d).strip():\n        print(\"Whitespace issue:\", repr(d))\n",
+   "output": "['Gadchiroli', 'Koppal', 'Koraput', 'Nandurbar', 'Raichur', 'Rayagada']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\n\n# Keep original order\ndf_dedup = df.drop_duplicates(subset=['Visit ID'], keep='first')\n# Drop rows where Visit ID is NaN\ndf_dedup = df_dedup.dropna(subset=['Visit ID'])\n\ndef norm(s):\n    if pd.isna(s): return ''\n    return str(s).strip().lower()\n\ncount = df_dedup[df_dedup['District'].apply(norm)=='gadchiroli'].shape[0]\nprint(count)\nprint(df_dedup[df_dedup['District'].apply(norm)=='gadchiroli']['Visit ID'].nunique())\n",
+   "output": "131\n131\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/field_visit_log.xlsx'\ndf = pd.read_excel(file_path, sheet_name='Field Visit Log', header=4)\ndf.columns = [c.strip() for c in df.columns]\ndf_clean = df.dropna(subset=['Visit ID'])\n\n# Check district values raw\nvals = df_clean['District'].astype(str).unique()\nprint([v for v in vals if 'gad' in v.lower()])\n# Show raw repr for some\nsamples = df_clean[df_clean['District'].astype(str).str.lower().str.contains('gad')]['District'].unique()\nprint([repr(s) for s in samples])\n",
+   "output": "['Gadchiroli', 'Rayagada']\n[\"'Gadchiroli'\", \"'Rayagada'\"]\n"
+  }
+ ],
+ "usage": {
+  "input": 42818,
+  "output": 7584
+ },
+ "finish": "max_steps",
+ "receipt": {
+  "stated": 0,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "Normalise village names by trimming outer whitespace, collapsing internal whitespace and comparing case-insensitively; deduplicate Visit ID by keeping its first spreadsheet occurrence. How many distinct retained visits took place in Gadchiroli district?",
+ "trap": "Spreadsheet row count includes duplicate Visit IDs and blank separators.",
+ "text": "ANSWER: 131",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/field_log.q3.simple.0"
+}

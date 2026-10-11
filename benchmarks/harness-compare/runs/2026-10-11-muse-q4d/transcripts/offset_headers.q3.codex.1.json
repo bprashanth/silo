@@ -1,0 +1,58 @@
+{
+ "job": "offset_headers.q3.codex.1",
+ "case": "offset_headers",
+ "q": "q3",
+ "harness": "codex",
+ "trial": 1,
+ "want": 11,
+ "got": "11",
+ "verdict": "correct",
+ "seconds": 65.2,
+ "actions": [
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc 'find /home/beeps/.local/share/idli-bench/codex/offset_headers.q3.codex.1/ws -maxdepth 2 -type f -ls'",
+   "output": " 15886705      8 -rw-rw-r--   1 beeps    beeps        7004 Oct 11 18:22 /home/beeps/.local/share/idli-bench/codex/offset_headers.q3.codex.1/ws/programme_monthly_spend.xlsx\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd, sys\npath='/home/beeps/.local/share/idli-bench/codex/offset_headers.q3.codex.1/ws/programme_monthly_spend.xlsx'\nxls=pd.ExcelFile(path)\nprint(xls.sheet_names)\nfor s in xls.sheet_names:\n    df=pd.read_excel(path, sheet_name=s, header=None)\n    print('---',s,'---')\n    print(df.head(30).to_string())\nPY\"",
+   "output": "['Monthly Spend']\n--- Monthly Spend ---\n                                                                                                             0                  1               2                                   3              4         5         6              7         8         9                      10\n0                                                                JanSahyog Collective \u2014 Programme Monthly Spend                NaN             NaN                                 NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n1                                            Prepared by: Grants & Finance Team | Internal management statement                NaN             NaN                                 NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n2   Reporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero                NaN             NaN                                 NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n3                                                                                                Programme Code          Programme      Lead State                     Funding Partner  Q1 FY 2025\u201326       NaN       NaN  Q2 FY 2025\u201326       NaN       NaN  Six-month Total (INR)\n4                                                                                                           NaN                NaN             NaN                                 NaN       Apr 2025  May 2025  Jun 2025       Jul 2025  Aug 2025  Sep 2025                    NaN\n5                                                                                                        PRG-01  Jal Jeevan Saathi     Maharashtra                  Jal Jeevan Mission         812500   1628000   1427000         964000   1273000   1068000                7172500\n6                                                                                                        PRG-02      Poshan Shakti     Maharashtra                     Tata Trusts CSR         840000   1134000   1081000         511000       NaN    758000                4324000\n7                                                                                                        PRG-03      Shiksha Udaan       Rajasthan              Azim Premji Foundation         577000    770500    529500         928500    470000    683500                3959000\n8                                                                                                        PRG-04     Swasthya Sathi          Odisha           Global Health Access Fund         722500         \u2013    719000        1118000   1487000    877000                4923500\n9                                                                                                        PRG-05    Mahila Ajeevika           Bihar                HDFC Bank Parivartan         849000    930000    624500         544000    591500         -                3539000\n10                                                                                                       PRG-06     Krishi Pragati          Odisha               NABARD Watershed Fund         795000    862500    835500         803500   1014500   1201000                5512000\n11                                                                                                       PRG-07       Bal Suraksha       Jharkhand                     Tata Trusts CSR         621500    656000       NaN         780000    663500    750000                3471000\n12                                                                                                       PRG-08      Digital Sakhi  Madhya Pradesh                HDFC Bank Parivartan         762500    509000    918000         784500    834000    693000                4501000\n13                                                                                                       PRG-09          Gram Urja       Rajasthan                   Global Green Fund         550000    919000   1059500         702000   1202000    565000                4997500\n14                                                                                                       PRG-10    Adivasi Adhikar     Maharashtra              Azim Premji Foundation         598500    903000    842500              -    605500    483500                3433000\n15                                                                                                       PRG-11  Nayi Disha Skills           Bihar  National Skill Development Mission         637000    648500    458500         784500    624500    435000                3588000\n16                                                                                                       PRG-12     Maa aur Shishu       Jharkhand           Global Health Access Fund            NaN    950000   1096000         761500    639500   1146500                4593500\n17                                                                                                          NaN                NaN             NaN                                 NaN            NaN       NaN       NaN            NaN       NaN       NaN                    NaN\n18                                                                                              PORTFOLIO TOTAL                NaN             NaN                                 NaN        7765500   9910500   9591000        8681500   9405000   8660500               54014000\n",
+   "exit_code": 0
+  },
+  {
+   "kind": "shell",
+   "input": "/bin/bash -lc \"python3 - << 'PY'\nimport pandas as pd\npath='/home/beeps/.local/share/idli-bench/codex/offset_headers.q3.codex.1/ws/programme_monthly_spend.xlsx'\ndf=pd.read_excel(path, sheet_name='Monthly Spend', header=None)\n# rows 5-16 inclusive? Let's find Programme Code column\n# header row for months is row 4 (0-indexed 4)\n# data starts row 5 (index5)\n# column 0 is programme code, column 8 is Aug 2025\ncount=0\nrows=[]\nfor i in range(5,17):\n    code=df.iloc[i,0]\n    if pd.isna(code):\n        continue\n    val=df.iloc[i,8]\n    # treat '-' '\u2013' blanks as zero\n    if isinstance(val,str):\n        v=val.strip()\n        if v in ['-','\u2013','']:\n            val=None\n    if pd.isna(val):\n        # zero\n        continue\n    try:\n        num=float(val)\n    except:\n        continue\n    if num>0:\n        count+=1\n        rows.append((code,num))\nprint(count)\nprint(rows)\nPY\"",
+   "output": "11\n[('PRG-01', 1273000.0), ('PRG-03', 470000.0), ('PRG-04', 1487000.0), ('PRG-05', 591500.0), ('PRG-06', 1014500.0), ('PRG-07', 663500.0), ('PRG-08', 834000.0), ('PRG-09', 1202000.0), ('PRG-10', 605500.0), ('PRG-11', 624500.0), ('PRG-12', 639500.0)]\n",
+   "exit_code": 0
+  }
+ ],
+ "usage": {
+  "input": 53404,
+  "output": 1142
+ },
+ "finish": "exit=0",
+ "receipt": {
+  "stated": 1,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "How many programme detail rows reported spending greater than zero in August 2025? Treat '-', '\u2013', and blanks as zero and exclude PORTFOLIO TOTAL.",
+ "trap": "Counting the summary row or nonnumeric zero markers inflates the programme count.",
+ "text": "11 programme detail rows reported spending greater than zero in August 2025. PORTFOLIO TOTAL is excluded.\n\nANSWER: 11",
+ "errors": [
+  "Model metadata for `muse-glimmer-30b` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+ ],
+ "codex_version": "0.154.0",
+ "workspace": "/home/beeps/.local/share/idli-bench/codex/offset_headers.q3.codex.1/ws",
+ "files_after": [
+  ".agents",
+  ".codex",
+  ".git",
+  "programme_monthly_spend.xlsx"
+ ],
+ "stderr_tail": "Reading additional input from stdin...\n2026-10-11T12:52:22.036243Z ERROR codex_core::session::session: failed to load skill /home/beeps/.agents/skills/canvas/SKILL.md: missing field `description`"
+}

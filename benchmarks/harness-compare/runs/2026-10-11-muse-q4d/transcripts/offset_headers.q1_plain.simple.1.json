@@ -1,0 +1,59 @@
+{
+ "job": "offset_headers.q1_plain.simple.1",
+ "case": "offset_headers",
+ "q": "q1_plain",
+ "harness": "simple",
+ "trial": 1,
+ "want": 54014000,
+ "got": "54014000",
+ "verdict": "correct",
+ "seconds": 173.2,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport os\n\nfile_path = '/data/programme_monthly_spend.xlsx'\nxls = pd.ExcelFile(file_path)\nprint(\"Sheets:\", xls.sheet_names)\n\n# Preview first sheet\ndf = pd.read_excel(file_path, sheet_name=0)\nprint(df.head(20))\nprint(df.columns.tolist())\n",
+   "output": "Sheets: ['Monthly Spend']\n       JanSahyog Collective \u2014 Programme Monthly Spend  ...            Unnamed: 10\n0   Prepared by: Grants & Finance Team | Internal ...  ...                    NaN\n1   Reporting period: 01-Apr-2025 to 30-Sep-2025 |...  ...                    NaN\n2                                      Programme Code  ...  Six-month Total (INR)\n3                                                 NaN  ...                    NaN\n4                                              PRG-01  ...                7172500\n5                                              PRG-02  ...                4324000\n6                                              PRG-03  ...                3959000\n7                                              PRG-04  ...                4923500\n8                                              PRG-05  ...                3539000\n9                                              PRG-06  ...                5512000\n10                                             PRG-07  ...                3471000\n11                                             PRG-08  ...                4501000\n12                                             PRG-09  ...                4997500\n13                                             PRG-10  ...                3433000\n14                                             PRG-11  ...                3588000\n15                                             PRG-12  ...                4593500\n16                                                NaN  ...                    NaN\n17                                    PORTFOLIO TOTAL  ...               54014000\n\n[18 rows x 11 columns]\n['JanSahyog Collective \u2014 Programme Monthly Spend', 'Unnamed: 1', 'Unnamed: 2', 'Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/programme_monthly_spend.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\nprint(df_raw.iloc[0:20, 0:11])\n",
+   "output": "                                                   0   ...                     10\n0      JanSahyog Collective \u2014 Programme Monthly Spend  ...                    NaN\n1   Prepared by: Grants & Finance Team | Internal ...  ...                    NaN\n2   Reporting period: 01-Apr-2025 to 30-Sep-2025 |...  ...                    NaN\n3                                      Programme Code  ...  Six-month Total (INR)\n4                                                 NaN  ...                    NaN\n5                                              PRG-01  ...                7172500\n6                                              PRG-02  ...                4324000\n7                                              PRG-03  ...                3959000\n8                                              PRG-04  ...                4923500\n9                                              PRG-05  ...                3539000\n10                                             PRG-06  ...                5512000\n11                                             PRG-07  ...                3471000\n12                                             PRG-08  ...                4501000\n13                                             PRG-09  ...                4997500\n14                                             PRG-10  ...                3433000\n15                                             PRG-11  ...                3588000\n16                                             PRG-12  ...                4593500\n17                                                NaN  ...                    NaN\n18                                    PORTFOLIO TOTAL  ...               54014000\n\n[19 rows x 11 columns]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/programme_monthly_spend.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n# print rows 2-10\nfor i in range(2, 12):\n    row = df_raw.iloc[i].tolist()\n    print(i, row)\n",
+   "output": "2 [\"Reporting period: 01-Apr-2025 to 30-Sep-2025 | Prepared on: 06-Oct-2025 | INR; '-' / '\u2013' / blank means zero\", nan, nan, nan, nan, nan, nan, nan, nan, nan, nan]\n3 ['Programme Code', 'Programme', 'Lead State', 'Funding Partner', 'Q1 FY 2025\u201326', nan, nan, 'Q2 FY 2025\u201326', nan, nan, 'Six-month Total (INR)']\n4 [nan, nan, nan, nan, 'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', nan]\n5 ['PRG-01', 'Jal Jeevan Saathi', 'Maharashtra', 'Jal Jeevan Mission', 812500, 1628000, 1427000, 964000, 1273000, 1068000, 7172500]\n6 ['PRG-02', 'Poshan Shakti', 'Maharashtra', 'Tata Trusts CSR', 840000, 1134000, 1081000, 511000, nan, 758000, 4324000]\n7 ['PRG-03', 'Shiksha Udaan', 'Rajasthan', 'Azim Premji Foundation', 577000, 770500, 529500, 928500, 470000, 683500, 3959000]\n8 ['PRG-04', 'Swasthya Sathi', 'Odisha', 'Global Health Access Fund', 722500, '\u2013', 719000, 1118000, 1487000, 877000, 4923500]\n9 ['PRG-05', 'Mahila Ajeevika', 'Bihar', 'HDFC Bank Parivartan', 849000, 930000, 624500, 544000, 591500, '-', 3539000]\n10 ['PRG-06', 'Krishi Pragati', 'Odisha', 'NABARD Watershed Fund', 795000, 862500, 835500, 803500, 1014500, 1201000, 5512000]\n11 ['PRG-07', 'Bal Suraksha', 'Jharkhand', 'Tata Trusts CSR', 621500, 656000, nan, 780000, 663500, 750000, 3471000]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport numpy as np\n\nfile_path = '/data/programme_monthly_spend.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\n# Find data start\nstart_row = 4  # row index where data starts (0-based, row 5)\ndata_rows = []\nfor i in range(start_row, df_raw.shape[0]):\n    row = df_raw.iloc[i]\n    prog_code = row[0]\n    if pd.isna(prog_code):\n        continue\n    if str(prog_code).strip().upper() == 'PORTFOLIO TOTAL':\n        break\n    # collect\n    data_rows.append(row)\n\n# Let's print number of rows\nprint('num data rows', len(data_rows))\nfor r in data_rows[:20]:\n    print(r.tolist())\n",
+   "output": "num data rows 12\n['PRG-01', 'Jal Jeevan Saathi', 'Maharashtra', 'Jal Jeevan Mission', 812500, 1628000, 1427000, 964000, 1273000, 1068000, 7172500]\n['PRG-02', 'Poshan Shakti', 'Maharashtra', 'Tata Trusts CSR', 840000, 1134000, 1081000, 511000, nan, 758000, 4324000]\n['PRG-03', 'Shiksha Udaan', 'Rajasthan', 'Azim Premji Foundation', 577000, 770500, 529500, 928500, 470000, 683500, 3959000]\n['PRG-04', 'Swasthya Sathi', 'Odisha', 'Global Health Access Fund', 722500, '\u2013', 719000, 1118000, 1487000, 877000, 4923500]\n['PRG-05', 'Mahila Ajeevika', 'Bihar', 'HDFC Bank Parivartan', 849000, 930000, 624500, 544000, 591500, '-', 3539000]\n['PRG-06', 'Krishi Pragati', 'Odisha', 'NABARD Watershed Fund', 795000, 862500, 835500, 803500, 1014500, 1201000, 5512000]\n['PRG-07', 'Bal Suraksha', 'Jharkhand', 'Tata Trusts CSR', 621500, 656000, nan, 780000, 663500, 750000, 3471000]\n['PRG-08', 'Digital Sakhi', 'Madhya Pradesh', 'HDFC Bank Parivartan', 762500, 509000, 918000, 784500, 834000, 693000, 4501000]\n['PRG-09', 'Gram Urja', 'Rajasthan', 'Global Green Fund', 550000, 919000, 1059500, 702000, 1202000, 565000, 4997500]\n['PRG-10', 'Adivasi Adhikar', 'Maharashtra', 'Azim Premji Foundation', 598500, 903000, 842500, '-', 605500, 483500, 3433000]\n['PRG-11', 'Nayi Disha Skills', 'Bihar', 'National Skill Development Mission', 637000, 648500, 458500, 784500, 624500, 435000, 3588000]\n['PRG-12', 'Maa aur Shishu', 'Jharkhand', 'Global Health Access Fund', nan, 950000, 1096000, 761500, 639500, 1146500, 4593500]\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport numpy as np\n\nvalues = [7172500,4324000,3959000,4923500,3539000,5512000,3471000,4501000,4997500,3433000,3588000,4593500]\nprint(sum(values))\n",
+   "output": "54014000\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nimport numpy as np\n\nfile_path = '/data/programme_monthly_spend.xlsx'\ndf_raw = pd.read_excel(file_path, sheet_name=0, header=None)\n\nstart_row = 4\ndata = []\nfor i in range(start_row, df_raw.shape[0]):\n    row = df_raw.iloc[i]\n    prog_code = row[0]\n    if pd.isna(prog_code):\n        continue\n    code_str = str(prog_code).strip()\n    if code_str.upper() == 'PORTFOLIO TOTAL':\n        break\n    # extract monthly values columns 4-9\n    monthly_vals = []\n    for col in range(4,10):\n        val = row[col]\n        # handle various missing representations\n        if pd.isna(val):\n            monthly_vals.append(0)\n        else:\n            val_str = str(val).strip()\n            if val_str in ['-', '\u2013', '']:\n                monthly_vals.append(0)\n            else:\n                # try convert to numeric\n                try:\n                    num = float(val_str.replace(',',''))\n                    monthly_vals.append(num)\n                except:\n                    monthly_vals.append(0)\n    data.append(monthly_vals)\n\nmonthly_array = np.array(data, dtype=float)\nprint('shape', monthly_array.shape)\nprint('sum per programme', monthly_array.sum(axis=1))\nprint('total sum monthly', monthly_array.sum())\n# compare to six-month total column\nsix_month_totals = []\nfor i in range(start_row, df_raw.shape[0]):\n    row = df_raw.iloc[i]\n    prog_code = row[0]\n    if pd.isna(prog_code):\n        continue\n    code_str = str(prog_code).strip()\n    if code_str.upper() == 'PORTFOLIO TOTAL':\n        break\n    val = row[10]\n    if pd.isna(val):\n        six_month_totals.append(0)\n    else:\n        try:\n            six_month_totals.append(float(val))\n        except:\n            six_month_totals.append(0)\nprint('sum six-month totals', sum(six_month_totals))\n",
+   "output": "shape (12, 6)\nsum per programme [7172500. 4324000. 3959000. 4923500. 3539000. 5512000. 3471000. 4501000.\n 4997500. 3433000. 3588000. 4593500.]\ntotal sum monthly 54014000.0\nsum six-month totals 54014000.0\n"
+  }
+ ],
+ "usage": {
+  "input": 18891,
+  "output": 2791
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 16,
+  "untraced": [],
+  "answer_traced": true,
+  "clean": true
+ },
+ "audit": [],
+ "question": "What was total programme spend from April through September 2025, in INR?",
+ "trap": "plain variant of q1",
+ "text": "The six-month totals listed for the 12 programmes sum to the portfolio total shown in the sheet.\n\nApril \u2013 September 2025 spend:\n* PRG-01 Jal Jeevan Saathi: 7,172,500\n* PRG-02 Poshan Shakti: 4,324,000\n* PRG-03 Shiksha Udaan: 3,959,000\n* PRG-04 Swasthya Sathi: 4,923,500\n* PRG-05 Mahila Ajeevika: 3,539,000\n* PRG-06 Krishi Pragati: 5,512,000\n* PRG-07 Bal Suraksha: 3,471,000\n* PRG-08 Digital Sakhi: 4,501,000\n* PRG-09 Gram Urja: 4,997,500\n* PRG-10 Adivasi Adhikar: 3,433,000\n* PRG-11 Nayi Disha Skills: 3,588,000\n* PRG-12 Maa aur Shishu: 4,593,500\n\nPortfolio total = 54,014,000 INR, which matches the sum of the monthly Apr 2025 \u2013 Sep 2025 values with \u2018-\u2019 / \u2018\u2013\u2019 / blank treated as zero.\n\nANSWER: 54014000",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/offset_headers.q1_plain.simple.1"
+}

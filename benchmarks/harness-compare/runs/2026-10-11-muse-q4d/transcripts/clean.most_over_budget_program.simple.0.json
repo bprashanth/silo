@@ -1,0 +1,67 @@
+{
+ "job": "clean.most_over_budget_program.simple.0",
+ "case": "clean",
+ "q": "most_over_budget_program",
+ "harness": "simple",
+ "trial": 0,
+ "want": "Maternal & Child Health",
+ "got": "Maternal & Child Health",
+ "verdict": "correct",
+ "seconds": 221.8,
+ "actions": [
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\n\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\n\n# Load sheets\ntransactions = pd.read_excel(file_path, sheet_name='Transactions')\nbudget = pd.read_excel(file_path, sheet_name='Budget vs Actual')\n\nprint(\"Transactions columns:\", transactions.columns.tolist())\nprint(\"Transactions head:\")\nprint(transactions.head())\n\nprint(\"\\nBudget columns:\", budget.columns.tolist())\nprint(\"Budget head:\")\nprint(budget.head())\n\n# Compute spend per program\nspend_per_program = transactions.groupby('Program')['Amount (INR)'].sum().reset_index()\nprint(\"\\nSpend per program:\")\nprint(spend_per_program)\n\n# Merge with budget\nmerged = pd.merge(budget, spend_per_program, on='Program', how='left')\nmerged['Amount (INR)'] = merged['Amount (INR)'].fillna(0)\nmerged['Spend minus Budget'] = merged['Amount (INR)'] - merged['Annual budget (INR)']\nprint(\"\\nMerged:\")\nprint(merged[['Program','Annual budget (INR)','Amount (INR)','Spend minus Budget']])\n\n# Find program with largest spend minus budget\nidx_max = merged['Spend minus Budget'].idxmax()\nmax_program = merged.loc[idx_max, 'Program']\nmax_value = merged.loc[idx_max, 'Spend minus Budget']\nprint(\"\\nMax program:\", max_program, max_value)\n",
+   "output": "Transactions columns: ['Txn ID', 'Date', 'Month', 'Program', 'Category', 'Expense type', 'Region', 'Funding source', 'Amount (INR)']\nTransactions head:\n   Txn ID       Date  ...            Funding source Amount (INR)\n0  TX0001 2025-04-02  ...           USAID sub-grant       160300\n1  TX0002 2025-04-17  ...         Tata Trusts (CSR)       194000\n2  TX0003 2025-04-03  ...  Infosys Foundation (CSR)       167300\n3  TX0004 2025-04-08  ...  Infosys Foundation (CSR)       102700\n4  TX0005 2025-04-02  ...  Infosys Foundation (CSR)       178800\n\n[5 rows x 9 columns]\n\nBudget columns: ['Program', 'Annual budget (INR)', 'Beneficiaries target', 'Beneficiaries reached']\nBudget head:\n                     Program  ...  Beneficiaries reached\n0        Education (Shiksha)  ...                 4025.0\n1    Maternal & Child Health  ...                 2570.0\n2  Water & Sanitation (WASH)  ...                10754.0\n3        Women's Livelihoods  ...                 1684.0\n4            Disaster Relief  ...                 2074.0\n\n[5 rows x 4 columns]\n\nSpend per program:\n                     Program  Amount (INR)\n0            Disaster Relief       2807100\n1        Education (Shiksha)       8370800\n2    Maternal & Child Health       9229600\n3          Organisation-wide       8132800\n4  Water & Sanitation (WASH)       5402400\n5        Women's Livelihoods       5851700\n\nMerged:\n                           Program  ...  Spend minus Budget\n0              Education (Shiksha)  ...          -1229200.0\n1          Maternal & Child Health  ...            829600.0\n2        Water & Sanitation (WASH)  ...           -597600.0\n3              Women's Livelihoods  ...            451700.0\n4                  Disaster Relief  ...            407100.0\n5        Admin (organisation-wide)  ...          -5200000.0\n6  Fundraising (organisation-wide)  ...          -2600000.0\n\n[7 rows x 4 columns]\n\nMax program: Maternal & Child Health 829600.0\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ntransactions = pd.read_excel(file_path, sheet_name='Transactions')\nprint(transactions['Program'].unique())\n# Check counts\nprint(transactions['Program'].value_counts())\n",
+   "output": "['Education (Shiksha)' 'Maternal & Child Health'\n 'Water & Sanitation (WASH)' \"Women's Livelihoods\" 'Disaster Relief'\n 'Organisation-wide']\nProgram\nOrganisation-wide            72\nMaternal & Child Health      51\nWomen's Livelihoods          50\nDisaster Relief              50\nWater & Sanitation (WASH)    47\nEducation (Shiksha)          44\nName: count, dtype: int64\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ntransactions = pd.read_excel(file_path, sheet_name='Transactions')\norg = transactions[transactions['Program']=='Organisation-wide']\nprint(org.head(20))\nprint(org['Category'].unique())\nprint(org['Expense type'].unique())\n",
+   "output": "    Txn ID       Date  ... Funding source Amount (INR)\n19  TX0020 2025-04-04  ...   Unrestricted       143100\n20  TX0021 2025-04-07  ...   Unrestricted       160400\n21  TX0022 2025-04-05  ...   Unrestricted       158500\n22  TX0023 2025-04-03  ...   Unrestricted        61200\n23  TX0024 2025-04-13  ...   Unrestricted        73300\n24  TX0025 2025-04-05  ...   Unrestricted        81800\n44  TX0045 2025-05-16  ...   Unrestricted       134400\n45  TX0046 2025-05-01  ...   Unrestricted       174300\n46  TX0047 2025-05-26  ...   Unrestricted       129600\n47  TX0048 2025-05-15  ...   Unrestricted        81500\n48  TX0049 2025-05-24  ...   Unrestricted        87100\n49  TX0050 2025-05-12  ...   Unrestricted        58500\n70  TX0071 2025-06-07  ...   Unrestricted       164900\n71  TX0072 2025-06-05  ...   Unrestricted       138200\n72  TX0073 2025-06-13  ...   Unrestricted       139900\n73  TX0074 2025-06-14  ...   Unrestricted        58300\n74  TX0075 2025-06-22  ...   Unrestricted        65500\n75  TX0076 2025-06-04  ...   Unrestricted        84300\n97  TX0098 2025-07-07  ...   Unrestricted       173900\n98  TX0099 2025-07-11  ...   Unrestricted       124500\n\n[20 rows x 9 columns]\n['Admin' 'Fundraising']\n['IT & software' 'Finance & audit' 'Utilities' 'Donor communications'\n 'Digital campaigns' 'Grant writing' 'Donor events' 'Admin salaries'\n 'Office rent']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ntransactions = pd.read_excel(file_path, sheet_name='Transactions')\n# Look at non-organisation programs\nnon_org = transactions[transactions['Program']!='Organisation-wide']\nprint(non_org['Category'].unique())\n# Check if any Program matches Admin/Fundraising\nprint(transactions['Program'].unique())\n",
+   "output": "['Program']\n['Education (Shiksha)' 'Maternal & Child Health'\n 'Water & Sanitation (WASH)' \"Women's Livelihoods\" 'Disaster Relief'\n 'Organisation-wide']\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ntransactions = pd.read_excel(file_path, sheet_name='Transactions')\norg = transactions[transactions['Program']=='Organisation-wide']\nsummary = org.groupby('Category')['Amount (INR)'].sum().reset_index()\nprint(summary)\n# also check Expense type\nprint(org.groupby(['Category','Expense type'])['Amount (INR)'].sum().reset_index().head(20))\n",
+   "output": "      Category  Amount (INR)\n0        Admin       5238900\n1  Fundraising       2893900\n      Category          Expense type  Amount (INR)\n0        Admin        Admin salaries        991300\n1        Admin       Finance & audit       1372100\n2        Admin         IT & software       1119500\n3        Admin           Office rent        301900\n4        Admin             Utilities       1454100\n5  Fundraising     Digital campaigns        690500\n6  Fundraising  Donor communications        638600\n7  Fundraising          Donor events        804500\n8  Fundraising         Grant writing        760300\n"
+  },
+  {
+   "kind": "python",
+   "input": "\nimport pandas as pd\nfile_path = '/data/asha_ngo_finances_FY25-26.xlsx'\ntransactions = pd.read_excel(file_path, sheet_name='Transactions')\nbudget = pd.read_excel(file_path, sheet_name='Budget vs Actual')\n\n# Create effective program name\ndef map_program(row):\n    prog = row['Program']\n    cat = row['Category']\n    if prog == 'Organisation-wide':\n        if cat == 'Admin':\n            return 'Admin (organisation-wide)'\n        elif cat == 'Fundraising':\n            return 'Fundraising (organisation-wide)'\n        else:\n            return prog\n    else:\n        return prog\n\ntransactions['Effective Program'] = transactions.apply(map_program, axis=1)\n\nspend = transactions.groupby('Effective Program')['Amount (INR)'].sum().reset_index()\nprint(spend)\n\nmerged = pd.merge(budget, spend, left_on='Program', right_on='Effective Program', how='left')\nmerged['Amount (INR)'] = merged['Amount (INR)'].fillna(0)\nmerged['Spend minus Budget'] = merged['Amount (INR)'] - merged['Annual budget (INR)']\nprint(merged[['Program','Annual budget (INR)','Amount (INR)','Spend minus Budget']])\n\n# Find max positive spend minus budget\nmax_row = merged.loc[merged['Spend minus Budget'].idxmax()]\nprint(\"\\nMax:\", max_row['Program'], max_row['Spend minus Budget'])\n",
+   "output": "                 Effective Program  Amount (INR)\n0        Admin (organisation-wide)       5238900\n1                  Disaster Relief       2807100\n2              Education (Shiksha)       8370800\n3  Fundraising (organisation-wide)       2893900\n4          Maternal & Child Health       9229600\n5        Water & Sanitation (WASH)       5402400\n6              Women's Livelihoods       5851700\n                           Program  ...  Spend minus Budget\n0              Education (Shiksha)  ...            -1229200\n1          Maternal & Child Health  ...              829600\n2        Water & Sanitation (WASH)  ...             -597600\n3              Women's Livelihoods  ...              451700\n4                  Disaster Relief  ...              407100\n5        Admin (organisation-wide)  ...               38900\n6  Fundraising (organisation-wide)  ...              293900\n\n[7 rows x 4 columns]\n\nMax: Maternal & Child Health 829600\n"
+  }
+ ],
+ "usage": {
+  "input": 21177,
+  "output": 3798
+ },
+ "finish": "stop",
+ "receipt": {
+  "stated": 22,
+  "untraced": [
+   9600000.0,
+   8400000.0,
+   6000000.0,
+   5400000.0,
+   2400000.0,
+   5200000.0,
+   2600000.0
+  ],
+  "answer_traced": true,
+  "clean": false
+ },
+ "audit": [],
+ "question": "Program with the largest spend minus annual budget, in INR (exact name)",
+ "trap": "",
+ "text": "Spend by effective program vs annual budget:\n\n* Education (Shiksha): 8,370,800 spent vs 9,600,000 budget \u2192 -1,229,200\n* Maternal & Child Health: 9,229,600 spent vs 8,400,000 budget \u2192 +829,600\n* Water & Sanitation (WASH): 5,402,400 spent vs 6,000,000 budget \u2192 -597,600\n* Women's Livelihoods: 5,851,700 spent vs 5,400,000 budget \u2192 +451,700\n* Disaster Relief: 2,807,100 spent vs 2,400,000 budget \u2192 +407,100\n* Admin (organisation-wide): 5,238,900 spent vs 5,200,000 budget \u2192 +38,900\n* Fundraising (organisation-wide): 2,893,900 spent vs 2,600,000 budget \u2192 +293,900\n\nThe largest positive spend-minus-budget is Maternal & Child Health with an overspend of 829,600 INR.\n\nANSWER: Maternal & Child Health",
+ "workspace": "/data (container), host /home/beeps/.local/share/idli-bench/simple/clean.most_over_budget_program.simple.0"
+}
