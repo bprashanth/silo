@@ -96,7 +96,13 @@ def speakable(text):
 
 
 def speak(text, voice=None):
-    """Text -> OGG/Opus bytes for Telegram's sendVoice."""
+    """English text -> OGG/Opus bytes for Telegram's sendVoice."""
+    return synth(speakable(text), voice, "en-us")
+
+
+def synth(text, voice=None, lang="en-us"):
+    """Text already fit to be spoken (speakable(), or a translation of it) -> OGG/Opus bytes.
+    lang is Kokoro's: "en-us", or "hi" for Hindi in Devanagari (with a Hindi voice, hf_ or hm_)."""
     global _kokoro
     import soundfile as sf
     with _klock:
@@ -104,7 +110,7 @@ def speak(text, voice=None):
             from kokoro_onnx import Kokoro
             d = os.path.join(MODELS, "kokoro")
             _kokoro = Kokoro(os.path.join(d, "kokoro-v1.0.onnx"), os.path.join(d, "voices-v1.0.bin"))
-        audio, sr = _kokoro.create(speakable(text), voice=voice or VOICE, speed=SPEED, lang="en-us")
+        audio, sr = _kokoro.create(text, voice=voice or VOICE, speed=SPEED, lang=lang)
     with tempfile.TemporaryDirectory() as d:
         wav, ogg = os.path.join(d, "a.wav"), os.path.join(d, "a.ogg")
         sf.write(wav, audio, sr)

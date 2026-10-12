@@ -222,8 +222,26 @@ def send(chat, text, aloud=False):
         tg("sendMessage", chat_id=chat, text=c, **extra)
 
 
-def say(chat, text):
-    """Read a reply aloud as a voice note. The badge line becomes a short spoken note."""
+LANGUAGES = {"hi": "हिंदी (Hindi)", "en": "English"}
+TRANSLATE = """Translate the user's text into natural spoken Hindi, as a person would say it aloud.
+Write everything in Devanagari script: transliterate English names and technical terms that
+Hindi speakers say in English (प्रोटोकॉल, फ़ोल्डर, वर्ड डॉक्युमेंट), and write numbers and money as
+Hindi words (लाख, करोड़, रुपये). Keep every number's value exactly. Output only the translation."""
+
+
+def to_hindi(text):
+    """Spoken English -> spoken Hindi, by the local model (never an external one: it's the reply)."""
+    m = MODELS["idli"]
+    r = post_json(f"{m['base']}/chat/completions", {
+        "model": m["model"], "temperature": 0, "reasoning_effort": "low", "max_tokens": 2000,
+        "messages": [{"role": "system", "content": TRANSLATE}, {"role": "user", "content": text}]},
+        {"Authorization": f"Bearer {m['key']}"}, timeout=180)
+    return r["choices"][0]["message"]["content"].strip()
+
+
+def say(chat, text, user_id=None):
+    """Read a reply aloud as a voice note, in the user's /language. The badge line becomes a
+    short spoken note. Hindi is translated from the English reply by the local model first."""
     body, note = [], ""
     for line in text.splitlines():
         mark = next((b for b in SPOKEN_BADGE if line.startswith(b)), None)
@@ -231,7 +249,13 @@ def say(chat, text):
             note = SPOKEN_BADGE[mark]
         elif not line.startswith(("➖", "🎙️")):
             body.append(line.replace("/how", ""))
-    send_file(chat, speech.speak("\n".join(body) + ("\n\n" + note if note else ""), chat_voice.get(chat)), "reply.ogg",
+    spoken = speech.speakable("\n".join(body) + ("\n\n" + note if note else ""))
+    voice = chat_voice.get(chat, speech.VOICE)
+    if todos.language(user_id or chat) == "hi":
+        audio = speech.synth(to_hindi(spoken), voice if voice.startswith(("hf_", "hm_")) else "hf_alpha", "hi")
+    else:
+        audio = speech.synth(spoken, voice, "en-us")
+    send_file(chat, audio, "reply.ogg",
               method="sendVoice", field="voice", mime="audio/ogg")
 
 
@@ -360,6 +384,10 @@ def handle(msg):
     if text.strip().lower().startswith("/todos"):
         send(chat, todos.list_text(user.get("id")), aloud=True)
         return
+    if text.strip().lower().startswith("/language"):
+        body, markup = language_menu(user.get("id"))
+        tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
+        return
     if text.strip().lower().startswith("/strict"):
         body, markup = strict_menu(user.get("id"))
         tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
@@ -429,7 +457,7 @@ def handle(msg):
             print(f"-> {who} [{done['kind']}]: {shown(done['reply'])}", flush=True)
             send(chat, prefix + done["reply"], aloud=not voice)
             if voice and VOICE_REPLIES:
-                say(chat, done["reply"])
+                say(chat, done["reply"], user.get("id"))
             return
     try:
         content = to_content(msg)
@@ -473,7 +501,7 @@ def handle(msg):
     full = (body + "\n\n" if body else "") + badge + "  /how"
     send(chat, prefix + full, aloud=not voice)
     if voice and VOICE_REPLIES:
-        say(chat, full)
+        say(chat, full, user.get("id"))
 
 
 DRIVE_NOTE = ("To copy it, sign in with Google. I'll download only this link: the folder, every "
@@ -554,6 +582,14 @@ def drive_copy(chat, user_id, file_id, token=None):
         print(f"drive copy {chat} failed: {e!r}", flush=True)
         reply = "Something went wrong copying that link. Send it again to retry."
     send(chat, reply)
+
+
+def language_menu(user_id):
+    cur = todos.language(user_id)
+    body = ("🗣️ The language 🔊 Read aloud speaks in. Replies are still written in English; "
+            f"for Hindi, the reply is translated on this box first, which adds about 10 s.\nNow: {LANGUAGES[cur]}")
+    buttons = [[{"text": ("• " if k == cur else "") + name, "callback_data": f"lang:{k}"}] for k, name in LANGUAGES.items()]
+    return body, {"inline_keyboard": buttons}
 
 
 def strict_menu(user_id):
@@ -676,18 +712,32 @@ def handle_callback(cb):
             return
         speaking.add(chat)
         spoken[key] = time.time()
-        tg("answerCallbackQuery", callback_query_id=cb["id"], text="Making the audio…")
+        hindi = todos.language(user.get("id")) == "hi"
+        tg("answerCallbackQuery", callback_query_id=cb["id"],
+           text="Translating to Hindi and making the audio…" if hindi else "Making the audio…")
         t0 = time.time()
         try:
             with recording(chat):
-                say(chat, cb["message"].get("text", ""))
-            print(f"read aloud {key[1]} voice={chat_voice.get(chat, speech.VOICE)} in {time.time() - t0:.1f}s", flush=True)
+                say(chat, cb["message"].get("text", ""), user.get("id"))
+            print(f"read aloud {key[1]} voice={chat_voice.get(chat, speech.VOICE)} "
+                  f"lang={todos.language(user.get('id'))} in {time.time() - t0:.1f}s", flush=True)
         except Exception as e:
             spoken.pop(key, None)
             print(f"read aloud failed: {e!r}", flush=True)
             send(chat, "I couldn't make the audio for that one. Try again in a moment.")
         finally:
             speaking.discard(chat)
+        return
+    if cb.get("data", "").startswith("lang:"):
+        lang = cb["data"].removeprefix("lang:")
+        if lang in LANGUAGES:
+            todos.set_language(user.get("id"), chat, lang)
+        tg("answerCallbackQuery", callback_query_id=cb["id"], text=LANGUAGES.get(lang, ""))
+        body, markup = language_menu(user.get("id"))
+        try:
+            tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        except urllib.error.HTTPError:
+            pass  # unchanged
         return
     if cb.get("data", "").startswith("strict:"):
         todos.set_strict(user.get("id"), chat, cb["data"] == "strict:on")
@@ -713,7 +763,7 @@ def handle_callback(cb):
             try:
                 with recording(chat):
                     say(chat, f"Hi, this is {VOICES[v].split(' (')[0]}. Your todo list has 3 items, and the "
-                              "Gadchiroli programme spent ₹4,52,300 this quarter.")
+                              "Gadchiroli programme spent ₹4,52,300 this quarter.", user.get("id"))
             except Exception as e:
                 print(f"voice sample failed: {e!r}", flush=True)
             finally:
@@ -747,6 +797,7 @@ def main():
         {"command": "todos", "description": "Your todo list"},
         {"command": "files", "description": "Your files"},
         {"command": "drive", "description": "Add a Google Drive folder"},
+        {"command": "language", "description": "Read-aloud language"},
         {"command": "strict", "description": "Check every answer twice"},
         {"command": "model", "description": "Switch model"},
         {"command": "how", "description": "How the last answer was made"},

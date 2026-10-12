@@ -24,6 +24,7 @@ import urllib.request
 IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30), "IST")
 DB = os.path.expanduser(os.environ.get("SILO_DB", "~/.local/share/idli-bridge/silo.db"))
 DAILY = os.environ.get("TODO_DAILY", "09:00")
+LANGUAGE = os.environ.get("READ_ALOUD_LANGUAGE", "hi")  # default for /language: Hindi
 _lock = threading.Lock()
 
 
@@ -38,9 +39,12 @@ def db():
     CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY, user TEXT, chat INTEGER,
         due TEXT, what TEXT, sent TEXT);
     """)
-    if "strict" not in [r[1] for r in c.execute("PRAGMA table_info(users)")]:
+    cols = [r[1] for r in c.execute("PRAGMA table_info(users)")]
+    if "strict" not in cols:
         c.execute("ALTER TABLE users ADD COLUMN strict INTEGER DEFAULT 0")  # /strict, off by default
-        c.commit()
+    if "language" not in cols:
+        c.execute(f"ALTER TABLE users ADD COLUMN language TEXT DEFAULT '{LANGUAGE}'")  # /language
+    c.commit()
     return c
 
 
@@ -81,6 +85,17 @@ def strict(user):
 def set_strict(user, chat, on):
     touch_user(user, chat)
     q("UPDATE users SET strict=? WHERE user=?", int(on), str(user))
+
+
+def language(user):
+    """The language Read aloud speaks in for this user (/language): "hi" or "en"."""
+    r = q("SELECT language FROM users WHERE user=?", str(user))
+    return (r and r[0]["language"]) or LANGUAGE
+
+
+def set_language(user, chat, lang):
+    touch_user(user, chat)
+    q("UPDATE users SET language=? WHERE user=?", lang, str(user))
 
 
 def numbered(rows):
