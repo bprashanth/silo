@@ -27,3 +27,15 @@ Later, maybe let the user ask for audio in words ("send me an audio response").
 
 **Committed before this:** `5b5fff3`. Checked: a clean tree, no keys or tokens in history,
 and the largest tracked file is a 772 KB benchmark `.xlsx`.
+
+## Later: Silo is the default voice, and /voice is hidden
+
+- **Default voice:** `hf_alpha` (Kokoro's Hindi voice reading English), named "Silo" in
+  `/voice`. Its sample says "Hi, this is Silo". `TTS_VOICE` now defaults to `hf_alpha`.
+- **`/voice`:** removed from the command menu and `/start`, but it still works. The menu is
+  now todos, files, drive, model, how, reset.
+- **Fix:** tapping the voice that's already selected made `editMessageText` fail with
+  "message is not modified", which skipped the sample. That error is now ignored.
+- **Incident:** restarting the bot for this killed a question the user had just asked by voice
+  (04:22, "Tell me about the scaffold conceptually…"); its answer was lost. Restarts drop
+  in-flight answers. Check the log for a recent incoming message before restarting.

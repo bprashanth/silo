@@ -7,7 +7,7 @@ Env:
   MODELS_DIR     where the weights live (default ~/.local/share/idli-bridge/models):
                  kokoro/kokoro-v1.0.onnx, kokoro/voices-v1.0.bin, whisper/ (Hugging Face cache)
   WHISPER_MODEL  default large-v3-turbo
-  TTS_VOICE      Kokoro voice (default af_heart); TTS_SPEED (default 1.0)
+  TTS_VOICE      Kokoro voice (default hf_alpha, called Silo in /voice); TTS_SPEED (default 1.0)
   SILO_CONFIG    glossary.txt there: names and words Whisper should expect, one per line
 """
 import os
@@ -22,7 +22,7 @@ import numpy as np
 MODELS = os.path.expanduser(os.environ.get("MODELS_DIR", "~/.local/share/idli-bridge/models"))
 CFG = os.path.expanduser(os.environ.get("SILO_CONFIG", "~/.config/silo"))
 WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "large-v3-turbo")
-VOICE = os.environ.get("TTS_VOICE", "af_heart")
+VOICE = os.environ.get("TTS_VOICE", "hf_alpha")
 SPEED = float(os.environ.get("TTS_SPEED", "1.0"))
 MAX_SPOKEN = 1500  # characters; longer replies are cut, and the voice note says so
 

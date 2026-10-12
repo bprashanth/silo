@@ -193,10 +193,11 @@ READ_ALOUD = os.environ.get("READ_ALOUD", "1") == "1"
 VOICE_REPLIES = os.environ.get("VOICE_REPLIES", "0") == "1"
 spoken = {}  # (chat, message_id) -> when it was read aloud
 speaking = set()  # chats with a read-aloud being made; one at a time per chat
-# /voice choices: Kokoro voices. The Hindi ones read English with an Indian accent.
-VOICES = {"af_heart": "Heart (US, woman)", "af_bella": "Bella (US, woman)", "am_michael": "Michael (US, man)",
+# /voice (a hidden command) picks from these Kokoro voices. The default is Silo: Kokoro's
+# Hindi voice hf_alpha reading English, which gives an Indian accent.
+VOICES = {"hf_alpha": "Silo (Indian, woman)", "af_heart": "Heart (US, woman)", "af_bella": "Bella (US, woman)", "am_michael": "Michael (US, man)",
           "bf_emma": "Emma (British, woman)", "bm_george": "George (British, man)",
-          "hf_alpha": "Alpha (Indian, woman)", "hm_omega": "Omega (Indian, man)"}
+          "hm_omega": "Omega (Indian, man)"}
 chat_voice = {}  # chat -> Kokoro voice; default speech.VOICE
 # The log holds who/what kind/how long, not what was said, unless LOG_CONTENT=1 (debugging):
 # otherwise /reset couldn't erase it.
@@ -382,7 +383,7 @@ def handle(msg):
         return
     if text.strip().lower() == "/start":
         send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /voice for the read-aloud voice, /model to switch, /reset to erase everything. "
+                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /model to switch, /reset to erase everything. "
                    "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
         return
     voice = msg.get("voice") or msg.get("audio")
@@ -680,7 +681,10 @@ def handle_callback(cb):
         chat_voice[chat] = v
         tg("answerCallbackQuery", callback_query_id=cb["id"], text=f"Voice: {VOICES[v]}")
         body, markup = voice_menu(chat)
-        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        try:
+            tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        except urllib.error.HTTPError:
+            pass  # the same voice again: nothing to change in the menu, still play the sample
         if chat not in speaking:
             speaking.add(chat)
             try:
@@ -720,7 +724,6 @@ def main():
         {"command": "todos", "description": "Your todo list"},
         {"command": "files", "description": "Your files"},
         {"command": "drive", "description": "Add a Google Drive folder"},
-        {"command": "voice", "description": "Read-aloud voice"},
         {"command": "model", "description": "Switch model"},
         {"command": "how", "description": "How the last answer was made"},
         {"command": "reset", "description": "Erase everything"},

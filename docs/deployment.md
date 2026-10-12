@@ -75,7 +75,7 @@ All settings are environment variables. The two secrets can also live in files u
 | `LOG_CONTENT` | `0` | `1` writes message and reply text to `tg_bridge.log`, for debugging. Off, the log holds only who, what kind and how long, so `/reset` leaves nothing behind. |
 | `READ_ALOUD` | `1` | puts a 🔊 Read aloud button on replies. Audio is made only when it's tapped, one at a time per chat. `/voice` picks the voice per chat. |
 | `VOICE_REPLIES` | `0` | `1` also speaks every reply to a voice note without a tap. Off: doing it for every message backed the box up. |
-| `TTS_VOICE` / `TTS_SPEED` | `af_heart` / `1.0` | the Kokoro voice used for read aloud, e.g. `bf_emma`, `am_michael`, `bm_george` |
+| `TTS_VOICE` / `TTS_SPEED` | `hf_alpha` / `1.0` | the default Kokoro voice for read aloud (`hf_alpha` is "Silo" in the hidden `/voice` command); each chat can pick another with `/voice` |
 
 Names Whisper keeps mishearing (organisations, villages, people) go one per line in
 `$SILO_CONFIG/glossary.txt`. They, and the user's open todos, are given to Whisper as hints.
