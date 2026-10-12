@@ -1,6 +1,12 @@
-"""Copy one Google Drive folder (or file) into a chat's workspace, after a Google sign-in.
+"""Copy one Google Drive folder (or file) into a chat's workspace.
 
-Flow: the user pastes a Drive link -> the bot replies with a "Sign in with Google" button
+Two ways in. A service account is used when its key is on the box, else a Google sign-in.
+
+Service account (SILO_CONFIG/drive_sa.json): the folder's owner shares it with the account's
+email as a Viewer, then pastes the link. The bot copies it with the account's own token. It
+can read only what has been shared with it, and nobody signs in. sa_email() is that address.
+
+Google sign-in flow: the user pastes a Drive link -> the bot replies with a "Sign in with Google" button
 -> Google sends the browser back with a one-time code -> the bot swaps it for a short-lived
 access token, copies that link only (with every subfolder), writes a manifest, then revokes
 the token. Nothing is kept that could read their Drive again; to refresh the copy, they
@@ -19,7 +25,7 @@ Getting back from Google, two ways:
   OAUTH_REDIRECT is http://localhost:<port>/... (the default): the browser lands on a page
     that doesn't load; the user copies its address into the chat and paste() finishes it.
 
-Env: SILO_CONFIG/google_oauth.json (the OAuth client JSON from Google Cloud Console),
+Env: SILO_CONFIG/drive_sa.json (a service account key), SILO_CONFIG/google_oauth.json (the OAuth client JSON from Google Cloud Console),
 OAUTH_REDIRECT, OAUTH_PORT (default 8791), DRIVE_MAX_MB (default 500), DRIVE_MAX_FILES (2000).
 """
 import base64
@@ -31,6 +37,8 @@ import os
 import re
 import secrets
 import shutil
+import subprocess
+import tempfile
 import threading
 import time
 import urllib.error
@@ -70,6 +78,37 @@ def client():
     except (OSError, ValueError):
         return None
     return c.get("web") or c.get("installed")
+
+
+def sa():
+    """The service account key from Google Cloud Console, or None."""
+    try:
+        k = json.load(open(os.path.join(CFG, "drive_sa.json")))
+    except (OSError, ValueError):
+        return None
+    return k if k.get("type") == "service_account" and k.get("private_key") else None
+
+
+def sa_email():
+    return (sa() or {}).get("client_email", "")
+
+
+def sa_token():
+    """A one-hour read-only Drive token for the service account (a signed JWT, signed by openssl)."""
+    k = sa()
+    b64 = lambda b: base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+    now = int(time.time())
+    body = b64(json.dumps({"alg": "RS256", "typ": "JWT"}).encode()) + "." + b64(json.dumps({
+        "iss": k["client_email"], "scope": SCOPE, "aud": "https://oauth2.googleapis.com/token",
+        "iat": now, "exp": now + 3600}).encode())
+    with tempfile.TemporaryDirectory() as d:  # created 0700
+        key = os.path.join(d, "key.pem")
+        with open(key, "w") as f:
+            f.write(k["private_key"])
+        sig = subprocess.run(["openssl", "dgst", "-sha256", "-sign", key], input=body.encode(),
+                             capture_output=True, check=True).stdout
+    return _post("https://oauth2.googleapis.com/token", {
+        "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer", "assertion": body + "." + b64(sig)})["access_token"]
 
 
 def find_link(text):
@@ -139,11 +178,20 @@ def _safe(name):
     return name[:120]
 
 
+class NoAccess(Exception):
+    """The link itself can't be opened: not shared with this account, or deleted."""
+
+
 def copy(token, file_id, dest_root, progress=lambda s: None):
     """Copy a folder tree (or one file) to dest_root/<name>. Returns a summary dict.
     Writes _drive_manifest.csv at the top: path, Drive link, type, modified, owner, note."""
     FIELDS = "id,name,mimeType,size,modifiedTime,webViewLink,owners(emailAddress),shortcutDetails"
-    top = _get(token, f"files/{file_id}", {"fields": FIELDS})
+    try:
+        top = _get(token, f"files/{file_id}", {"fields": FIELDS})
+    except urllib.error.HTTPError as e:
+        if e.code in (403, 404):
+            raise NoAccess(e.code)
+        raise
     root = os.path.join(dest_root, _safe(top["name"]))
     if os.path.exists(root):
         shutil.rmtree(root) if os.path.isdir(root) else os.remove(root)
@@ -218,11 +266,13 @@ def copy(token, file_id, dest_root, progress=lambda s: None):
             "skipped_items": [r[0] for r in rows if r[5].startswith("skipped")][:10]}
 
 
-def summary_text(s):
+def summary_text(s, signed_in=False):
     mb = s["bytes"] / 1e6
     what = (f"the folder “{s['name']}”: {s['files']} files in {s['folders']} folders ({mb:.1f} MB)"
             if s["is_folder"] else f"“{s['name']}” ({mb:.1f} MB)")
-    out = f"✓ Copied {what} from your Drive to this box. I've signed out of your Google account."
+    out = f"✓ Copied {what} from Google Drive to this box."
+    if signed_in:
+        out += " I've signed out of your Google account."
     if s["skipped"]:
         out += f"\nSkipped {s['skipped']} item(s): " + ", ".join(s["skipped_items"])
     return out + "\nAsk me anything about it. To refresh the copy later, send the link again."

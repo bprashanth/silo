@@ -449,14 +449,19 @@ DRIVE_NOTE = ("To copy it, sign in with Google. I'll download only this link: th
 
 
 def drive_message(chat, user, text):
-    """A Drive link starts a sign-in; a pasted Google redirect finishes one. True if handled."""
+    """A Drive link starts a copy (service account) or a sign-in; a pasted Google redirect
+    finishes a sign-in. True if handled."""
     got = drive.parse_redirect(text)
     if got:
-        threading.Thread(target=drive_copy, args=got, daemon=True).start()
+        threading.Thread(target=drive_signed_in, args=got, daemon=True).start()
         return True
     link = drive.find_link(text)
     if not link:
         return False
+    if drive.sa():
+        send(chat, "📁 Copying that link: the folder and every folder inside it…")
+        threading.Thread(target=drive_copy, args=(chat, user.get("id"), link[0]), daemon=True).start()
+        return True
     if not drive.client():
         send(chat, "Google Drive isn't set up on this box yet, so I can't copy that link.")
         return True
@@ -471,34 +476,48 @@ def drive_message(chat, user, text):
     return True
 
 
-def drive_copy(state, code):
-    """Finish a sign-in and copy the link into the chat's files, then revoke the token."""
+def drive_signed_in(state, code):
+    """Finish a Google sign-in, copy the link, then revoke the token."""
     p = drive.pending.get(state)
     if not p:
         return
-    chat = p["chat"]
     try:
         p, token = drive.finish(state, code)
     except Exception as e:
-        send(chat, str(e) if isinstance(e, ValueError) else "Google didn't accept that sign-in. Send the link again.")
+        send(p["chat"], str(e) if isinstance(e, ValueError) else "Google didn't accept that sign-in. Send the link again.")
         return
-    send(chat, "Signed in. Copying now…")
+    send(p["chat"], "Signed in. Copying now…")
+    try:
+        drive_copy(p["chat"], p["user"], p["file_id"], token)
+    finally:
+        drive.revoke(token)
+
+
+def drive_copy(chat, user_id, file_id, token=None):
+    """Copy the link into the chat's files: with a sign-in token, else as the service account."""
     t0 = time.time()
     try:
         with locks[chat]:
-            s = drive.copy(token, p["file_id"], harness.workdir(chat), progress=lambda m: send(chat, m))
-        reply = drive.summary_text(s)
+            s = drive.copy(token or drive.sa_token(), file_id, harness.workdir(chat),
+                           progress=lambda m: send(chat, m))
+        reply = drive.summary_text(s, signed_in=bool(token))
         history[chat].append({"role": "user", "content": f"(I shared the Google Drive {'folder' if s['is_folder'] else 'file'} "
                                                           f"“{s['name']}”; it is copied into the files.)"})
         history[chat].append({"role": "assistant", "content": reply})
-        audit_log.append(chat, {"type": "drive", "chat": chat, "user": {"id": p["user"]}, "file_id": p["file_id"],
+        audit_log.append(chat, {"type": "drive", "chat": chat, "user": {"id": user_id}, "file_id": file_id,
+                                "via": "sign-in" if token else "service account",
                                 "summary": s, "seconds": round(time.time() - t0, 1)})
         print(f"drive copy {chat}: {s['files']} files {s['bytes']} bytes in {time.time() - t0:.0f}s", flush=True)
-    except urllib.error.HTTPError as e:
+    except drive.NoAccess:
         reply = ("I couldn't open that link with your Google account: it may not be shared with you, or it "
-                 f"was deleted (Google said {e.code}).")
-    finally:
-        drive.revoke(token)
+                 "was deleted.") if token else (
+                 "I can't see that link yet. In Google Drive, open its Share dialog and add\n"
+                 f"{drive.sa_email()}\nas a Viewer (you can untick \"Notify people\"). Then send the link again.")
+    except urllib.error.HTTPError as e:
+        reply = f"The copy stopped partway: Google said {e.code}. Send the link again to retry."
+    except Exception as e:
+        print(f"drive copy {chat} failed: {e!r}", flush=True)
+        reply = "Something went wrong copying that link. Send it again to retry."
     send(chat, reply)
 
 
@@ -561,7 +580,7 @@ def safe_handle(update):
 def main():
     answer.cleanup_jobs()
     if drive.client() and drive.REDIRECT.startswith("https://"):
-        drive.serve(drive_copy)
+        drive.serve(drive_signed_in)
     todos.start_loop(lambda chat, text: send(chat, text, aloud=True))
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)

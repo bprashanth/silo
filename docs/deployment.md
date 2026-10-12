@@ -149,21 +149,51 @@ Telegram API app (`telethon_ap_id` and `telethon_app_hash` in
 
 ## Google Drive (optional)
 
-A user pastes a Drive folder or file link. The bot asks them to sign in with Google, copies
-only that link (with every subfolder, Google Sheets as `.xlsx`, Docs as `.md` or `.txt`,
-Slides as `.pdf`, plus `_drive_manifest.csv` saying where each file came from) into their
-files, and revokes the sign-in straight away. To refresh the copy, they send the link again.
-`tg-bridge/drive.py` is the only code that talks to Google; the agents read the copy and
-still have no network.
+A user pastes a Drive folder or file link, and the bot copies only that link into their files:
+every subfolder, Google Sheets as `.xlsx`, Docs as `.md` or `.txt`, Slides as `.pdf`, plus
+`_drive_manifest.csv` saying where each file came from. To refresh the copy, they send the
+link again. `tg-bridge/drive.py` is the only code that talks to Google; the agents read the
+copy and still have no network.
+
+There are two ways to reach the user's Drive. If a service account key is present, the bot
+uses it; otherwise it asks the user to sign in.
+
+### Service account (recommended)
+
+The folder's owner shares it with the service account's email as a Viewer. Nobody signs in,
+there's no list of users to keep, and the account can read only what has been shared with
+it. If a link isn't shared yet, the bot replies with the email to share it with. Access is
+removed in the same Share dialog. Two things to know:
+- Anyone on `TG_ALLOWED` who has a link the account can read can get a copy of it.
+- A Google Workspace organisation that blocks sharing outside the domain won't let its users
+  add the account.
 
 One-time setup in [Google Cloud Console](https://console.cloud.google.com/):
-1. Create a project, and enable the **Google Drive API**.
-2. **OAuth consent screen:** choose External, leave it in Testing, and add each team member's
-   Google account as a test user. Add the scope `.../auth/drive.readonly`.
-   - Testing mode limits sign-in to those test users. Its 7-day token expiry doesn't matter,
-     because each sign-in is used once.
-   - On Google Workspace, Internal works too.
-3. **Credentials → Create OAuth client ID**, then do one of:
+1. In a project, enable the **Google Drive API**.
+2. **IAM & Admin → Service accounts → Create**. It needs no roles.
+3. On the account, choose **Keys → Add key → JSON**. Save the file as
+   `$SILO_CONFIG/drive_sa.json` with `chmod 600`, then restart the bot.
+
+Signing in as the account uses the `openssl` command, so nothing extra needs installing.
+
+### Sign in with Google
+
+Use this when no service account key is present. The bot asks the user to sign in with
+Google, copies the link, and revokes the sign-in straight away. Google's consent screen
+says "see and download all your Google Drive files", because that's the narrowest scope that
+can read an existing folder.
+
+One-time setup in [Google Cloud Console](https://console.cloud.google.com/):
+1. In a project, enable the **Google Drive API**.
+2. **Google Auth Platform** (formerly the OAuth consent screen):
+   - Under **Branding**, give the app a name and contact emails.
+   - Under **Audience**, choose External and leave it in Testing. Add each team member's
+     Google account as a test user; up to 100 are allowed, and only they can sign in.
+   - Under **Data Access**, add the scope `.../auth/drive.readonly`.
+   - Leaving Testing requires Google's verification, which for this scope includes a paid
+     security assessment. Testing mode's 7-day token expiry doesn't matter, because each
+     sign-in is used once.
+3. **Clients → Create client**, then do one of:
    - **Desktop app** (paste-back mode, works anywhere). After sign-in, Google sends the
      browser to `http://localhost:8791/oauth/callback?...`, a page that doesn't load on a
      phone. The user copies that address into the chat, and the bot finishes the sign-in.
