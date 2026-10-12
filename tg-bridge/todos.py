@@ -38,6 +38,9 @@ def db():
     CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY, user TEXT, chat INTEGER,
         due TEXT, what TEXT, sent TEXT);
     """)
+    if "strict" not in [r[1] for r in c.execute("PRAGMA table_info(users)")]:
+        c.execute("ALTER TABLE users ADD COLUMN strict INTEGER DEFAULT 0")  # /strict, off by default
+        c.commit()
     return c
 
 
@@ -67,6 +70,17 @@ def touch_user(user, chat):
     q("INSERT INTO users(user, chat, daily, last_daily) VALUES(?,?,?,?) "
       "ON CONFLICT(user) DO UPDATE SET chat=excluded.chat", str(user), chat, DAILY, first)
     return q("SELECT * FROM users WHERE user=?", str(user))[0]
+
+
+def strict(user):
+    """Is strict mode (every answer checked independently) on for this user?"""
+    r = q("SELECT strict FROM users WHERE user=?", str(user))
+    return bool(r and r[0]["strict"])
+
+
+def set_strict(user, chat, on):
+    touch_user(user, chat)
+    q("UPDATE users SET strict=? WHERE user=?", int(on), str(user))
 
 
 def numbered(rows):

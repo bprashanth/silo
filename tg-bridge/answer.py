@@ -185,9 +185,10 @@ def finish_run(run, question):
 
 # ---- one reply --------------------------------------------------------------------------
 
-def respond(chat, user, history, system, model, model_key):
+def respond(chat, user, history, system, model, model_key, strict=False):
     """history ends with the user's new message. Returns (reply_text, badge_text, files)
-    where files is {name: bytes} to send back (Codex's charts and reports)."""
+    where files is {name: bytes} to send back (Codex's charts and reports).
+    strict: also run the independent checker and compare (/strict); otherwise Codex alone."""
     current = history[-1]["content"]
     question = as_text(current)
     job = f"{chat}-{int(time.time() * 1000)}"
@@ -204,6 +205,16 @@ def respond(chat, user, history, system, model, model_key):
                               f"{model['label']} via OpenRouter." if not local
                               else "➖ Not checked: pictures are answered without a second check for now.")
         primary = finish_run(primary, question)
+    elif not strict:
+        # Codex alone. If it fails, the bridge's harness answers instead.
+        primary, checker = run_codex(chat, history, job), None
+        new_files = primary.pop("new_files", {})
+        status = "off"
+        if not primary["text"].strip():
+            primary = run_simple(chat, history, system + ANSWER_TAIL, model)
+            primary["engine"] += " (fallback: Codex failed)"
+        primary = finish_run(primary, question)
+        kind, text = "none", "➖ Not checked. /strict turns on independent checking."
     else:
         fc = POOL.submit(run_codex, chat, history, job)
         fk = POOL.submit(run_simple, chat, history, system + ANSWER_TAIL, model, CHECK_EFFORT)

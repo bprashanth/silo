@@ -149,7 +149,10 @@ def how(rec, full=False):
            f"Code: silo {v.get('silo')}" + (f", Codex {v['codex']}" if v.get("codex") else ""), ""]
     out += _run_summary("Answer", rec.get("primary"), full)
     out.append("")
-    out += _run_summary("Independent check", rec.get("checker"), full)
+    if rec.get("checker_status") == "off":
+        out.append("Independent check: off (strict mode is off; /strict turns it on)")
+    else:
+        out += _run_summary("Independent check", rec.get("checker"), full)
     if rec.get("checker_status") == "late":
         lc = rec.get("late_check")
         out.append("  (the check was still running when the reply was sent"

@@ -102,7 +102,8 @@ def llm(chat, user):
     """Answer the chat's latest message: io's Codex answers, the bridge's harness checks
     (answer.py). Returns (reply, badge, files to send back)."""
     key = chat_model[chat]
-    reply, badge, files = answer.respond(chat, user, list(history[chat]), SYSTEM, MODELS[key], key)
+    reply, badge, files = answer.respond(chat, user, list(history[chat]), SYSTEM, MODELS[key], key,
+                                         strict=todos.strict(user.get("id")))
     if not reply.strip():
         raise Unsupported("The model didn't produce an answer. Try a narrower question, or /how to see what it tried.")
     return reply, badge, files
@@ -359,6 +360,10 @@ def handle(msg):
     if text.strip().lower().startswith("/todos"):
         send(chat, todos.list_text(user.get("id")), aloud=True)
         return
+    if text.strip().lower().startswith("/strict"):
+        body, markup = strict_menu(user.get("id"))
+        tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
+        return
     if text.strip().lower().startswith("/voice"):
         body, markup = voice_menu(chat)
         tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
@@ -383,8 +388,8 @@ def handle(msg):
         return
     if text.strip().lower() == "/start":
         send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /model to switch, /reset to erase everything. "
-                   "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
+                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /strict to check every answer twice, /model to switch, /reset to erase everything. "
+                   "/how shows the steps behind an answer.")
         return
     voice = msg.get("voice") or msg.get("audio")
     heard = ""
@@ -433,8 +438,9 @@ def handle(msg):
         return
     kind = "photo" if "photo" in msg else (msg.get("document") or {}).get("file_name", "")
     print(f"<- {who}: {('[file] ' if 'document' in msg else '[photo] ') if kind else ''}{shown(msg.get('caption') or text)}", flush=True)
-    send(chat, "⏳ Working on it. Every answer is computed and then checked independently, "
-               "which usually takes 30–90 seconds.")
+    send(chat, "⏳ Working on it. Strict mode: the answer is computed and then checked independently, "
+               "which usually takes 30–90 seconds." if todos.strict(user.get("id"))
+               else "⏳ Working on it. This usually takes 20–60 seconds.")
     with locks[chat]:
         history[chat].append({"role": "user", "content": content})
         try:
@@ -548,6 +554,16 @@ def drive_copy(chat, user_id, file_id, token=None):
         print(f"drive copy {chat} failed: {e!r}", flush=True)
         reply = "Something went wrong copying that link. Send it again to retry."
     send(chat, reply)
+
+
+def strict_menu(user_id):
+    on = todos.strict(user_id)
+    body = ("🔍 Strict mode is " + ("ON" if on else "OFF") + ".\n"
+            "When it's on, every answer is worked out a second time, independently, and the two are "
+            "compared: ✅ they agree, ⚠️ they don't, ◻️ the check couldn't finish. It can add up to 30 s, "
+            "and fewer people can be answered at once.\nWhen it's off, answers aren't checked (➖).")
+    button = {"text": "Turn it off" if on else "Turn it on", "callback_data": "strict:" + ("off" if on else "on")}
+    return body, {"inline_keyboard": [[button]]}
 
 
 def voice_menu(chat):
@@ -673,6 +689,13 @@ def handle_callback(cb):
         finally:
             speaking.discard(chat)
         return
+    if cb.get("data", "").startswith("strict:"):
+        todos.set_strict(user.get("id"), chat, cb["data"] == "strict:on")
+        body, markup = strict_menu(user.get("id"))
+        tg("answerCallbackQuery", callback_query_id=cb["id"],
+           text="Strict mode on" if cb["data"] == "strict:on" else "Strict mode off")
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        return
     if cb.get("data", "").startswith("voice:"):
         v = cb["data"].removeprefix("voice:")
         if v not in VOICES:
@@ -724,6 +747,7 @@ def main():
         {"command": "todos", "description": "Your todo list"},
         {"command": "files", "description": "Your files"},
         {"command": "drive", "description": "Add a Google Drive folder"},
+        {"command": "strict", "description": "Check every answer twice"},
         {"command": "model", "description": "Switch model"},
         {"command": "how", "description": "How the last answer was made"},
         {"command": "reset", "description": "Erase everything"},

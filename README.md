@@ -45,10 +45,11 @@ reliably on the server, because the user base's Windows machines vary too much.
   images to, and get answers and charts back from.
   - It runs against a model served on this box: Muse Glimmer 30B.
   - io's Codex answers, behind io's offline bubblewrap profile.
-  - The bridge's own one-tool harness checks each answer independently, computing in a
-    Docker container with no network and read-only files.
-  - Every reply carries a badge (verified, disagrees, unverified, nothing to
-    check), and `/how` shows the audit record behind it.
+  - In strict mode (`/strict`, off by default), the bridge's own one-tool harness checks
+    each answer independently, computing in a Docker container with no network and
+    read-only files.
+  - Every reply carries a badge (verified, disagrees, unverified, or not checked), and
+    `/how` shows the audit record behind it.
   - Voice notes in English are transcribed on the box (Whisper), and replies can be read aloud
     in a natural voice (Kokoro). Both run on the CPU.
   - A personal todo list by voice or text ("add…", "I already did 1 and 2", "remind me at 6"),

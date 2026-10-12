@@ -15,9 +15,9 @@ serving. The bot long-polls Telegram, so it needs outbound HTTPS to
                                                    '-> audit record per reply (/how)
 ```
 
-Every message is answered twice, independently and in parallel. io's Codex writes the
-reply, and the bridge's own one-tool harness checks it. The reply carries a badge saying
-whether the two agreed (`proposals/correctness-receipt.md`), and `/how` shows the audit
+io's Codex writes each reply. In strict mode (`/strict`, a per-user setting that's off by
+default), the message is also answered independently, in parallel, by the bridge's own
+one-tool harness, and the reply carries a badge saying whether the two agreed (`proposals/correctness-receipt.md`), and `/how` shows the audit
 record behind it (`proposals/audit-checker.md`).
 
 ## What you need
@@ -120,8 +120,8 @@ systemd unit.
 
 In Telegram, open your bot and:
 1. Send `/start`. It replies "Hi! I'm Silo…" and names the current model.
-2. Send a spreadsheet with a question as the caption, e.g. "total spend by
-   category". The reply comes back with the number and a badge, e.g.
+2. Send `/strict` and turn it on. Then send a spreadsheet with a question as the caption,
+   e.g. "total spend by category". The reply comes back with the number and a badge, e.g.
    `✅ Verified: an independent second computation also got 5238900.`
 3. Send `/how`. It lists the files (with hashes), every step each side ran with its key
    output line, the model and code versions, and the badge. `/how full` sends all of it,
@@ -234,6 +234,8 @@ One-time setup in [Google Cloud Console](https://console.cloud.google.com/):
   `ANSWER:` line, which is stripped from the reply. Their values are compared at the precision
   each was written, so 480 and 481 disagree, while 79.6 and 0.796 (as a fraction) agree.
 - **The badge:**
+  - ➖ not checked: strict mode is off, so Codex answered alone. If Codex fails, the
+    bridge's harness answers instead;
   - ✅ the two agree;
   - ⚠️ they disagree, and both values are shown;
   - ◻️ unverified: the check didn't finish within `CHECK_GRACE` s of Codex or reached no
