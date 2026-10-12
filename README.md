@@ -53,6 +53,9 @@ reliably on the server, because the user base's Windows machines vary too much.
     in a natural voice (Kokoro). Both run on the CPU.
   - A personal todo list by voice or text ("add…", "I already did 1 and 2", "remind me at 6"),
     with a morning list and reminders.
+  - Google Drive folders shared with the bot's account are copied into the user's files,
+    subfolders included (`/drive`, `/files`).
+  - [narrative/2026-10-12-v1-features.md](narrative/2026-10-12-v1-features.md) describes these v1 features.
 - **Measurements** (`benchmarks/`) of how we develop our understanding of useful and trustable. 
 - **Proposals** for the correctness receipt and the audit trail that the "trustable" goals need.
 

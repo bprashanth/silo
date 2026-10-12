@@ -14,6 +14,7 @@ Env: SILO_DB (default ~/.local/share/idli-bridge/silo.db), TODO_DAILY (default 0
 import datetime
 import json
 import os
+import re
 import sqlite3
 import threading
 import time
@@ -70,6 +71,20 @@ def touch_user(user, chat):
 
 def numbered(rows):
     return "\n".join(f"{i}. {r['text']}" for i, r in enumerate(rows, 1)) or "(nothing open)"
+
+
+def _words(text):
+    return set(re.findall(r"\w+", text.lower())) - {"the", "a", "an", "to", "my", "me", "for", "of", "and", "with"}
+
+
+def same_todo(user, text):
+    """The open todo that says the same thing as text (same words, or one's words contain the other's)."""
+    w = _words(text)
+    for r in open_todos(user):
+        o = _words(r["text"])
+        if w and o and (w <= o or o <= w):
+            return r
+    return None
 
 
 def list_text(user, title="Your todos:"):
@@ -189,7 +204,8 @@ def handle(chat, user, text, model):
 
     out, show = [], False
     stamp = now().isoformat(timespec="seconds")
-    for name, a in calls:
+    # Adds first, so a reminder for something added in the same message isn't added twice.
+    for name, a in sorted(calls, key=lambda c: c[0] != "add_todos"):
         if name == "add_todos":
             items = [i.strip() for i in a.get("items") or [] if i and i.strip()]
             for i in items:
@@ -220,6 +236,11 @@ def handle(chat, user, text, model):
             q("INSERT INTO reminders(user, chat, due, what) VALUES(?,?,?,?)", str(user), chat,
               when.isoformat(timespec="minutes"), what)
             out.append(f"⏰ I'll remind you {say_when(when)}" + (f": {what}" if what else " with your todo list") + ".")
+            # A reminder about something is also a todo, unless the list already has it.
+            if what and not same_todo(user, what):
+                q("INSERT INTO todos(user, text, created) VALUES(?,?,?)", str(user), what, stamp)
+                out.append(f"➕ Added: {what}")
+                show = True
         elif name == "set_daily_time":
             try:
                 h, m = (int(x) for x in a["time"].split(":")[:2])
@@ -251,8 +272,13 @@ def due_messages():
                             + "\n\nTell me when you've done any, by voice or text (\"I did 1 and 3\")."))
     for r in q("SELECT * FROM reminders WHERE sent IS NULL AND due <= ?", t.isoformat(timespec="minutes")):
         q("UPDATE reminders SET sent=? WHERE id=?", t.isoformat(timespec="seconds"), r["id"])
-        out.append((r["chat"], f"⏰ Reminder: {r['what']}" if r["what"]
-                    else list_text(r["user"], "⏰ Reminder, your todos:")))
+        if r["what"]:
+            text = f"⏰ Reminder: {r['what']}"
+            if same_todo(r["user"], r["what"]):
+                text += "\n\nIt's on your todo list; tell me when it's done."
+        else:
+            text = list_text(r["user"], "⏰ Reminder, your todos:")
+        out.append((r["chat"], text))
     return out
 
 

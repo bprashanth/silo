@@ -19,6 +19,7 @@ Env (see docs/deployment.md):
   SYSTEM_PROMPT       override the system prompt
 """
 import base64
+import html
 import json
 import os
 import subprocess
@@ -342,6 +343,14 @@ def handle(msg):
     if text.strip().lower().startswith("/todos"):
         send(chat, todos.list_text(user.get("id")), aloud=True)
         return
+    if text.strip().lower().startswith("/drive"):
+        drive_help(chat)
+        return
+    if text.strip().lower().startswith("/files"):
+        arg = text.strip().split(maxsplit=1)
+        body, markup = files_view(chat, arg[1] if len(arg) > 1 else "")
+        tg("sendMessage", chat_id=chat, text=body, **({"reply_markup": markup} if markup else {}))
+        return
     if text.strip().lower().startswith("/how"):
         how(chat, "full" in text.lower())
         return
@@ -354,7 +363,7 @@ def handle(msg):
         return
     if text.strip().lower() == "/start":
         send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /model to switch, /reset to erase everything. "
+                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /model to switch, /reset to erase everything. "
                    "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
         return
     voice = msg.get("voice") or msg.get("audio")
@@ -521,6 +530,61 @@ def drive_copy(chat, user_id, file_id, token=None):
     send(chat, reply)
 
 
+def drive_help(chat):
+    """/drive: how to share a folder, then the email alone so it's easy to copy."""
+    email = drive.sa_email()
+    if not email:
+        send(chat, "📁 Paste a Google Drive link and I'll ask you to sign in with Google to copy it."
+             if drive.client() else "Google Drive isn't set up on this box yet.")
+        return
+    send(chat, "📁 To give me a Google Drive folder: in Drive, open the folder's Share dialog, add the "
+               "email below as a Viewer (you can untick \"Notify people\"), then paste the folder's link "
+               "here. I'll copy it, with every folder inside it, into your files (/files). "
+               "To take access away, remove the email in the same Share dialog.")
+    tg("sendMessage", chat_id=chat, text=f"<code>{html.escape(email)}</code>", parse_mode="HTML")
+
+
+def files_view(chat, rel):
+    """/files [folder]: what's in this chat's files, like ls. Folders get buttons to open them."""
+    root = os.path.realpath(harness.workdir(chat))
+    rel = rel.strip().strip("/")
+    path = os.path.realpath(os.path.join(root, rel))
+    if path != root and not path.startswith(root + os.sep):
+        return "That folder isn't in your files.", None
+    if not os.path.isdir(path):
+        return f"There's no folder called “{rel}” in your files. /files shows the top level.", None
+    rel = os.path.relpath(path, root) if path != root else ""
+    dirs, files = [], []
+    for e in sorted(os.scandir(path), key=lambda e: e.name.lower()):
+        if e.is_symlink():
+            continue
+        (dirs if e.is_dir() else files).append(e)
+    title = f"📂 {rel}/" if rel else "📂 Your files"
+    lines = [f"📁 {d.name}/" for d in dirs] + [f"📄 {f.name}  ({size_text(f.stat().st_size)})" for f in files]
+    if not lines:
+        lines = ["(empty)" if rel else "(nothing yet: send me a file, or a Google Drive link)"]
+    body = title + "\n" + "\n".join(lines)
+    if len(body) > 4000:
+        body = body[:3990] + "\n…"
+    buttons = []
+    for d in dirs:
+        target = f"{rel}/{d.name}" if rel else d.name
+        if len(f"files:{target}".encode()) <= 64:  # Telegram's limit on button data
+            buttons.append([{"text": f"📁 {d.name}", "callback_data": f"files:{target}"}])
+    if rel:
+        up = os.path.dirname(rel)
+        if len(f"files:{up}".encode()) <= 64:
+            buttons.append([{"text": "⬆️ Up", "callback_data": f"files:{up}"}])
+    return body, ({"inline_keyboard": buttons[:40]} if buttons else None)
+
+
+def size_text(n):
+    for unit in ("bytes", "KB", "MB", "GB"):
+        if n < 1000 or unit == "GB":
+            return f"{n:.0f} {unit}" if unit == "bytes" else f"{n:.1f} {unit}"
+        n /= 1000
+
+
 def erase(chat, user):
     """/reset: everything the box keeps for this chat and user. Voice notes are never written
     to disk (they're transcribed in memory), so their transcripts in history and the audit
@@ -548,6 +612,12 @@ def handle_callback(cb):
             result = "Cancelled; nothing was erased."
         tg("answerCallbackQuery", callback_query_id=cb["id"])
         tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=result)
+        return
+    if cb.get("data", "").startswith("files:"):
+        body, markup = files_view(chat, cb["data"].removeprefix("files:"))
+        tg("answerCallbackQuery", callback_query_id=cb["id"])
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body,
+           **({"reply_markup": markup} if markup else {}))
         return
     if cb.get("data") == "say":
         key = (chat, cb["message"]["message_id"])
@@ -586,6 +656,8 @@ def main():
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
     tg("setMyCommands", commands=[
         {"command": "todos", "description": "Your todo list"},
+        {"command": "files", "description": "Your files"},
+        {"command": "drive", "description": "Add a Google Drive folder"},
         {"command": "model", "description": "Switch model"},
         {"command": "how", "description": "How the last answer was made"},
         {"command": "reset", "description": "Erase everything"},
