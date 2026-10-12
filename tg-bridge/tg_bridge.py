@@ -110,6 +110,7 @@ def llm(chat, user):
 
 class typing:
     """Keep Telegram's "typing..." indicator alive while the model works."""
+    action = "typing"
 
     def __init__(self, chat):
         self.chat, self.stop = chat, threading.Event()
@@ -118,7 +119,7 @@ class typing:
         def tick():
             while not self.stop.is_set():
                 try:
-                    tg("sendChatAction", chat_id=self.chat, action="typing")
+                    tg("sendChatAction", chat_id=self.chat, action=self.action)
                 except Exception:
                     pass
                 self.stop.wait(4)
@@ -126,6 +127,11 @@ class typing:
 
     def __exit__(self, *a):
         self.stop.set()
+
+
+class recording(typing):
+    """The "recording voice..." indicator, while read-aloud audio is made."""
+    action = "record_voice"
 
 
 def model_name(key):
@@ -180,9 +186,18 @@ def how(chat, full):
         send(chat, audit_log.how(rec))
 
 
-# Voice out (spoken replies and the Read aloud button) is off until voice in is solid.
+# Voice out. Audio is made only when someone taps 🔊 Read aloud on a reply (READ_ALOUD=1, the
+# default). VOICE_REPLIES=1 would also speak every reply to a voice note unasked; it's off,
+# because doing that for every message backed the box up.
+READ_ALOUD = os.environ.get("READ_ALOUD", "1") == "1"
 VOICE_REPLIES = os.environ.get("VOICE_REPLIES", "0") == "1"
 spoken = {}  # (chat, message_id) -> when it was read aloud
+speaking = set()  # chats with a read-aloud being made; one at a time per chat
+# /voice choices: Kokoro voices. The Hindi ones read English with an Indian accent.
+VOICES = {"af_heart": "Heart (US, woman)", "af_bella": "Bella (US, woman)", "am_michael": "Michael (US, man)",
+          "bf_emma": "Emma (British, woman)", "bm_george": "George (British, man)",
+          "hf_alpha": "Alpha (Indian, woman)", "hm_omega": "Omega (Indian, man)"}
+chat_voice = {}  # chat -> Kokoro voice; default speech.VOICE
 # The log holds who/what kind/how long, not what was said, unless LOG_CONTENT=1 (debugging):
 # otherwise /reset couldn't erase it.
 LOG_CONTENT = os.environ.get("LOG_CONTENT", "0") == "1"
@@ -190,7 +205,7 @@ LOG_CONTENT = os.environ.get("LOG_CONTENT", "0") == "1"
 
 def shown(text):
     return text if LOG_CONTENT else f"({len(text or '')} chars)"
-READ_ALOUD = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
+READ_ALOUD_BUTTON = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
 # What a badge sounds like in a voice reply; the full badge stays in the text.
 SPOKEN_BADGE = {"✅": "This answer was checked independently.",
                 "⚠️": "Careful: an independent check got a different answer.",
@@ -201,7 +216,7 @@ def send(chat, text, aloud=False):
     """Send text in Telegram-sized pieces; aloud=True puts a Read aloud button on the last."""
     chunks = [text[i:i + 4000] for i in range(0, len(text), 4000)] or [""]  # Telegram limit is 4096
     for i, c in enumerate(chunks):
-        extra = {"reply_markup": READ_ALOUD} if aloud and VOICE_REPLIES and i == len(chunks) - 1 else {}
+        extra = {"reply_markup": READ_ALOUD_BUTTON} if aloud and READ_ALOUD and i == len(chunks) - 1 else {}
         tg("sendMessage", chat_id=chat, text=c, **extra)
 
 
@@ -214,7 +229,7 @@ def say(chat, text):
             note = SPOKEN_BADGE[mark]
         elif not line.startswith(("➖", "🎙️")):
             body.append(line.replace("/how", ""))
-    send_file(chat, speech.speak("\n".join(body) + ("\n\n" + note if note else "")), "reply.ogg",
+    send_file(chat, speech.speak("\n".join(body) + ("\n\n" + note if note else ""), chat_voice.get(chat)), "reply.ogg",
               method="sendVoice", field="voice", mime="audio/ogg")
 
 
@@ -343,6 +358,10 @@ def handle(msg):
     if text.strip().lower().startswith("/todos"):
         send(chat, todos.list_text(user.get("id")), aloud=True)
         return
+    if text.strip().lower().startswith("/voice"):
+        body, markup = voice_menu(chat)
+        tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
+        return
     if text.strip().lower().startswith("/drive"):
         drive_help(chat)
         return
@@ -363,7 +382,7 @@ def handle(msg):
         return
     if text.strip().lower() == "/start":
         send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /model to switch, /reset to erase everything. "
+                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /voice for the read-aloud voice, /model to switch, /reset to erase everything. "
                    "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
         return
     voice = msg.get("voice") or msg.get("audio")
@@ -530,6 +549,15 @@ def drive_copy(chat, user_id, file_id, token=None):
     send(chat, reply)
 
 
+def voice_menu(chat):
+    """/voice: pick the voice that 🔊 Read aloud uses; picking one plays a short sample."""
+    cur = chat_voice.get(chat, speech.VOICE)
+    body = ("🔊 Pick the voice for Read aloud. Tapping one plays a short sample.\n"
+            f"Now: {VOICES.get(cur, cur)}")
+    buttons = [[{"text": ("• " if k == cur else "") + name, "callback_data": f"voice:{k}"}] for k, name in VOICES.items()]
+    return body, {"inline_keyboard": buttons}
+
+
 def drive_help(chat):
     """/drive: how to share a folder, then the email alone so it's easy to copy."""
     email = drive.sa_email()
@@ -596,6 +624,7 @@ def erase(chat, user):
         audit_log.erase(chat)
         for k in [k for k in spoken if k[0] == chat]:
             del spoken[k]
+        chat_voice.pop(chat, None)
 
 
 def handle_callback(cb):
@@ -621,14 +650,47 @@ def handle_callback(cb):
         return
     if cb.get("data") == "say":
         key = (chat, cb["message"]["message_id"])
-        repeat = time.time() - spoken.get(key, 0) < 120  # a second tap while the first is on its way
-        tg("answerCallbackQuery", callback_query_id=cb["id"],
-           text="Already sent, it may take a moment to arrive." if repeat else "Reading it aloud…")
-        if not repeat:
-            spoken[key] = time.time()
-            t0 = time.time()
-            say(chat, cb["message"].get("text", ""))
-            print(f"read aloud {key[1]} in {time.time() - t0:.1f}s", flush=True)
+        if time.time() - spoken.get(key, 0) < 120:  # a second tap while the first is on its way
+            tg("answerCallbackQuery", callback_query_id=cb["id"], text="Already sent, it may take a moment to arrive.")
+            return
+        if chat in speaking:
+            tg("answerCallbackQuery", callback_query_id=cb["id"],
+               text="Still making the last one. Tap again once it arrives.")
+            return
+        speaking.add(chat)
+        spoken[key] = time.time()
+        tg("answerCallbackQuery", callback_query_id=cb["id"], text="Making the audio…")
+        t0 = time.time()
+        try:
+            with recording(chat):
+                say(chat, cb["message"].get("text", ""))
+            print(f"read aloud {key[1]} voice={chat_voice.get(chat, speech.VOICE)} in {time.time() - t0:.1f}s", flush=True)
+        except Exception as e:
+            spoken.pop(key, None)
+            print(f"read aloud failed: {e!r}", flush=True)
+            send(chat, "I couldn't make the audio for that one. Try again in a moment.")
+        finally:
+            speaking.discard(chat)
+        return
+    if cb.get("data", "").startswith("voice:"):
+        v = cb["data"].removeprefix("voice:")
+        if v not in VOICES:
+            tg("answerCallbackQuery", callback_query_id=cb["id"])
+            return
+        chat_voice[chat] = v
+        tg("answerCallbackQuery", callback_query_id=cb["id"], text=f"Voice: {VOICES[v]}")
+        body, markup = voice_menu(chat)
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        if chat not in speaking:
+            speaking.add(chat)
+            try:
+                with recording(chat):
+                    say(chat, f"Hi, this is {VOICES[v].split(' (')[0]}. Your todo list has 3 items, and the "
+                              "Gadchiroli programme spent ₹4,52,300 this quarter.")
+            except Exception as e:
+                print(f"voice sample failed: {e!r}", flush=True)
+            finally:
+                speaking.discard(chat)
         return
     key = cb.get("data", "").removeprefix("model:")
     result = set_model(chat, key)
@@ -658,6 +720,7 @@ def main():
         {"command": "todos", "description": "Your todo list"},
         {"command": "files", "description": "Your files"},
         {"command": "drive", "description": "Add a Google Drive folder"},
+        {"command": "voice", "description": "Read-aloud voice"},
         {"command": "model", "description": "Switch model"},
         {"command": "how", "description": "How the last answer was made"},
         {"command": "reset", "description": "Erase everything"},

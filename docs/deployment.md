@@ -73,7 +73,8 @@ All settings are environment variables. The two secrets can also live in files u
 | `MODELS_DIR` | `~/.local/share/idli-bridge/models` | speech weights: `kokoro/` and `whisper/` |
 | `WHISPER_MODEL` | `large-v3-turbo` | the speech-to-text model |
 | `LOG_CONTENT` | `0` | `1` writes message and reply text to `tg_bridge.log`, for debugging. Off, the log holds only who, what kind and how long, so `/reset` leaves nothing behind. |
-| `VOICE_REPLIES` | `0` | `1` turns on voice out: spoken replies to voice notes, and a 🔊 Read aloud button. Off while voice in is being settled. |
+| `READ_ALOUD` | `1` | puts a 🔊 Read aloud button on replies. Audio is made only when it's tapped, one at a time per chat. `/voice` picks the voice per chat. |
+| `VOICE_REPLIES` | `0` | `1` also speaks every reply to a voice note without a tap. Off: doing it for every message backed the box up. |
 | `TTS_VOICE` / `TTS_SPEED` | `af_heart` / `1.0` | the Kokoro voice used for read aloud, e.g. `bf_emma`, `am_michael`, `bm_george` |
 
 Names Whisper keeps mishearing (organisations, villages, people) go one per line in
