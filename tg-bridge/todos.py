@@ -195,8 +195,23 @@ Their open todos (number. text):
 Daily list time: {daily}. Pending reminders: {reminders}"""
 
 
-def call_model(model, messages):
-    body = {"model": model["model"], "messages": messages, "tools": TOOLS, "tool_choice": "required",
+TODO_TOOLS = {"add_todos", "complete_todos", "delete_todos", "edit_todo", "show_todos", "remind_at",
+              "set_daily_time", "cancel_reminders"}
+MAX_TURNS = 5
+
+
+def parse_calls(msg):
+    calls = []
+    for tc in msg.get("tool_calls") or []:
+        try:
+            calls.append((tc["function"]["name"], json.loads(tc["function"]["arguments"] or "{}")))
+        except json.JSONDecodeError:
+            pass
+    return calls
+
+
+def call_model(model, messages, tool_choice="required"):
+    body = {"model": model["model"], "messages": messages, "tools": TOOLS, "tool_choice": tool_choice,
             "reasoning_effort": "low"}
     req = urllib.request.Request(f"{model['base']}/chat/completions", json.dumps(body).encode(),
                                  {"Content-Type": "application/json", "Authorization": f"Bearer {model['key']}"})
@@ -239,12 +254,7 @@ def handle(chat, user, text, model, files=(), recent=()):
                            recent="\n".join(f"{'Them' if r == 'user' else 'You'}: {t[:300]}" for r, t in recent) or "(none)",
                            reminders=", ".join(f"{r['due'][:16]} {r['what'] or 'todo list'}" for r in pending) or "none")
     msg = call_model(model, [{"role": "system", "content": system}, {"role": "user", "content": text}])
-    calls = []
-    for tc in msg.get("tool_calls") or []:
-        try:
-            calls.append((tc["function"]["name"], json.loads(tc["function"]["arguments"] or "{}")))
-        except json.JSONDecodeError:
-            pass
+    calls = parse_calls(msg)
     if not calls or any(n == "not_about_todos" for n, _ in calls):
         return None
     if all(n in DIRECT or n == "small_talk" for n, _ in calls) and any(n in DIRECT for n, _ in calls):
@@ -257,10 +267,11 @@ def handle(chat, user, text, model, files=(), recent=()):
     def pick(nums):
         return [rows[n - 1] for n in dict.fromkeys(nums or []) if isinstance(n, int) and 1 <= n <= len(rows)]
 
-    out, show = [], False
     stamp = now().isoformat(timespec="seconds")
-    # Adds first, so a reminder for something added in the same message isn't added twice.
-    for name, a in sorted(calls, key=lambda c: c[0] != "add_todos"):
+
+    def run_call(name, a):
+        """Carry out one tool call; returns (reply lines, whether to show the list)."""
+        out, show = [], False
         if name == "add_todos":
             items = [i.strip() for i in a.get("items") or [] if i and i.strip()]
             for i in items:
@@ -286,7 +297,7 @@ def handle(chat, user, text, model, files=(), recent=()):
                 when = parse_when(a["date"], a["time"])
             except (KeyError, ValueError):
                 out.append("I couldn't work out the time for that reminder. Try \"remind me at 6 pm\".")
-                continue
+                return out, show
             what = (a.get("what") or "").strip()
             q("INSERT INTO reminders(user, chat, due, what) VALUES(?,?,?,?)", str(user), chat,
               when.isoformat(timespec="minutes"), what)
@@ -307,9 +318,38 @@ def handle(chat, user, text, model, files=(), recent=()):
         elif name == "cancel_reminders":
             q("UPDATE reminders SET sent='cancelled' WHERE user=? AND sent IS NULL", str(user))
             out.append("Cancelled your pending reminders.")
+        return out, show
+
+    # The model makes one tool call per turn (it's trained to see each result before the next
+    # step), so "scrap the list, add these three and remind me at 4" takes several turns: each
+    # call is carried out, its result and the new list go back, and it continues.
+    convo = [{"role": "system", "content": system}, {"role": "user", "content": text}]
+    out, show, done_calls = [], False, []
+    for turn in range(MAX_TURNS):
+        todo_calls = [(n, a) for n, a in calls if n in TODO_TOOLS]
+        if not todo_calls:
+            break
+        results = []
+        # Adds first, so a reminder for something added in the same turn isn't added twice.
+        for name, a in sorted(todo_calls, key=lambda c: c[0] != "add_todos"):
+            lines, sh = run_call(name, a)
+            out += lines
+            show = show or sh
+            done_calls.append((name, a))
+            results.append("\n".join(lines) or "done")
+        rows = open_todos(user)
+        if turn == MAX_TURNS - 1:
+            break
+        convo.append({"role": "assistant", "content": msg.get("content") or "", "tool_calls": msg["tool_calls"]})
+        for tc, res in zip(msg["tool_calls"], results + [""] * len(msg["tool_calls"])):
+            convo.append({"role": "tool", "tool_call_id": tc.get("id", ""),
+                          "content": f"{res}\nTheir open todos now:\n{numbered(rows)}\n"
+                                     "If the message asked for anything else, make the next call; otherwise reply 'done'."})
+        msg = call_model(model, convo, tool_choice="auto")
+        calls = parse_calls(msg)
     if show or not out:
         out.append("\n" + list_text(user))
-    return {"reply": "\n".join(out).strip(), "calls": [{"name": n, "args": a} for n, a in calls], "kind": "todo"}
+    return {"reply": "\n".join(out).strip(), "calls": [{"name": n, "args": a} for n, a in done_calls], "kind": "todo"}
 
 
 # ---- morning list and reminders ------------------------------------------------------------
