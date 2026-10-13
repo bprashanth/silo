@@ -474,17 +474,23 @@ def handle(msg):
     prefix = ""
     if text and drive_message(chat, user, text):
         return
+    status = Status(chat)
+    if text and not msg.get("document") and "photo" not in msg:
+        status.set(ESTIMATE["sorting"])
     if text and not msg.get("document") and "photo" not in msg:
         # Todos and reminders first: always the local model, never an external one.
         try:
             with typing(chat):
                 recent = [(m["role"], answer.as_text(m["content"])) for m in list(history[chat])[-4:]]
-                done = todos.handle(chat, user.get("id"), text, MODELS["idli"], harness.files(chat), recent)
+                strict = todos.strict(user.get("id"))
+                done = todos.handle(chat, user.get("id"), text, MODELS["idli"], harness.files(chat), recent,
+                                    on_sorted=lambda kind: kind in ("direct", "todo", "codex") and status.set(
+                                        ESTIMATE["strict" if kind == "codex" and strict else kind]))
         except Exception as e:
             print(f"todo error: {e!r}", flush=True)
             done = None
         if done and done["kind"] == "direct":
-            answer_direct(chat, user, text, done, voice, who)
+            answer_direct(chat, user, text, done, voice, who, status)
             return
         if done:
             audit_log.append(chat, {"type": "todo", "chat": chat, "user": {"id": user.get("id")},
@@ -493,20 +499,18 @@ def handle(msg):
             history[chat].append({"role": "user", "content": text})
             history[chat].append({"role": "assistant", "content": done["reply"]})
             print(f"-> {who} [{done['kind']}]: {shown(done['reply'])}", flush=True)
-            send(chat, prefix + done["reply"], aloud=not (voice and VOICE_REPLIES))
+            status.replace(prefix + done["reply"], aloud=not (voice and VOICE_REPLIES))
             if voice and VOICE_REPLIES:
                 say(chat, done["reply"], user.get("id"))
             return
     try:
         content = to_content(msg)
     except Unsupported as e:
-        send(chat, str(e))
+        status.replace(str(e))
         return
     kind = "photo" if "photo" in msg else (msg.get("document") or {}).get("file_name", "")
     print(f"<- {who}: {('[file] ' if 'document' in msg else '[photo] ') if kind else ''}{shown(msg.get('caption') or text)}", flush=True)
-    send(chat, "⏳ Working on it. Strict mode: the answer is computed and then checked independently, "
-               "which usually takes 30–90 seconds." if todos.strict(user.get("id"))
-               else "⏳ Working on it. This usually takes 20–60 seconds.")
+    status.set(ESTIMATE["strict" if todos.strict(user.get("id")) else "codex"])
     with locks[chat]:
         history[chat].append({"role": "user", "content": content})
         try:
@@ -515,9 +519,10 @@ def handle(msg):
         except Exception as e:
             print(f"LLM error: {e}", flush=True)
             history[chat].pop()
-            send(chat, str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
+            status.replace(str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
             return
         history[chat].append({"role": "assistant", "content": reply})
+    status.delete()  # the answer comes as a new message, so the phone notifies
     print(f"-> {who} [{chat_model[chat]}]: {shown(reply)} {badge.split(':')[0]}", flush=True)
     for name, data in files.items():
         try:
@@ -546,11 +551,54 @@ DIRECT_BADGE = {"general": "➖ From the model's general knowledge, not your fil
                 "silo": "➖ About Silo. /how shows how this was answered."}
 
 
-def answer_direct(chat, user, text, sorted_as, voice, who):
+ESTIMATE = {
+    "sorting": "⏳ One moment…",
+    "direct": "⏳ A quick answer from the model: about 1–10 s.",
+    "todo": "⏳ Updating your todos: about 5–30 s.",
+    "codex": "⏳ Working on it with your files: usually 20–60 s.",
+    "strict": "⏳ Working on it with your files, then checking it independently (strict mode): usually 30–90 s.",
+}
+
+
+class Status:
+    """One "⏳" message sent the moment a message arrives. Once the message is sorted it shows
+    how long the reply will take. A quick reply replaces it; a long one arrives as a new message
+    (so the phone notifies), and this one is deleted."""
+
+    def __init__(self, chat):
+        self.chat, self.id = chat, None
+
+    def set(self, text, **extra):
+        try:
+            if self.id is None:
+                self.id = tg("sendMessage", chat_id=self.chat, text=text, **extra)["result"]["message_id"]
+            else:
+                tg("editMessageText", chat_id=self.chat, message_id=self.id, text=text, **extra)
+            return True
+        except urllib.error.HTTPError:
+            return False  # "not modified", or the message is gone
+
+    def replace(self, text, aloud=False):
+        """Turn the status message into the reply (or send the reply, if it's too long to edit in)."""
+        extra = {"reply_markup": READ_ALOUD_BUTTON} if aloud and READ_ALOUD else {}
+        if self.id is None or len(text) > 4000 or not self.set(text, **extra):
+            self.delete()
+            send(self.chat, text, aloud=aloud)
+
+    def delete(self):
+        if self.id is not None:
+            try:
+                tg("deleteMessage", chat_id=self.chat, message_id=self.id)
+            except urllib.error.HTTPError:
+                pass
+            self.id = None
+
+
+def answer_direct(chat, user, text, sorted_as, voice, who, status=None):
     """A question that needs no files: the local model answers at once, with no reasoning,
     and the message grows as the words arrive (direct.py)."""
     topic, t0 = sorted_as["topic"], time.time()
-    state = {"id": None, "shown": "", "at": 0.0}
+    state = {"id": status.id if status else None, "shown": "", "at": 0.0}
 
     def show(so_far, final=False):
         body = so_far.strip()
@@ -573,7 +621,10 @@ def answer_direct(chat, user, text, sorted_as, voice, who):
         except Exception as e:
             print(f"direct error: {e!r}", flush=True)
             history[chat].pop()
-            send(chat, "Sorry, the model failed to respond. Try again.")
+            if status and not state["shown"]:
+                status.replace("Sorry, the model failed to respond. Try again.")
+            else:
+                send(chat, "Sorry, the model failed to respond. Try again.")
             return
         history[chat].append({"role": "assistant", "content": reply})
     badge = DIRECT_BADGE[topic]

@@ -242,9 +242,10 @@ def say_when(when):
 DIRECT = {"general_question": "general", "about_silo": "silo"}
 
 
-def handle(chat, user, text, model, files=(), recent=()):
+def handle(chat, user, text, model, files=(), recent=(), on_sorted=lambda kind: None):
     """Todo operations for this message, or None if it isn't about todos.
-    Returns {"reply": str, "calls": [...]} for the audit record."""
+    Returns {"reply": str, "calls": [...]} for the audit record. on_sorted(kind) is called as
+    soon as the first model call has sorted the message: "codex", "direct", "chat" or "todo"."""
     u = touch_user(user, chat)
     rows = open_todos(user)
     pending = q("SELECT * FROM reminders WHERE user=? AND sent IS NULL ORDER BY due", str(user))
@@ -256,13 +257,18 @@ def handle(chat, user, text, model, files=(), recent=()):
     msg = call_model(model, [{"role": "system", "content": system}, {"role": "user", "content": text}])
     calls = parse_calls(msg)
     if not calls or any(n == "not_about_todos" for n, _ in calls):
+        on_sorted("codex")
         return None
     if all(n in DIRECT or n == "small_talk" for n, _ in calls) and any(n in DIRECT for n, _ in calls):
+        on_sorted("direct")
         topic = "silo" if any(n == "about_silo" for n, _ in calls) else "general"
         return {"kind": "direct", "topic": topic, "calls": [{"name": n, "args": a} for n, a in calls]}
     chat_reply = next((a.get("reply") for n, a in calls if n == "small_talk" and a.get("reply")), None)
     if chat_reply and all(n == "small_talk" for n, _ in calls):
+        on_sorted("chat")
         return {"reply": chat_reply.strip(), "calls": [{"name": n, "args": a} for n, a in calls], "kind": "chat"}
+
+    on_sorted("todo")
 
     def pick(nums):
         return [rows[n - 1] for n in dict.fromkeys(nums or []) if isinstance(n, int) and 1 <= n <= len(rows)]
