@@ -23,7 +23,8 @@ import urllib.request
 
 IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30), "IST")
 DB = os.path.expanduser(os.environ.get("SILO_DB", "~/.local/share/idli-bridge/silo.db"))
-DAILY = os.environ.get("TODO_DAILY", "09:00")
+DAILY = os.environ.get("TODO_DAILY", "09:00")  # the morning list
+EVENING = os.environ.get("TODO_EVENING", "17:00")  # the evening check-in
 LANGUAGE = os.environ.get("READ_ALOUD_LANGUAGE", "hi")  # default for /language: Hindi
 _lock = threading.Lock()
 
@@ -44,6 +45,9 @@ def db():
     cols = [r[1] for r in c.execute("PRAGMA table_info(users)")]
     if "strict" not in cols:
         c.execute("ALTER TABLE users ADD COLUMN strict INTEGER DEFAULT 0")  # /strict, off by default
+    if "evening" not in cols:
+        c.execute(f"ALTER TABLE users ADD COLUMN evening TEXT DEFAULT '{EVENING}'")
+        c.execute("ALTER TABLE users ADD COLUMN last_evening TEXT")
     if "language" not in cols:
         c.execute(f"ALTER TABLE users ADD COLUMN language TEXT DEFAULT '{LANGUAGE}'")  # /language
     c.commit()
@@ -70,11 +74,13 @@ def open_todos(user):
 
 
 def touch_user(user, chat):
-    # A new user's first morning list is tomorrow's if today's time has already passed.
+    # A new user's first morning list (or evening check-in) waits for tomorrow if today's time
+    # has already passed.
     t = now()
-    first = t.date().isoformat() if t.strftime("%H:%M") >= DAILY else None
-    q("INSERT INTO users(user, chat, daily, last_daily) VALUES(?,?,?,?) "
-      "ON CONFLICT(user) DO UPDATE SET chat=excluded.chat", str(user), chat, DAILY, first)
+    today, hm = t.date().isoformat(), t.strftime("%H:%M")
+    q("INSERT INTO users(user, chat, daily, last_daily, evening, last_evening) VALUES(?,?,?,?,?,?) "
+      "ON CONFLICT(user) DO UPDATE SET chat=excluded.chat", str(user), chat, DAILY,
+      today if hm >= DAILY else None, EVENING, today if hm >= EVENING else None)
     return q("SELECT * FROM users WHERE user=?", str(user))[0]
 
 
@@ -155,8 +161,10 @@ TOOLS = [
         "time": {"type": "string", "description": "HH:MM, 24-hour"},
         "what": {"type": "string", "description": "what to remind about; empty means their todo list"}},
        ["date", "time"]),
-    fn("set_daily_time", "Change when the daily todo list is sent each morning (IST).",
-       {"time": {"type": "string", "description": "HH:MM, 24-hour"}}, ["time"]),
+    fn("set_daily_time", "Change when the daily todo list is sent: the morning list (default 09:00) "
+       "or the evening check-in (default 17:00), IST.",
+       {"time": {"type": "string", "description": "HH:MM, 24-hour"},
+        "which": {"type": "string", "enum": ["morning", "evening"]}}, ["time"]),
     fn("cancel_reminders", "Cancel all pending one-off reminders."),
     fn("small_talk", "Greetings, thanks, acknowledgements or chit-chat that need no data, files or "
        "facts: reply briefly and warmly yourself.", {"reply": {"type": "string"}}, ["reply"]),
@@ -192,7 +200,8 @@ Now: {now} (IST, Asia/Kolkata). Times are IST. A bare hour without am/pm: 1-7 me
 Their open todos (number. text):
 {todos}
 
-Daily list time: {daily}. Pending reminders: {reminders}"""
+Morning list: {daily}. Evening check-in: {evening}. These come every day by themselves; a
+reminder ("remind me at 4 to …") is extra, on top of them. Pending reminders: {reminders}"""
 
 
 TODO_TOOLS = {"add_todos", "complete_todos", "delete_todos", "edit_todo", "show_todos", "remind_at",
@@ -251,6 +260,7 @@ def handle(chat, user, text, model, files=(), recent=(), on_sorted=lambda kind: 
     pending = q("SELECT * FROM reminders WHERE user=? AND sent IS NULL ORDER BY due", str(user))
     files = list(files)
     system = SYSTEM.format(now=now().strftime("%A %d %B %Y, %H:%M"), todos=numbered(rows), daily=u["daily"],
+                           evening=u["evening"] or EVENING,
                            files=(", ".join(files[:30]) + (f" and {len(files) - 30} more" if len(files) > 30 else "")) or "none",
                            recent="\n".join(f"{'Them' if r == 'user' else 'You'}: {t[:300]}" for r, t in recent) or "(none)",
                            reminders=", ".join(f"{r['due'][:16]} {r['what'] or 'todo list'}" for r in pending) or "none")
@@ -317,8 +327,12 @@ def handle(chat, user, text, model, files=(), recent=(), on_sorted=lambda kind: 
             try:
                 h, m = (int(x) for x in a["time"].split(":")[:2])
                 t = f"{h:02d}:{m:02d}"
-                q("UPDATE users SET daily=? WHERE user=?", t, str(user))
-                out.append(f"🌅 I'll send your todo list every day at {t} IST.")
+                if a.get("which") == "evening":
+                    q("UPDATE users SET evening=? WHERE user=?", t, str(user))
+                    out.append(f"🌇 I'll send your evening check-in every day at {t} IST.")
+                else:
+                    q("UPDATE users SET daily=? WHERE user=?", t, str(user))
+                    out.append(f"🌅 I'll send your morning todo list every day at {t} IST.")
             except (KeyError, ValueError):
                 out.append("I couldn't work out that time.")
         elif name == "cancel_reminders":
@@ -364,13 +378,26 @@ def due_messages():
     """[(chat, text)] to send now: daily lists and one-off reminders. Marks them sent."""
     t = now()
     out = []
+    today, hm = t.date().isoformat(), t.strftime("%H:%M")
     for u in q("SELECT * FROM users"):
-        today = t.date().isoformat()
-        if u["last_daily"] != today and t.strftime("%H:%M") >= (u["daily"] or DAILY):
+        morning, evening = u["daily"] or DAILY, u["evening"] or EVENING
+        if u["last_daily"] != today and hm >= morning:
             q("UPDATE users SET last_daily=? WHERE user=?", today, u["user"])
-            if open_todos(u["user"]):
+            # Open todos carry over from day to day until they're done or removed. If the box
+            # was down all day, the evening check-in covers it; don't send both at once.
+            if open_todos(u["user"]) and hm < evening:
                 out.append((u["chat"], list_text(u["user"], "☀️ Good morning! Your todos for today:")
                             + "\n\nTell me when you've done any, by voice or text (\"I did 1 and 3\")."))
+        if u["last_evening"] != today and hm >= evening:
+            q("UPDATE users SET last_evening=? WHERE user=?", today, u["user"])
+            done = q("SELECT text FROM todos WHERE user=? AND done >= ?", u["user"], today)
+            if open_todos(u["user"]):
+                head = "🌇 Evening check-in."
+                if done:
+                    head += f" Done today: {len(done)} ({', '.join(r['text'] for r in done[:5])}" + \
+                            (", …" if len(done) > 5 else "") + ")."
+                out.append((u["chat"], list_text(u["user"], head + "\nStill open, carried over to tomorrow:")
+                            + "\n\nAnything done? Tell me (\"I did 2\"), or drop what's no longer needed."))
     for r in q("SELECT * FROM reminders WHERE sent IS NULL AND due <= ?", t.isoformat(timespec="minutes")):
         q("UPDATE reminders SET sent=? WHERE id=?", t.isoformat(timespec="seconds"), r["id"])
         if r["what"]:

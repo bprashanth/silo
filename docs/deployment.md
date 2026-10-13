@@ -70,6 +70,7 @@ All settings are environment variables. The two secrets can also live in files u
 | `AUDIT_ROOT` | `~/.local/share/idli-bridge/audit` | audit records, `<chat>/<date>.jsonl` |
 | `SILO_DB` | `~/.local/share/idli-bridge/silo.db` | todos, reminders and each user's morning-list time (SQLite) |
 | `TODO_DAILY` | `09:00` | default time (IST) for the morning todo list |
+| `TODO_EVENING` | `17:00` | default time (IST) for the evening check-in: what was done today, and the open todos carried over to tomorrow |
 | `MODELS_DIR` | `~/.local/share/idli-bridge/models` | speech weights: `kokoro/` and `whisper/` |
 | `WHISPER_MODEL` | `large-v3-turbo` | the speech-to-text model |
 | `LOG_CONTENT` | `0` | `1` writes message and reply text to `tg_bridge.log`, for debugging. Off, the log holds only who, what kind and how long, so `/reset` leaves nothing behind. |

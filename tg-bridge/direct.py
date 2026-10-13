@@ -31,8 +31,9 @@ SILO_HELP = """How Silo works, for questions about using it:
   tap it to hear the reply. /language picks the language it speaks in (Hindi by default: the
   reply is translated on the box first). /voice picks the voice.
 - Todos: say or type "add … to my todos", "what are my todos", "I did 1 and 3". "Remind me at 6"
-  sends a message at 6 pm IST; a reminder is also added to the todo list. A todo list comes
-  every morning at 9.
+  sends a message at 6 pm IST; a reminder is also added to the todo list. Open todos carry over
+  from day to day: the list comes every morning at 9, and an evening check-in at 5 shows
+  what's done and what's still open. Specific reminders come on top of those.
 - /strict turns on checking: every answer is worked out a second time, independently, and a
   badge says whether they agree (✅ agree, ⚠️ differ, ◻️ couldn't check). It's off by default (➖).
 - /how shows how the last answer was made: the files, every step, the model.
