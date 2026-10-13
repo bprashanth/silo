@@ -149,7 +149,11 @@ def how(rec, full=False):
            f"Code: silo {v.get('silo')}" + (f", Codex {v['codex']}" if v.get("codex") else ""), ""]
     out += _run_summary("Answer", rec.get("primary"), full)
     out.append("")
-    if rec.get("checker_status") == "off":
+    if rec.get("checker_status") == "direct":
+        out.append("Independent check: none. The first-pass sort judged this a question that needs "
+                   "no files, so the model answered it directly: " +
+                   ", ".join(c["name"] for c in rec.get("sorted_as") or []) + ".")
+    elif rec.get("checker_status") == "off":
         out.append("Independent check: off (strict mode is off; /strict turns it on)")
     else:
         out += _run_summary("Independent check", rec.get("checker"), full)

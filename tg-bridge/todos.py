@@ -31,6 +31,7 @@ _lock = threading.Lock()
 def db():
     os.makedirs(os.path.dirname(DB), exist_ok=True)
     c = sqlite3.connect(DB, check_same_thread=False)
+    os.chmod(DB, 0o600)  # todos and conversation history: only the bot's user reads them
     c.row_factory = sqlite3.Row
     c.executescript("""
     CREATE TABLE IF NOT EXISTS todos (id INTEGER PRIMARY KEY, user TEXT, text TEXT,
@@ -38,6 +39,7 @@ def db():
     CREATE TABLE IF NOT EXISTS users (user TEXT PRIMARY KEY, chat INTEGER, daily TEXT, last_daily TEXT);
     CREATE TABLE IF NOT EXISTS reminders (id INTEGER PRIMARY KEY, user TEXT, chat INTEGER,
         due TEXT, what TEXT, sent TEXT);
+    CREATE TABLE IF NOT EXISTS history (seq INTEGER PRIMARY KEY, chat TEXT, role TEXT, content TEXT);
     """)
     cols = [r[1] for r in c.execute("PRAGMA table_info(users)")]
     if "strict" not in cols:
@@ -158,15 +160,30 @@ TOOLS = [
     fn("cancel_reminders", "Cancel all pending one-off reminders."),
     fn("small_talk", "Greetings, thanks, acknowledgements or chit-chat that need no data, files or "
        "facts: reply briefly and warmly yourself.", {"reply": {"type": "string"}}, ["reply"]),
-    fn("not_about_todos", "Anything else: a question, a request about files or data, a task, "
-       "anything that needs facts or work."),
+    fn("general_question", "A question that needs NONE of their files, data or calculations and "
+       "isn't a follow-up to a question about them: general knowledge, advice, explanations, "
+       "writing or translation help. If it could possibly be about their files or data, or you're "
+       "unsure, call not_about_todos instead."),
+    fn("about_silo", "A question about how to use this assistant itself: its buttons and commands, "
+       "read aloud, voice notes, language, strict mode, files, Google Drive, todos, reminders, privacy."),
+    fn("not_about_todos", "Anything else, and whenever in doubt: a question or request about their "
+       "files or data, a follow-up to one, a calculation, a chart, a task."),
 ]
 
 SYSTEM = """You manage a personal todo list and reminders for someone at an Indian non-profit.
 Their message may be a transcribed voice note, so expect small transcription slips in names.
 Call the tools that carry out what they ask; several calls are fine ("add X and remind me at 6").
-If it is only small talk (hi, thanks, ok), call small_talk. Otherwise, if it is not about their
-todos or reminders, call not_about_todos and nothing else.
+If it is only small talk (hi, thanks, ok), call small_talk. A question about how to use this
+assistant: about_silo. A question that clearly needs none of their files or data:
+general_question. Anything else that is not about their todos or reminders, including anything
+you're unsure about: not_about_todos, and nothing else.
+
+If the question touches a topic that appears in their file names or in the recent messages
+about their files, it may be about their files: call not_about_todos.
+
+Their files: {files}
+The last messages, for context (a follow-up to a question about their files is about their files):
+{recent}
 
 Now: {now} (IST, Asia/Kolkata). Times are IST. A bare hour without am/pm: 1-7 means pm
 (6 -> 18:00), 8-11 means am, 12 means noon. If that time has already passed today, use tomorrow.
@@ -207,13 +224,19 @@ def say_when(when):
     return f"{label} at {when.strftime('%I:%M %p').lstrip('0').lower()} IST"
 
 
-def handle(chat, user, text, model):
+DIRECT = {"general_question": "general", "about_silo": "silo"}
+
+
+def handle(chat, user, text, model, files=(), recent=()):
     """Todo operations for this message, or None if it isn't about todos.
     Returns {"reply": str, "calls": [...]} for the audit record."""
     u = touch_user(user, chat)
     rows = open_todos(user)
     pending = q("SELECT * FROM reminders WHERE user=? AND sent IS NULL ORDER BY due", str(user))
+    files = list(files)
     system = SYSTEM.format(now=now().strftime("%A %d %B %Y, %H:%M"), todos=numbered(rows), daily=u["daily"],
+                           files=(", ".join(files[:30]) + (f" and {len(files) - 30} more" if len(files) > 30 else "")) or "none",
+                           recent="\n".join(f"{'Them' if r == 'user' else 'You'}: {t[:300]}" for r, t in recent) or "(none)",
                            reminders=", ".join(f"{r['due'][:16]} {r['what'] or 'todo list'}" for r in pending) or "none")
     msg = call_model(model, [{"role": "system", "content": system}, {"role": "user", "content": text}])
     calls = []
@@ -224,6 +247,9 @@ def handle(chat, user, text, model):
             pass
     if not calls or any(n == "not_about_todos" for n, _ in calls):
         return None
+    if all(n in DIRECT or n == "small_talk" for n, _ in calls) and any(n in DIRECT for n, _ in calls):
+        topic = "silo" if any(n == "about_silo" for n, _ in calls) else "general"
+        return {"kind": "direct", "topic": topic, "calls": [{"name": n, "args": a} for n, a in calls]}
     chat_reply = next((a.get("reply") for n, a in calls if n == "small_talk" and a.get("reply")), None)
     if chat_reply and all(n == "small_talk" for n, _ in calls):
         return {"reply": chat_reply.strip(), "calls": [{"name": n, "args": a} for n, a in calls], "kind": "chat"}

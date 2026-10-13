@@ -215,6 +215,16 @@ One-time setup in [Google Cloud Console](https://console.cloud.google.com/):
 
 ## What runs where
 
+- **Every text or voice message** first goes to one quick call to the local model. It sorts the
+  message as a todo, small talk, a question about Silo, a general question that needs no
+  files, or anything else, which goes to Codex. When it's unsure, it picks Codex.
+  - General questions and questions about Silo are answered by the local model directly
+    (`tg-bridge/direct.py`). There are no tools, no files and no reasoning, and the message
+    grows in Telegram as the words arrive.
+  - Muse's template has no "reasoning off" setting. So the prompt is rendered with
+    llama.cpp's `/apply-template`, and the reply starts at the final-answer channel.
+- **The conversation** (the last 20 messages per chat) is kept in `$SILO_DB`, mode 600, so a
+  restart doesn't lose it. `/reset` deletes it.
 - **Uploads** go to `$WORK_ROOT/<chat id>/` on the host. `/reset` deletes them.
   - The model sees the full text of PDFs, `.txt`, `.md` and `.csv` files, up to about 100k
     characters.

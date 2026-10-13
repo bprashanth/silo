@@ -34,6 +34,7 @@ from collections import defaultdict, deque
 import answer
 import audit_log
 import charts
+import direct
 import drive
 import harness
 import speech
@@ -82,7 +83,40 @@ SYSTEM = os.environ.get(
 MAX_DOC_CHARS = 100_000  # ~25k tokens; Glimmer has 131k context
 FILE_URL = f"https://api.telegram.org/file/bot{TG_TOKEN}"
 
-history = defaultdict(lambda: deque(maxlen=20))
+class Turns(deque):
+    """One chat's last 20 messages, kept in the database (todos.DB) so a restart doesn't lose
+    the conversation. /reset clears it (Turns.clear, then todos.erase VACUUMs the file)."""
+
+    def __init__(self, chat):
+        super().__init__(maxlen=20)
+        self.chat = str(chat)
+        for r in todos.q("SELECT role, content FROM history WHERE chat=? ORDER BY seq", self.chat)[-20:]:
+            super().append({"role": r["role"], "content": json.loads(r["content"])})
+
+    def append(self, m):
+        super().append(m)
+        todos.q("INSERT INTO history(chat, role, content) VALUES(?,?,?)", self.chat, m["role"],
+                json.dumps(m["content"], ensure_ascii=False))
+        todos.q("DELETE FROM history WHERE chat=? AND seq NOT IN "
+                "(SELECT seq FROM history WHERE chat=? ORDER BY seq DESC LIMIT 20)", self.chat, self.chat)
+
+    def pop(self):
+        m = super().pop()
+        todos.q("DELETE FROM history WHERE seq=(SELECT MAX(seq) FROM history WHERE chat=?)", self.chat)
+        return m
+
+    def clear(self):
+        super().clear()
+        todos.q("DELETE FROM history WHERE chat=?", self.chat)
+
+
+class History(dict):
+    def __missing__(self, chat):
+        self[chat] = Turns(chat)
+        return self[chat]
+
+
+history = History()
 locks = defaultdict(threading.Lock)
 
 
@@ -444,10 +478,14 @@ def handle(msg):
         # Todos and reminders first: always the local model, never an external one.
         try:
             with typing(chat):
-                done = todos.handle(chat, user.get("id"), text, MODELS["idli"])
+                recent = [(m["role"], answer.as_text(m["content"])) for m in list(history[chat])[-4:]]
+                done = todos.handle(chat, user.get("id"), text, MODELS["idli"], harness.files(chat), recent)
         except Exception as e:
             print(f"todo error: {e!r}", flush=True)
             done = None
+        if done and done["kind"] == "direct":
+            answer_direct(chat, user, text, done, voice, who)
+            return
         if done:
             audit_log.append(chat, {"type": "todo", "chat": chat, "user": {"id": user.get("id")},
                                     "message": text, "voice": bool(voice), "calls": done["calls"],
@@ -455,7 +493,7 @@ def handle(msg):
             history[chat].append({"role": "user", "content": text})
             history[chat].append({"role": "assistant", "content": done["reply"]})
             print(f"-> {who} [{done['kind']}]: {shown(done['reply'])}", flush=True)
-            send(chat, prefix + done["reply"], aloud=not voice)
+            send(chat, prefix + done["reply"], aloud=not (voice and VOICE_REPLIES))
             if voice and VOICE_REPLIES:
                 say(chat, done["reply"], user.get("id"))
             return
@@ -499,7 +537,63 @@ def handle(msg):
         print(f"chart errors: {errors}", flush=True)
         body += "\n\n(Couldn't draw a chart: " + "; ".join(errors) + ")"
     full = (body + "\n\n" if body else "") + badge + "  /how"
-    send(chat, prefix + full, aloud=not voice)
+    send(chat, prefix + full, aloud=not (voice and VOICE_REPLIES))
+    if voice and VOICE_REPLIES:
+        say(chat, full, user.get("id"))
+
+
+DIRECT_BADGE = {"general": "➖ From the model's general knowledge, not your files. Not checked.",
+                "silo": "➖ About Silo. /how shows how this was answered."}
+
+
+def answer_direct(chat, user, text, sorted_as, voice, who):
+    """A question that needs no files: the local model answers at once, with no reasoning,
+    and the message grows as the words arrive (direct.py)."""
+    topic, t0 = sorted_as["topic"], time.time()
+    state = {"id": None, "shown": "", "at": 0.0}
+
+    def show(so_far, final=False):
+        body = so_far.strip()
+        if not body or (not final and (time.time() - state["at"] < 1.0 or body == state["shown"])):
+            return  # Telegram allows about one edit a second per chat
+        state["at"], state["shown"] = time.time(), body
+        if state["id"] is None:
+            state["id"] = tg("sendMessage", chat_id=chat, text=body + " …")["result"]["message_id"]
+        else:
+            extra = {"reply_markup": READ_ALOUD_BUTTON} if final and READ_ALOUD and not (voice and VOICE_REPLIES) else {}
+            try:
+                tg("editMessageText", chat_id=chat, message_id=state["id"], text=body if final else body + " …", **extra)
+            except urllib.error.HTTPError:
+                pass  # "not modified"
+
+    with locks[chat]:
+        history[chat].append({"role": "user", "content": text})
+        try:
+            reply = direct.stream(MODELS["idli"], list(history[chat]), topic, show)
+        except Exception as e:
+            print(f"direct error: {e!r}", flush=True)
+            history[chat].pop()
+            send(chat, "Sorry, the model failed to respond. Try again.")
+            return
+        history[chat].append({"role": "assistant", "content": reply})
+    badge = DIRECT_BADGE[topic]
+    full = reply[:3900] + "\n\n" + badge
+    if state["id"] is None:
+        send(chat, full, aloud=not (voice and VOICE_REPLIES))
+    else:
+        state["at"] = 0
+        show(full, final=True)
+    m = MODELS["idli"]
+    audit_log.append(chat, {
+        "type": "answer", "chat": chat, "user": {"id": user.get("id"), "username": user.get("username")},
+        "message": text, "files": [],
+        "model": {"key": "idli", "label": m["label"], "kind": m["kind"], "base": m["base"], "model": m["model"]},
+        "versions": {"silo": answer.SILO_VERSION},
+        "primary": {"engine": "Muse, answered directly (no files, no tools, no reasoning)",
+                    "seconds": round(time.time() - t0, 1), "actions": [], "answer": None, "text": reply},
+        "checker": None, "checker_status": "direct", "sorted_as": sorted_as["calls"],
+        "badge": {"kind": "none", "text": badge}, "sent_files": []})
+    print(f"-> {who} [direct {topic}]: {shown(reply)} in {time.time() - t0:.1f}s", flush=True)
     if voice and VOICE_REPLIES:
         say(chat, full, user.get("id"))
 
