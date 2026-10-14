@@ -58,7 +58,7 @@ All settings are environment variables. The two secrets can also live in files u
 | `IDLI_BASE_URL` | `http://127.0.0.1:8181/v1` | your model server's OpenAI base URL |
 | `IDLI_MODEL` | `muse-glimmer-30b` | the model name the server expects (llama.cpp: its `--alias`) |
 | `IDLI_KEY` | `none` | a bearer token, if your server checks one |
-| `TG_ALLOWED` | empty, meaning **anyone** | comma-separated Telegram usernames or numeric user ids allowed to use the bot |
+| `TG_ALLOWED` | empty | comma-separated Telegram usernames or numeric user ids allowed to use the bot, on top of `$SILO_CONFIG/allowed.txt`. With neither, **anyone** can use it. |
 | `OPENROUTER_API_KEY` | `api_key` in `$SILO_CONFIG/openrouter.json` | optional; adds external models to `/model`. Leave it unset to keep all data on the box. |
 | `WORK_ROOT` | `~/.local/share/idli-bridge/work` | where uploaded files are kept, one directory per chat |
 | `SYSTEM_PROMPT` | a short Telegram-assistant prompt | replaces the base system prompt (the checker's, and replies to external models) |
@@ -82,7 +82,12 @@ All settings are environment variables. The two secrets can also live in files u
 Names Whisper keeps mishearing (organisations, villages, people) go one per line in
 `$SILO_CONFIG/glossary.txt`. They, and the user's open todos, are given to Whisper as hints.
 
-**Always set `TG_ALLOWED`.** A Telegram bot can be found and messaged by anyone.
+**Always keep an allow list.** A Telegram bot can be found and messaged by anyone. Put
+one Telegram username or numeric user id per line in `$SILO_CONFIG/allowed.txt`
+(`#` starts a comment). The bot checks the file's modification time on every message and
+re-reads it when it has changed, so adding or removing someone takes effect on their next
+message, with no restart. An empty file allows nobody; only a missing file with no
+`TG_ALLOWED` lets anyone in. Phone numbers can't be used: Telegram never gives them to bots.
 Allowing usernames is easiest; numeric ids survive a username change. A denied user's id
 is printed in `tg_bridge.log` (`denied name(12345)`), which is an easy way to learn ids.
 
@@ -99,7 +104,8 @@ export IDLI_MODEL=<name from GET $IDLI_BASE_URL/models>
 ```sh
 cd tg-bridge
 export TELEGRAM_BOT_TOKEN=123456:ABC...        # or ~/.config/silo/telegram.json
-TG_ALLOWED=alice,bob,7196436554 ./start.sh
+printf 'alice\nbob\n7196436554\n' > ~/.config/silo/allowed.txt
+./start.sh
 ```
 
 `start.sh` does the following:
