@@ -11,6 +11,12 @@ rm -f tg_bridge.pid
 [[ ${1:-} == stop ]] && exit 0
 
 [[ -x .venv/bin/python ]] || { uv venv -p 3.12 .venv && uv pip install -p .venv -r requirements.txt; }
+kokoro=${MODELS_DIR:-$HOME/.local/share/idli-bridge/models}/kokoro
+for f in kokoro-v1.0.onnx voices-v1.0.bin; do
+  [[ -s $kokoro/$f ]] || { mkdir -p "$kokoro" && curl -sSLf -o "$kokoro/$f" \
+    "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/$f"; }
+done
+command -v ffmpeg >/dev/null || echo "warning: ffmpeg not found; voice notes and read aloud won't work" >&2
 docker image inspect idli-sandbox:1 >/dev/null 2>&1 || docker build -t idli-sandbox:1 sandbox
 base=${IDLI_BASE_URL:-http://127.0.0.1:8181/v1}
 curl -sf "$base/models" >/dev/null || echo "warning: no model server answering at $base" >&2

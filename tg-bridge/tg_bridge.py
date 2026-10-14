@@ -19,12 +19,14 @@ Env (see docs/deployment.md):
   SYSTEM_PROMPT       override the system prompt
 """
 import base64
+import html
 import json
 import os
 import subprocess
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.request
 import uuid
 from collections import defaultdict, deque
@@ -32,7 +34,11 @@ from collections import defaultdict, deque
 import answer
 import audit_log
 import charts
+import direct
+import drive
 import harness
+import speech
+import todos
 
 CFG = os.path.expanduser(os.environ.get("SILO_CONFIG", "~/.config/silo"))
 
@@ -77,7 +83,40 @@ SYSTEM = os.environ.get(
 MAX_DOC_CHARS = 100_000  # ~25k tokens; Glimmer has 131k context
 FILE_URL = f"https://api.telegram.org/file/bot{TG_TOKEN}"
 
-history = defaultdict(lambda: deque(maxlen=20))
+class Turns(deque):
+    """One chat's last 20 messages, kept in the database (todos.DB) so a restart doesn't lose
+    the conversation. /reset clears it (Turns.clear, then todos.erase VACUUMs the file)."""
+
+    def __init__(self, chat):
+        super().__init__(maxlen=20)
+        self.chat = str(chat)
+        for r in todos.q("SELECT role, content FROM history WHERE chat=? ORDER BY seq", self.chat)[-20:]:
+            super().append({"role": r["role"], "content": json.loads(r["content"])})
+
+    def append(self, m):
+        super().append(m)
+        todos.q("INSERT INTO history(chat, role, content) VALUES(?,?,?)", self.chat, m["role"],
+                json.dumps(m["content"], ensure_ascii=False))
+        todos.q("DELETE FROM history WHERE chat=? AND seq NOT IN "
+                "(SELECT seq FROM history WHERE chat=? ORDER BY seq DESC LIMIT 20)", self.chat, self.chat)
+
+    def pop(self):
+        m = super().pop()
+        todos.q("DELETE FROM history WHERE seq=(SELECT MAX(seq) FROM history WHERE chat=?)", self.chat)
+        return m
+
+    def clear(self):
+        super().clear()
+        todos.q("DELETE FROM history WHERE chat=?", self.chat)
+
+
+class History(dict):
+    def __missing__(self, chat):
+        self[chat] = Turns(chat)
+        return self[chat]
+
+
+history = History()
 locks = defaultdict(threading.Lock)
 
 
@@ -97,7 +136,8 @@ def llm(chat, user):
     """Answer the chat's latest message: io's Codex answers, the bridge's harness checks
     (answer.py). Returns (reply, badge, files to send back)."""
     key = chat_model[chat]
-    reply, badge, files = answer.respond(chat, user, list(history[chat]), SYSTEM, MODELS[key], key)
+    reply, badge, files = answer.respond(chat, user, list(history[chat]), SYSTEM, MODELS[key], key,
+                                         strict=todos.strict(user.get("id")))
     if not reply.strip():
         raise Unsupported("The model didn't produce an answer. Try a narrower question, or /how to see what it tried.")
     return reply, badge, files
@@ -105,6 +145,7 @@ def llm(chat, user):
 
 class typing:
     """Keep Telegram's "typing..." indicator alive while the model works."""
+    action = "typing"
 
     def __init__(self, chat):
         self.chat, self.stop = chat, threading.Event()
@@ -113,7 +154,7 @@ class typing:
         def tick():
             while not self.stop.is_set():
                 try:
-                    tg("sendChatAction", chat_id=self.chat, action="typing")
+                    tg("sendChatAction", chat_id=self.chat, action=self.action)
                 except Exception:
                     pass
                 self.stop.wait(4)
@@ -121,6 +162,11 @@ class typing:
 
     def __exit__(self, *a):
         self.stop.set()
+
+
+class recording(typing):
+    """The "recording voice..." indicator, while read-aloud audio is made."""
+    action = "record_voice"
 
 
 def model_name(key):
@@ -175,9 +221,76 @@ def how(chat, full):
         send(chat, audit_log.how(rec))
 
 
-def send(chat, text):
-    for i in range(0, len(text), 4000):  # Telegram limit is 4096
-        tg("sendMessage", chat_id=chat, text=text[i:i + 4000])
+# Voice out. Audio is made only when someone taps 🔊 Read aloud on a reply (READ_ALOUD=1, the
+# default). VOICE_REPLIES=1 would also speak every reply to a voice note unasked; it's off,
+# because doing that for every message backed the box up.
+READ_ALOUD = os.environ.get("READ_ALOUD", "1") == "1"
+VOICE_REPLIES = os.environ.get("VOICE_REPLIES", "0") == "1"
+spoken = {}  # (chat, message_id) -> when it was read aloud
+speaking = set()  # chats with a read-aloud being made; one at a time per chat
+# /voice (a hidden command) picks from these Kokoro voices. The default is Silo: Kokoro's
+# Hindi voice hf_alpha reading English, which gives an Indian accent.
+VOICES = {"hf_alpha": "Silo (Indian, woman)", "af_heart": "Heart (US, woman)", "af_bella": "Bella (US, woman)", "am_michael": "Michael (US, man)",
+          "bf_emma": "Emma (British, woman)", "bm_george": "George (British, man)",
+          "hm_omega": "Omega (Indian, man)"}
+chat_voice = {}  # chat -> Kokoro voice; default speech.VOICE
+# The log holds who/what kind/how long, not what was said, unless LOG_CONTENT=1 (debugging):
+# otherwise /reset couldn't erase it.
+LOG_CONTENT = os.environ.get("LOG_CONTENT", "0") == "1"
+
+
+def shown(text):
+    return text if LOG_CONTENT else f"({len(text or '')} chars)"
+READ_ALOUD_BUTTON = {"inline_keyboard": [[{"text": "🔊 Read aloud", "callback_data": "say"}]]}
+# What a badge sounds like in a voice reply; the full badge stays in the text.
+SPOKEN_BADGE = {"✅": "This answer was checked independently.",
+                "⚠️": "Careful: an independent check got a different answer.",
+                "◻️": "This answer isn't verified."}
+
+
+def send(chat, text, aloud=False):
+    """Send text in Telegram-sized pieces; aloud=True puts a Read aloud button on the last."""
+    chunks = [text[i:i + 4000] for i in range(0, len(text), 4000)] or [""]  # Telegram limit is 4096
+    for i, c in enumerate(chunks):
+        extra = {"reply_markup": READ_ALOUD_BUTTON} if aloud and READ_ALOUD and i == len(chunks) - 1 else {}
+        tg("sendMessage", chat_id=chat, text=c, **extra)
+
+
+LANGUAGES = {"hi": "हिंदी (Hindi)", "en": "English"}
+TRANSLATE = """Translate the user's text into natural spoken Hindi, as a person would say it aloud.
+Write everything in Devanagari script: transliterate English names and technical terms that
+Hindi speakers say in English (प्रोटोकॉल, फ़ोल्डर, वर्ड डॉक्युमेंट), and write numbers and money as
+Hindi words (लाख, करोड़, रुपये). Keep every number's value exactly. Output only the translation."""
+
+
+def to_hindi(text):
+    """Spoken English -> spoken Hindi, by the local model (never an external one: it's the reply)."""
+    m = MODELS["idli"]
+    r = post_json(f"{m['base']}/chat/completions", {
+        "model": m["model"], "temperature": 0, "reasoning_effort": "low", "max_tokens": 2000,
+        "messages": [{"role": "system", "content": TRANSLATE}, {"role": "user", "content": text}]},
+        {"Authorization": f"Bearer {m['key']}"}, timeout=180)
+    return r["choices"][0]["message"]["content"].strip()
+
+
+def say(chat, text, user_id=None):
+    """Read a reply aloud as a voice note, in the user's /language. The badge line becomes a
+    short spoken note. Hindi is translated from the English reply by the local model first."""
+    body, note = [], ""
+    for line in text.splitlines():
+        mark = next((b for b in SPOKEN_BADGE if line.startswith(b)), None)
+        if mark:
+            note = SPOKEN_BADGE[mark]
+        elif not line.startswith(("➖", "🎙️")):
+            body.append(line.replace("/how", ""))
+    spoken = speech.speakable("\n".join(body) + ("\n\n" + note if note else ""))
+    voice = chat_voice.get(chat, speech.VOICE)
+    if todos.language(user_id or chat) == "hi":
+        audio = speech.synth(to_hindi(spoken), voice if voice.startswith(("hf_", "hm_")) else "hf_alpha", "hi")
+    else:
+        audio = speech.synth(spoken, voice, "en-us")
+    send_file(chat, audio, "reply.ogg",
+              method="sendVoice", field="voice", mime="audio/ogg")
 
 
 def download(file_id):
@@ -248,7 +361,7 @@ def to_content(msg):
         name, mime = doc.get("file_name", "file"), doc.get("mime_type", "")
         return file_content(msg["chat"]["id"], name, mime, download(doc["file_id"]), caption)
     if not caption:
-        raise Unsupported("Sorry, I can read text messages, photos, and PDF, Excel, PNG/JPG, TXT and MD files.")
+        raise Unsupported("Sorry, I can read text and voice messages, photos, and PDF, Excel, PNG/JPG, TXT and MD files.")
     return caption
 
 
@@ -302,23 +415,102 @@ def handle(msg):
         else:
             model_menu(chat)
         return
+    if text.strip().lower().startswith("/todos"):
+        send(chat, todos.list_text(user.get("id")), aloud=True)
+        return
+    if text.strip().lower().startswith("/language"):
+        body, markup = language_menu(user.get("id"))
+        tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
+        return
+    if text.strip().lower().startswith("/strict"):
+        body, markup = strict_menu(user.get("id"))
+        tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
+        return
+    if text.strip().lower().startswith("/voice"):
+        body, markup = voice_menu(chat)
+        tg("sendMessage", chat_id=chat, text=body, reply_markup=markup)
+        return
+    if text.strip().lower().startswith("/drive"):
+        drive_help(chat)
+        return
+    if text.strip().lower().startswith("/files"):
+        arg = text.strip().split(maxsplit=1)
+        body, markup = files_view(chat, arg[1] if len(arg) > 1 else "")
+        tg("sendMessage", chat_id=chat, text=body, **({"reply_markup": markup} if markup else {}))
+        return
     if text.strip().lower().startswith("/how"):
         how(chat, "full" in text.lower())
         return
-    if text.strip().lower() in ("/reset", "/start"):
-        history[chat].clear()
-        harness.clear(chat)
-        send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
-                   f"You're on {model_name(chat_model[chat])}; /model to switch, /reset to start over. "
-                   "Every answer is checked independently and carries a badge; /how shows the steps behind it.")
+    if text.strip().lower() == "/reset":
+        tg("sendMessage", chat_id=chat, text=(
+            "This erases everything I keep about you on this box: the conversation, your files, "
+            "your todos and reminders, and the record of past answers and voice notes. It can't be undone."),
+           reply_markup={"inline_keyboard": [[{"text": "Erase everything", "callback_data": "reset:yes"},
+                                              {"text": "Cancel", "callback_data": "reset:no"}]]})
         return
+    if text.strip().lower() == "/start":
+        send(chat, "Hi! I'm Silo. Ask me anything, or send a PDF, Excel sheet, image, or text file. "
+                   f"You're on {model_name(chat_model[chat])}; /todos for your list, /files for your files, /drive to add a Google Drive folder, /strict to check every answer twice, /model to switch, /reset to erase everything. "
+                   "/how shows the steps behind an answer.")
+        return
+    voice = msg.get("voice") or msg.get("audio")
+    heard = ""
+    if voice:
+        try:
+            with typing(chat):
+                hints = [r["text"] for r in todos.open_todos(user.get("id"))]
+                heard = speech.transcribe(download(voice["file_id"]), hints)
+        except Exception as e:
+            print(f"transcribe error: {e!r}", flush=True)
+            send(chat, "Sorry, I couldn't make out that voice note. Try again, or type it.")
+            return
+        if not heard:
+            send(chat, "I couldn't hear any words in that voice note.")
+            return
+        print(f"<- {who}: [voice {voice.get('duration')}s] {shown(heard)}", flush=True)
+        msg = {**msg, "text": heard}
+        text = heard
+        send(chat, f"🎙️ “{heard}”")  # at once, so a mishearing shows before the answer arrives
+    prefix = ""
+    if text and drive_message(chat, user, text):
+        return
+    status = Status(chat)
+    if text and not msg.get("document") and "photo" not in msg:
+        status.set(ESTIMATE["sorting"])
+    if text and not msg.get("document") and "photo" not in msg:
+        # Todos and reminders first: always the local model, never an external one.
+        try:
+            with typing(chat):
+                recent = [(m["role"], answer.as_text(m["content"])) for m in list(history[chat])[-4:]]
+                strict = todos.strict(user.get("id"))
+                done = todos.handle(chat, user.get("id"), text, MODELS["idli"], harness.files(chat), recent,
+                                    on_sorted=lambda kind: kind in ("direct", "todo", "codex") and status.set(
+                                        ESTIMATE["strict" if kind == "codex" and strict else kind]))
+        except Exception as e:
+            print(f"todo error: {e!r}", flush=True)
+            done = None
+        if done and done["kind"] == "direct":
+            answer_direct(chat, user, text, done, voice, who, status)
+            return
+        if done:
+            audit_log.append(chat, {"type": "todo", "chat": chat, "user": {"id": user.get("id")},
+                                    "message": text, "voice": bool(voice), "calls": done["calls"],
+                                    "reply": done["reply"]})
+            history[chat].append({"role": "user", "content": text})
+            history[chat].append({"role": "assistant", "content": done["reply"]})
+            print(f"-> {who} [{done['kind']}]: {shown(done['reply'])}", flush=True)
+            status.replace(prefix + done["reply"], aloud=not (voice and VOICE_REPLIES))
+            if voice and VOICE_REPLIES:
+                say(chat, done["reply"], user.get("id"))
+            return
     try:
         content = to_content(msg)
     except Unsupported as e:
-        send(chat, str(e))
+        status.replace(str(e))
         return
     kind = "photo" if "photo" in msg else (msg.get("document") or {}).get("file_name", "")
-    print(f"<- {who}: {('[' + kind + '] ') if kind else ''}{msg.get('caption') or text}", flush=True)
+    print(f"<- {who}: {('[file] ' if 'document' in msg else '[photo] ') if kind else ''}{shown(msg.get('caption') or text)}", flush=True)
+    status.set(ESTIMATE["strict" if todos.strict(user.get("id")) else "codex"])
     with locks[chat]:
         history[chat].append({"role": "user", "content": content})
         try:
@@ -327,10 +519,11 @@ def handle(msg):
         except Exception as e:
             print(f"LLM error: {e}", flush=True)
             history[chat].pop()
-            send(chat, str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
+            status.replace(str(e) if isinstance(e, Unsupported) else "Sorry, the model failed to respond. Try again.")
             return
         history[chat].append({"role": "assistant", "content": reply})
-    print(f"-> {who} [{chat_model[chat]}]: {reply}\n   {badge}", flush=True)
+    status.delete()  # the answer comes as a new message, so the phone notifies
+    print(f"-> {who} [{chat_model[chat]}]: {shown(reply)} {badge.split(':')[0]}", flush=True)
     for name, data in files.items():
         try:
             if name.lower().endswith((".png", ".jpg", ".jpeg")):
@@ -348,12 +541,378 @@ def handle(msg):
     if errors:
         print(f"chart errors: {errors}", flush=True)
         body += "\n\n(Couldn't draw a chart: " + "; ".join(errors) + ")"
-    send(chat, (body + "\n\n" if body else "") + badge + "  /how")
+    full = (body + "\n\n" if body else "") + badge + "  /how"
+    send(chat, prefix + full, aloud=not (voice and VOICE_REPLIES))
+    if voice and VOICE_REPLIES:
+        say(chat, full, user.get("id"))
+
+
+DIRECT_BADGE = {"general": "➖ From the model's general knowledge, not your files. Not checked.",
+                "silo": "➖ About Silo. /how shows how this was answered."}
+
+
+ESTIMATE = {
+    "sorting": "⏳ One moment…",
+    "direct": "⏳ A quick answer from the model: about 1–10 s.",
+    "todo": "⏳ Updating your todos: about 5–30 s.",
+    "codex": "⏳ Working on it with your files: usually 20–60 s.",
+    "strict": "⏳ Working on it with your files, then checking it independently (strict mode): usually 30–90 s.",
+}
+
+
+class Status:
+    """One "⏳" message sent the moment a message arrives. Once the message is sorted it shows
+    how long the reply will take. A quick reply replaces it; a long one arrives as a new message
+    (so the phone notifies), and this one is deleted."""
+
+    def __init__(self, chat):
+        self.chat, self.id = chat, None
+
+    def set(self, text, **extra):
+        try:
+            if self.id is None:
+                self.id = tg("sendMessage", chat_id=self.chat, text=text, **extra)["result"]["message_id"]
+            else:
+                tg("editMessageText", chat_id=self.chat, message_id=self.id, text=text, **extra)
+            return True
+        except urllib.error.HTTPError:
+            return False  # "not modified", or the message is gone
+
+    def replace(self, text, aloud=False):
+        """Turn the status message into the reply (or send the reply, if it's too long to edit in)."""
+        extra = {"reply_markup": READ_ALOUD_BUTTON} if aloud and READ_ALOUD else {}
+        if self.id is None or len(text) > 4000 or not self.set(text, **extra):
+            self.delete()
+            send(self.chat, text, aloud=aloud)
+
+    def delete(self):
+        if self.id is not None:
+            try:
+                tg("deleteMessage", chat_id=self.chat, message_id=self.id)
+            except urllib.error.HTTPError:
+                pass
+            self.id = None
+
+
+def answer_direct(chat, user, text, sorted_as, voice, who, status=None):
+    """A question that needs no files: the local model answers at once, with no reasoning,
+    and the message grows as the words arrive (direct.py)."""
+    topic, t0 = sorted_as["topic"], time.time()
+    state = {"id": status.id if status else None, "shown": "", "at": 0.0}
+
+    def show(so_far, final=False):
+        body = so_far.strip()
+        if not body or (not final and (time.time() - state["at"] < 1.0 or body == state["shown"])):
+            return  # Telegram allows about one edit a second per chat
+        state["at"], state["shown"] = time.time(), body
+        if state["id"] is None:
+            state["id"] = tg("sendMessage", chat_id=chat, text=body + " …")["result"]["message_id"]
+        else:
+            extra = {"reply_markup": READ_ALOUD_BUTTON} if final and READ_ALOUD and not (voice and VOICE_REPLIES) else {}
+            try:
+                tg("editMessageText", chat_id=chat, message_id=state["id"], text=body if final else body + " …", **extra)
+            except urllib.error.HTTPError:
+                pass  # "not modified"
+
+    with locks[chat]:
+        history[chat].append({"role": "user", "content": text})
+        try:
+            reply = direct.stream(MODELS["idli"], list(history[chat]), topic, show)
+        except Exception as e:
+            print(f"direct error: {e!r}", flush=True)
+            history[chat].pop()
+            if status and not state["shown"]:
+                status.replace("Sorry, the model failed to respond. Try again.")
+            else:
+                send(chat, "Sorry, the model failed to respond. Try again.")
+            return
+        history[chat].append({"role": "assistant", "content": reply})
+    badge = DIRECT_BADGE[topic]
+    full = reply[:3900] + "\n\n" + badge
+    if state["id"] is None:
+        send(chat, full, aloud=not (voice and VOICE_REPLIES))
+    else:
+        state["at"] = 0
+        show(full, final=True)
+    m = MODELS["idli"]
+    audit_log.append(chat, {
+        "type": "answer", "chat": chat, "user": {"id": user.get("id"), "username": user.get("username")},
+        "message": text, "files": [],
+        "model": {"key": "idli", "label": m["label"], "kind": m["kind"], "base": m["base"], "model": m["model"]},
+        "versions": {"silo": answer.SILO_VERSION},
+        "primary": {"engine": "Muse, answered directly (no files, no tools, no reasoning)",
+                    "seconds": round(time.time() - t0, 1), "actions": [], "answer": None, "text": reply},
+        "checker": None, "checker_status": "direct", "sorted_as": sorted_as["calls"],
+        "badge": {"kind": "none", "text": badge}, "sent_files": []})
+    print(f"-> {who} [direct {topic}]: {shown(reply)} in {time.time() - t0:.1f}s", flush=True)
+    if voice and VOICE_REPLIES:
+        say(chat, full, user.get("id"))
+
+
+DRIVE_NOTE = ("To copy it, sign in with Google. I'll download only this link: the folder, every "
+              "folder inside it, and a list of where each file came from. Google's screen will say "
+              "\"see and download all your Google Drive files\": that's the only read permission Google "
+              "offers for an existing folder, but I copy just this link, once, and sign out straight after. "
+              "Nothing that could read your Drive again is kept. The sign-in link works for 15 minutes.")
+
+
+def drive_message(chat, user, text):
+    """A Drive link starts a copy (service account) or a sign-in; a pasted Google redirect
+    finishes a sign-in. True if handled."""
+    got = drive.parse_redirect(text)
+    if got:
+        threading.Thread(target=drive_signed_in, args=got, daemon=True).start()
+        return True
+    link = drive.find_link(text)
+    if not link:
+        return False
+    if drive.sa():
+        send(chat, "📁 Copying that link: the folder and every folder inside it…")
+        threading.Thread(target=drive_copy, args=(chat, user.get("id"), link[0]), daemon=True).start()
+        return True
+    if not drive.client():
+        send(chat, "Google Drive isn't set up on this box yet, so I can't copy that link.")
+        return True
+    url = drive.sign_in_url(chat, user.get("id"), link[0])
+    note = DRIVE_NOTE
+    if not drive.REDIRECT.startswith("https://"):
+        note += ("\n\nAfter you sign in, your browser will show a page that doesn't load. "
+                 "That's expected: copy that page's address and paste it here.")
+    tg("sendMessage", chat_id=chat, text="📁 " + note,
+       reply_markup={"inline_keyboard": [[{"text": "Sign in with Google", "url": url}]]})
+    print(f"drive sign-in started for {chat}", flush=True)
+    return True
+
+
+def drive_signed_in(state, code):
+    """Finish a Google sign-in, copy the link, then revoke the token."""
+    p = drive.pending.get(state)
+    if not p:
+        return
+    try:
+        p, token = drive.finish(state, code)
+    except Exception as e:
+        send(p["chat"], str(e) if isinstance(e, ValueError) else "Google didn't accept that sign-in. Send the link again.")
+        return
+    send(p["chat"], "Signed in. Copying now…")
+    try:
+        drive_copy(p["chat"], p["user"], p["file_id"], token)
+    finally:
+        drive.revoke(token)
+
+
+def drive_copy(chat, user_id, file_id, token=None):
+    """Copy the link into the chat's files: with a sign-in token, else as the service account."""
+    t0 = time.time()
+    try:
+        with locks[chat]:
+            s = drive.copy(token or drive.sa_token(), file_id, harness.workdir(chat),
+                           progress=lambda m: send(chat, m))
+        reply = drive.summary_text(s, signed_in=bool(token))
+        history[chat].append({"role": "user", "content": f"(I shared the Google Drive {'folder' if s['is_folder'] else 'file'} "
+                                                          f"“{s['name']}”; it is copied into the files.)"})
+        history[chat].append({"role": "assistant", "content": reply})
+        audit_log.append(chat, {"type": "drive", "chat": chat, "user": {"id": user_id}, "file_id": file_id,
+                                "via": "sign-in" if token else "service account",
+                                "summary": s, "seconds": round(time.time() - t0, 1)})
+        print(f"drive copy {chat}: {s['files']} files {s['bytes']} bytes in {time.time() - t0:.0f}s", flush=True)
+    except drive.NoAccess:
+        reply = ("I couldn't open that link with your Google account: it may not be shared with you, or it "
+                 "was deleted.") if token else (
+                 "I can't see that link yet. In Google Drive, open its Share dialog and add\n"
+                 f"{drive.sa_email()}\nas a Viewer (you can untick \"Notify people\"). Then send the link again.")
+    except urllib.error.HTTPError as e:
+        reply = f"The copy stopped partway: Google said {e.code}. Send the link again to retry."
+    except Exception as e:
+        print(f"drive copy {chat} failed: {e!r}", flush=True)
+        reply = "Something went wrong copying that link. Send it again to retry."
+    send(chat, reply)
+
+
+def language_menu(user_id):
+    cur = todos.language(user_id)
+    body = ("🗣️ The language 🔊 Read aloud speaks in. Replies are still written in English; "
+            f"for Hindi, the reply is translated on this box first, which adds about 10 s.\nNow: {LANGUAGES[cur]}")
+    buttons = [[{"text": ("• " if k == cur else "") + name, "callback_data": f"lang:{k}"}] for k, name in LANGUAGES.items()]
+    return body, {"inline_keyboard": buttons}
+
+
+def strict_menu(user_id):
+    on = todos.strict(user_id)
+    body = ("🔍 Strict mode is " + ("ON" if on else "OFF") + ".\n"
+            "When it's on, every answer is worked out a second time, independently, and the two are "
+            "compared: ✅ they agree, ⚠️ they don't, ◻️ the check couldn't finish. It can add up to 30 s, "
+            "and fewer people can be answered at once.\nWhen it's off, answers aren't checked (➖).")
+    button = {"text": "Turn it off" if on else "Turn it on", "callback_data": "strict:" + ("off" if on else "on")}
+    return body, {"inline_keyboard": [[button]]}
+
+
+def voice_menu(chat):
+    """/voice: pick the voice that 🔊 Read aloud uses; picking one plays a short sample."""
+    cur = chat_voice.get(chat, speech.VOICE)
+    body = ("🔊 Pick the voice for Read aloud. Tapping one plays a short sample.\n"
+            f"Now: {VOICES.get(cur, cur)}")
+    buttons = [[{"text": ("• " if k == cur else "") + name, "callback_data": f"voice:{k}"}] for k, name in VOICES.items()]
+    return body, {"inline_keyboard": buttons}
+
+
+def drive_help(chat):
+    """/drive: how to share a folder, then the email alone so it's easy to copy."""
+    email = drive.sa_email()
+    if not email:
+        send(chat, "📁 Paste a Google Drive link and I'll ask you to sign in with Google to copy it."
+             if drive.client() else "Google Drive isn't set up on this box yet.")
+        return
+    send(chat, "📁 To give me a Google Drive folder: in Drive, open the folder's Share dialog, add the "
+               "email below as a Viewer (you can untick \"Notify people\"), then paste the folder's link "
+               "here. I'll copy it, with every folder inside it, into your files (/files). "
+               "To take access away, remove the email in the same Share dialog.")
+    tg("sendMessage", chat_id=chat, text=f"<code>{html.escape(email)}</code>", parse_mode="HTML")
+
+
+def files_view(chat, rel):
+    """/files [folder]: what's in this chat's files, like ls. Folders get buttons to open them."""
+    root = os.path.realpath(harness.workdir(chat))
+    rel = rel.strip().strip("/")
+    path = os.path.realpath(os.path.join(root, rel))
+    if path != root and not path.startswith(root + os.sep):
+        return "That folder isn't in your files.", None
+    if not os.path.isdir(path):
+        return f"There's no folder called “{rel}” in your files. /files shows the top level.", None
+    rel = os.path.relpath(path, root) if path != root else ""
+    dirs, files = [], []
+    for e in sorted(os.scandir(path), key=lambda e: e.name.lower()):
+        if e.is_symlink():
+            continue
+        (dirs if e.is_dir() else files).append(e)
+    title = f"📂 {rel}/" if rel else "📂 Your files"
+    lines = [f"📁 {d.name}/" for d in dirs] + [f"📄 {f.name}  ({size_text(f.stat().st_size)})" for f in files]
+    if not lines:
+        lines = ["(empty)" if rel else "(nothing yet: send me a file, or a Google Drive link)"]
+    body = title + "\n" + "\n".join(lines)
+    if len(body) > 4000:
+        body = body[:3990] + "\n…"
+    buttons = []
+    for d in dirs:
+        target = f"{rel}/{d.name}" if rel else d.name
+        if len(f"files:{target}".encode()) <= 64:  # Telegram's limit on button data
+            buttons.append([{"text": f"📁 {d.name}", "callback_data": f"files:{target}"}])
+    if rel:
+        up = os.path.dirname(rel)
+        if len(f"files:{up}".encode()) <= 64:
+            buttons.append([{"text": "⬆️ Up", "callback_data": f"files:{up}"}])
+    return body, ({"inline_keyboard": buttons[:40]} if buttons else None)
+
+
+def size_text(n):
+    for unit in ("bytes", "KB", "MB", "GB"):
+        if n < 1000 or unit == "GB":
+            return f"{n:.0f} {unit}" if unit == "bytes" else f"{n:.1f} {unit}"
+        n /= 1000
+
+
+def erase(chat, user):
+    """/reset: everything the box keeps for this chat and user. Voice notes are never written
+    to disk (they're transcribed in memory), so their transcripts in history and the audit
+    records are what's left of them."""
+    with locks[chat]:
+        history[chat].clear()
+        harness.clear(chat)
+        todos.erase(user)
+        audit_log.erase(chat)
+        for k in [k for k in spoken if k[0] == chat]:
+            del spoken[k]
+        chat_voice.pop(chat, None)
 
 
 def handle_callback(cb):
     chat, user = cb["message"]["chat"]["id"], cb.get("from", {})
     if not allowed(user):
+        return
+    if cb.get("data", "").startswith("reset:"):
+        if cb["data"] == "reset:yes":
+            erase(chat, user.get("id"))
+            result = ("Erased. Your conversation, files, todos, reminders and answer records are gone "
+                      "from this box. (Telegram keeps its own copy of this chat; you can clear it in Telegram.)")
+            print(f"reset {chat}", flush=True)
+        else:
+            result = "Cancelled; nothing was erased."
+        tg("answerCallbackQuery", callback_query_id=cb["id"])
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=result)
+        return
+    if cb.get("data", "").startswith("files:"):
+        body, markup = files_view(chat, cb["data"].removeprefix("files:"))
+        tg("answerCallbackQuery", callback_query_id=cb["id"])
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body,
+           **({"reply_markup": markup} if markup else {}))
+        return
+    if cb.get("data") == "say":
+        key = (chat, cb["message"]["message_id"])
+        if time.time() - spoken.get(key, 0) < 120:  # a second tap while the first is on its way
+            tg("answerCallbackQuery", callback_query_id=cb["id"], text="Already sent, it may take a moment to arrive.")
+            return
+        if chat in speaking:
+            tg("answerCallbackQuery", callback_query_id=cb["id"],
+               text="Still making the last one. Tap again once it arrives.")
+            return
+        speaking.add(chat)
+        spoken[key] = time.time()
+        hindi = todos.language(user.get("id")) == "hi"
+        tg("answerCallbackQuery", callback_query_id=cb["id"],
+           text="Translating to Hindi and making the audio…" if hindi else "Making the audio…")
+        t0 = time.time()
+        try:
+            with recording(chat):
+                say(chat, cb["message"].get("text", ""), user.get("id"))
+            print(f"read aloud {key[1]} voice={chat_voice.get(chat, speech.VOICE)} "
+                  f"lang={todos.language(user.get('id'))} in {time.time() - t0:.1f}s", flush=True)
+        except Exception as e:
+            spoken.pop(key, None)
+            print(f"read aloud failed: {e!r}", flush=True)
+            send(chat, "I couldn't make the audio for that one. Try again in a moment.")
+        finally:
+            speaking.discard(chat)
+        return
+    if cb.get("data", "").startswith("lang:"):
+        lang = cb["data"].removeprefix("lang:")
+        if lang in LANGUAGES:
+            todos.set_language(user.get("id"), chat, lang)
+        tg("answerCallbackQuery", callback_query_id=cb["id"], text=LANGUAGES.get(lang, ""))
+        body, markup = language_menu(user.get("id"))
+        try:
+            tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        except urllib.error.HTTPError:
+            pass  # unchanged
+        return
+    if cb.get("data", "").startswith("strict:"):
+        todos.set_strict(user.get("id"), chat, cb["data"] == "strict:on")
+        body, markup = strict_menu(user.get("id"))
+        tg("answerCallbackQuery", callback_query_id=cb["id"],
+           text="Strict mode on" if cb["data"] == "strict:on" else "Strict mode off")
+        tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        return
+    if cb.get("data", "").startswith("voice:"):
+        v = cb["data"].removeprefix("voice:")
+        if v not in VOICES:
+            tg("answerCallbackQuery", callback_query_id=cb["id"])
+            return
+        chat_voice[chat] = v
+        tg("answerCallbackQuery", callback_query_id=cb["id"], text=f"Voice: {VOICES[v]}")
+        body, markup = voice_menu(chat)
+        try:
+            tg("editMessageText", chat_id=chat, message_id=cb["message"]["message_id"], text=body, reply_markup=markup)
+        except urllib.error.HTTPError:
+            pass  # the same voice again: nothing to change in the menu, still play the sample
+        if chat not in speaking:
+            speaking.add(chat)
+            try:
+                with recording(chat):
+                    say(chat, f"Hi, this is {VOICES[v].split(' (')[0]}. Your todo list has 3 items, and the "
+                              "Gadchiroli programme spent ₹4,52,300 this quarter.", user.get("id"))
+            except Exception as e:
+                print(f"voice sample failed: {e!r}", flush=True)
+            finally:
+                speaking.discard(chat)
         return
     key = cb.get("data", "").removeprefix("model:")
     result = set_model(chat, key)
@@ -374,12 +933,20 @@ def safe_handle(update):
 
 def main():
     answer.cleanup_jobs()
+    if drive.client() and drive.REDIRECT.startswith("https://"):
+        drive.serve(drive_signed_in)
+    todos.start_loop(lambda chat, text: send(chat, text, aloud=True))
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
     tg("setMyCommands", commands=[
-        {"command": "model", "description": "Switch model (idli internal / external)"},
-        {"command": "how", "description": "Show the steps behind the last answer (/how full: everything)"},
-        {"command": "reset", "description": "Start a fresh conversation"},
+        {"command": "todos", "description": "Your todo list"},
+        {"command": "files", "description": "Your files"},
+        {"command": "drive", "description": "Add a Google Drive folder"},
+        {"command": "language", "description": "Read-aloud language"},
+        {"command": "strict", "description": "Check every answer twice"},
+        {"command": "model", "description": "Switch model"},
+        {"command": "how", "description": "How the last answer was made"},
+        {"command": "reset", "description": "Erase everything"},
     ])
     offset = 0
     while True:

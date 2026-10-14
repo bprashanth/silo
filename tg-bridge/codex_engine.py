@@ -26,7 +26,10 @@ def run(files, prompt, root, timeout=TIMEOUT, keep=False):
     os.makedirs(home)
     os.makedirs(ws)
     for f in files:
-        shutil.copy(f, ws)
+        if os.path.isdir(f):  # a Drive folder copy
+            shutil.copytree(f, os.path.join(ws, os.path.basename(f)))
+        else:
+            shutil.copy(f, ws)
     before = set(os.listdir(ws))
     info = json.loads(subprocess.check_output(["node", os.path.join(HERE, "io_config.js"), home, ws], text=True))
     env = {k: v for k, v in os.environ.items()
