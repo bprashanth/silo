@@ -13,6 +13,7 @@ fi
 export PYTHONPATH="/mnt/seagate/silo/livestock-voice/packages${PYTHONPATH:+:$PYTHONPATH}"
 export HF_HUB_OFFLINE=1 TOKENIZERS_PARALLELISM=false NUMBA_CACHE_DIR=/mnt/seagate/silo/livestock-voice/numba-cache
 export OMP_NUM_THREADS=4 OPENBLAS_NUM_THREADS=1
+export HOST="${HOST:-0.0.0.0}"
 setsid "$STATE/venv/bin/python" -u server.py > "$STATE/server.log" 2>&1 < /dev/null &
 echo $! > "$STATE/server.pid"
 echo 'Starting http://localhost:8765; log:' "$STATE/server.log"
