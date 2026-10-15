@@ -46,7 +46,7 @@ def glossary():
         return []
 
 
-def transcribe(data, hints=()):
+def transcribe(data, hints=(), with_quality=False):
     """English speech -> text. hints (names, open todos) bias Whisper towards the user's words."""
     global _whisper
     with _wlock:
@@ -57,7 +57,16 @@ def transcribe(data, hints=()):
         words = ", ".join([*glossary(), *hints])[-800:]
         segs, _ = _whisper.transcribe(_decode(data), language="en", beam_size=1, vad_filter=True,
                                       initial_prompt=("Names and words: " + words) if words else None)
-        return " ".join(s.text.strip() for s in segs).strip()
+        segments = list(segs)
+        text = " ".join(s.text.strip() for s in segments).strip()
+        if not with_quality:
+            return text
+        scores = [s.avg_logprob for s in segments]
+        silence = [s.no_speech_prob for s in segments]
+        return {"text": text, "avg_logprob": sum(scores)/len(scores) if scores else None,
+                "max_no_speech_probability": max(silence) if silence else 1,
+                "needs_clarification": not text or bool(scores and sum(scores)/len(scores) < -1.0)
+                    or bool(silence and min(silence) > 0.6)}
 
 
 # ---- text to speech ---------------------------------------------------------------------

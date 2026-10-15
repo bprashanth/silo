@@ -40,6 +40,8 @@ import drive
 import harness
 import speech
 import todos
+import livestock_bridge
+import sys
 
 CFG = os.path.expanduser(os.environ.get("SILO_CONFIG", "~/.config/silo"))
 
@@ -427,6 +429,8 @@ def handle(msg):
     if not allowed(user):
         print(f"denied {who}", flush=True)
         send(chat, "Sorry, this bot is private.")
+        return
+    if livestock_bridge.handle(sys.modules[__name__], msg):
         return
     text = msg.get("text") or ""
     if text.strip().lower().startswith("/model"):
@@ -954,12 +958,14 @@ def safe_handle(update):
 
 def main():
     answer.cleanup_jobs()
+    livestock_bridge.start(sys.modules[__name__])
     if drive.client() and drive.REDIRECT.startswith("https://"):
         drive.serve(drive_signed_in)
     todos.start_loop(lambda chat, text: send(chat, text, aloud=True))
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
           f"allowed={sorted(allowed_names() or ['anyone'])}", flush=True)
     tg("setMyCommands", commands=[
+        {"command": "livestock", "description": "Livestock case intake and field visits"},
         {"command": "todos", "description": "Your todo list"},
         {"command": "files", "description": "Your files"},
         {"command": "drive", "description": "Add a Google Drive folder"},

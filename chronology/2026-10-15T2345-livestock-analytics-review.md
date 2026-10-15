@@ -1,0 +1,3 @@
+# Final livestock analytics review
+
+Visual inspection found two reporting issues: the spoken district “Demo North district” formed a separate bucket from the seeded “Demo North”, and missing outcomes were shown as unknown with a zero count. Analytics now normalizes the known district suffix while preserving original case evidence, and counts missing outcomes correctly. Added a focused regression; sixteen deterministic tests pass. The actual dashboard now has three district buckets, Demo North includes the live case (48), and outcome counts sum to all 151 submitted cases. Final computed evidence is livestock/tests/evidence/final-metrics.json. Restarted only the API at idle; Telegram remains in ordinary Silo mode.

@@ -1,0 +1,129 @@
+{
+  "total_cases": 151,
+  "open_cases": 67,
+  "synthetic_cases": 150,
+  "live_cases": 1,
+  "reported_visits": 115,
+  "farmer_confirmed_visits": 84,
+  "independently_confirmed_visits": 83,
+  "unresolved_cases": 67,
+  "assignment_hours": 9.76,
+  "resolution_hours": 64.84,
+  "acceptance_rate": 84.8,
+  "by_status": [
+    {
+      "label": "CLOSED",
+      "value": 84
+    },
+    {
+      "label": "ASSIGNED",
+      "value": 23
+    },
+    {
+      "label": "NEEDS_REVIEW",
+      "value": 16
+    },
+    {
+      "label": "AWAITING_FEEDBACK",
+      "value": 15
+    },
+    {
+      "label": "ACCEPTED",
+      "value": 13
+    }
+  ],
+  "by_category": [
+    {
+      "label": "weakness",
+      "value": 51
+    },
+    {
+      "label": "appetite loss",
+      "value": 50
+    },
+    {
+      "label": "mobility",
+      "value": 49
+    },
+    {
+      "label": "general",
+      "value": 1
+    }
+  ],
+  "by_priority": [
+    {
+      "label": "routine",
+      "value": 98
+    },
+    {
+      "label": "urgent",
+      "value": 53
+    }
+  ],
+  "by_village": [
+    {
+      "label": "Neemgaon",
+      "value": 35
+    },
+    {
+      "label": "Lotuspur",
+      "value": 29
+    },
+    {
+      "label": "Sonapur",
+      "value": 24
+    },
+    {
+      "label": "Jasminpur",
+      "value": 24
+    },
+    {
+      "label": "Rampur",
+      "value": 22
+    },
+    {
+      "label": "Palashpur",
+      "value": 17
+    }
+  ],
+  "by_district": [
+    {
+      "label": "Demo East",
+      "value": 57
+    },
+    {
+      "label": "Demo North",
+      "value": 48
+    },
+    {
+      "label": "Demo South",
+      "value": 46
+    }
+  ],
+  "outcomes": [
+    {
+      "label": "doing better now",
+      "value": 1
+    },
+    {
+      "label": "improved",
+      "value": 25
+    },
+    {
+      "label": "not improved",
+      "value": 16
+    },
+    {
+      "label": "recovered",
+      "value": 27
+    },
+    {
+      "label": "stable",
+      "value": 31
+    },
+    {
+      "label": "unknown",
+      "value": 51
+    }
+  ]
+}

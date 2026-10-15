@@ -1,0 +1,9 @@
+# Livestock v2 workflow and first real-model checks
+
+Added a lightweight Idli Ops package and opt-in /livestock route to the existing Silo bot. Reused the local Muse endpoint, Whisper large-v3-turbo and Kokoro hf_alpha; the old call benchmark remains separate. The dashboard is available on port 8766 over the existing tailnet. SQLite/private assets stay on NVMe, packages and large synthetic test artifacts on Seagate.
+
+The application stores intake drafts, case transitions, protocol references, approved assignments, original message/media evidence, vet reports, farmer feedback and closure summaries. Its analytics reads the database directly, with 150 clearly synthetic historical records and distinct live-demo provenance. Queries select approved actual SQL using Muse. Browser checks exercised actual metrics, real Muse query results, saved dashboard, mobile width and Telegram connection instructions; screenshots are under /mnt/seagate/silo/livestock-v2/ui/.
+
+Real Muse integration testing exposed fabricated missing fields, a negative-warning loop and echoed-report confirmation loops. Added source-quote checks, contextual negative handling and unchanged-value confirmation checks. This entry records work in progress, not final acceptance. Unit checks and a five-turn real-model intake now pass; full model and live Telegram workflows are still being exercised.
+
+The user selected single-account farmer/vet roleplay. Vet bindings persist across role switching; same-account feedback is explicitly labeled and excluded from independent-confirmation counts. Real Telegram /livestock farmer produced a text and hf_alpha voice greeting. A synthetic hf_alpha voice note transcribed exactly with mean log probability -0.179; low-confidence transcription now asks clarification while retaining the original audio and transcription metadata. The bot was restarted only after checking it had no unanswered request. No ordinary Silo state was reset.

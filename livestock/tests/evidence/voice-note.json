@@ -1,0 +1,10 @@
+{
+  "voice": "hf_alpha",
+  "language": "en-us",
+  "source_text": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+  "transcript": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+  "tts_seconds": 0.964,
+  "stt_seconds": 7.691,
+  "audio_bytes": 18698,
+  "actual_pipeline": "tg-bridge speech.synth and speech.transcribe; no Telegram transport"
+}

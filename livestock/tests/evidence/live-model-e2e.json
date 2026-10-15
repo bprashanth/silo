@@ -1,0 +1,1628 @@
+{
+  "started_at": "20261015T180157Z",
+  "transport": "MOCK Telegram delivery; actual Engine and local Muse",
+  "model_calls": [
+    {
+      "instruction": "Extract only facts explicitly stated by the farmer in the latest message, interpreting short answers against last_question. Return {\"updates\":{field:value},\"unknown_fields\":[],\"evidence\":{field:\"exact quote from latest message\"},\"confirmed\":boolean,\"ambiguous\":boolean}. Fields: animal_type, symptoms, urgent_warning_signs, symptoms_since, animals_affected, previous_treatment, farmer_name, village, district, contact. animals_affected MUST be a JSON integer (e.g. 1), NOT a sentence. symptoms and urgent_warning_signs MUST be JSON arrays of strings. No warning signs is []. No treatment is \"none\". Preserve corrections. Unknown is explicit \"I do not know\", not missing. Missing information MUST be omitted, NEVER labeled unknown. Do not assume no prior treatment or no urgent signs. Include an exact message quote in evidence for each updated field. confirmed only when explicitly agreeing to the summary. Never infer animal type, name or district.",
+      "payload": {
+        "fields": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "yesterday"
+        },
+        "last_question": null,
+        "message": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+        "confirming": false
+      },
+      "result": {
+        "updates": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "yesterday",
+          "animals_affected": 1
+        },
+        "unknown_fields": [],
+        "evidence": {
+          "animal_type": "My cow",
+          "symptoms": [
+            "She is not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "since yesterday",
+          "animals_affected": "My cow"
+        },
+        "confirmed": false,
+        "ambiguous": false
+      },
+      "seconds": 2.154
+    },
+    {
+      "instruction": "Extract only facts explicitly stated by the farmer in the latest message, interpreting short answers against last_question. Return {\"updates\":{field:value},\"unknown_fields\":[],\"evidence\":{field:\"exact quote from latest message\"},\"confirmed\":boolean,\"ambiguous\":boolean}. Fields: animal_type, symptoms, urgent_warning_signs, symptoms_since, animals_affected, previous_treatment, farmer_name, village, district, contact. animals_affected MUST be a JSON integer (e.g. 1), NOT a sentence. symptoms and urgent_warning_signs MUST be JSON arrays of strings. No warning signs is []. No treatment is \"none\". Preserve corrections. Unknown is explicit \"I do not know\", not missing. Missing information MUST be omitted, NEVER labeled unknown. Do not assume no prior treatment or no urgent signs. Include an exact message quote in evidence for each updated field. confirmed only when explicitly agreeing to the summary. Never infer animal type, name or district.",
+      "payload": {
+        "fields": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "yesterday",
+          "animals_affected": 1,
+          "urgent_warning_signs": []
+        },
+        "last_question": "Is the animal unable to stand, struggling to breathe, or unconscious?",
+        "message": "No. She can stand and walk, breathes normally, and is conscious. Only one cow is affected.",
+        "confirming": false
+      },
+      "result": {
+        "updates": {
+          "animals_affected": 1
+        },
+        "unknown_fields": [],
+        "evidence": {
+          "animals_affected": "Only one cow is affected."
+        },
+        "confirmed": false,
+        "ambiguous": false
+      },
+      "seconds": 1.285
+    },
+    {
+      "instruction": "Extract only facts explicitly stated by the farmer in the latest message, interpreting short answers against last_question. Return {\"updates\":{field:value},\"unknown_fields\":[],\"evidence\":{field:\"exact quote from latest message\"},\"confirmed\":boolean,\"ambiguous\":boolean}. Fields: animal_type, symptoms, urgent_warning_signs, symptoms_since, animals_affected, previous_treatment, farmer_name, village, district, contact. animals_affected MUST be a JSON integer (e.g. 1), NOT a sentence. symptoms and urgent_warning_signs MUST be JSON arrays of strings. No warning signs is []. No treatment is \"none\". Preserve corrections. Unknown is explicit \"I do not know\", not missing. Missing information MUST be omitted, NEVER labeled unknown. Do not assume no prior treatment or no urgent signs. Include an exact message quote in evidence for each updated field. confirmed only when explicitly agreeing to the summary. Never infer animal type, name or district.",
+      "payload": {
+        "fields": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "yesterday",
+          "animals_affected": 1,
+          "urgent_warning_signs": [],
+          "farmer_name": "Anjali",
+          "village": "Rampur",
+          "district": "Demo North district",
+          "previous_treatment": "unknown"
+        },
+        "last_question": "Has the animal received any treatment so far?",
+        "message": "I do not know whether she has had any treatment. My name is Anjali. I am in Rampur in Demo North district.",
+        "confirming": false
+      },
+      "result": {
+        "updates": {
+          "farmer_name": "Anjali",
+          "village": "Rampur",
+          "district": "Demo North district"
+        },
+        "unknown_fields": [
+          "previous_treatment"
+        ],
+        "evidence": {
+          "farmer_name": "My name is Anjali.",
+          "village": "I am in Rampur",
+          "district": "in Demo North district."
+        },
+        "confirmed": false,
+        "ambiguous": false
+      },
+      "seconds": 1.974
+    },
+    {
+      "instruction": "Extract only facts explicitly stated by the farmer in the latest message, interpreting short answers against last_question. Return {\"updates\":{field:value},\"unknown_fields\":[],\"evidence\":{field:\"exact quote from latest message\"},\"confirmed\":boolean,\"ambiguous\":boolean}. Fields: animal_type, symptoms, urgent_warning_signs, symptoms_since, animals_affected, previous_treatment, farmer_name, village, district, contact. animals_affected MUST be a JSON integer (e.g. 1), NOT a sentence. symptoms and urgent_warning_signs MUST be JSON arrays of strings. No warning signs is []. No treatment is \"none\". Preserve corrections. Unknown is explicit \"I do not know\", not missing. Missing information MUST be omitted, NEVER labeled unknown. Do not assume no prior treatment or no urgent signs. Include an exact message quote in evidence for each updated field. confirmed only when explicitly agreeing to the summary. Never infer animal type, name or district.",
+      "payload": {
+        "fields": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "two days ago",
+          "animals_affected": 1,
+          "urgent_warning_signs": [],
+          "farmer_name": "Anjali",
+          "village": "Neemgaon",
+          "district": "Demo North district",
+          "previous_treatment": "unknown"
+        },
+        "last_question": "Are these details correct?",
+        "message": "Correction: my village is Neemgaon, not Rampur. The symptoms began two days ago, not yesterday.",
+        "confirming": true
+      },
+      "result": {
+        "updates": {
+          "village": "Neemgaon",
+          "symptoms_since": "two days ago"
+        },
+        "unknown_fields": [],
+        "evidence": {
+          "village": "my village is Neemgaon, not Rampur",
+          "symptoms_since": "The symptoms began two days ago, not yesterday"
+        },
+        "confirmed": true,
+        "ambiguous": false
+      },
+      "seconds": 1.521
+    },
+    {
+      "instruction": "Extract only facts explicitly stated by the farmer in the latest message, interpreting short answers against last_question. Return {\"updates\":{field:value},\"unknown_fields\":[],\"evidence\":{field:\"exact quote from latest message\"},\"confirmed\":boolean,\"ambiguous\":boolean}. Fields: animal_type, symptoms, urgent_warning_signs, symptoms_since, animals_affected, previous_treatment, farmer_name, village, district, contact. animals_affected MUST be a JSON integer (e.g. 1), NOT a sentence. symptoms and urgent_warning_signs MUST be JSON arrays of strings. No warning signs is []. No treatment is \"none\". Preserve corrections. Unknown is explicit \"I do not know\", not missing. Missing information MUST be omitted, NEVER labeled unknown. Do not assume no prior treatment or no urgent signs. Include an exact message quote in evidence for each updated field. confirmed only when explicitly agreeing to the summary. Never infer animal type, name or district.",
+      "payload": {
+        "fields": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "two days ago",
+          "animals_affected": 1,
+          "urgent_warning_signs": [],
+          "farmer_name": "Anjali",
+          "village": "Neemgaon",
+          "district": "Demo North district",
+          "previous_treatment": "unknown"
+        },
+        "last_question": "Are these details correct?",
+        "message": "Yes, those details are correct. Please submit the case.",
+        "confirming": true
+      },
+      "result": {
+        "updates": {},
+        "unknown_fields": [],
+        "evidence": {},
+        "confirmed": true,
+        "ambiguous": false
+      },
+      "seconds": 1.198
+    },
+    {
+      "instruction": "Select relevant demonstration routing protocol and recommend a vet using geographic coverage, availability, specialization and workload. Return {\"protocol_id\":string,\"vet_id\":string,\"reason\":string,\"category\":string}. Use only provided IDs; no medical treatment advice.",
+      "payload": {
+        "case": {
+          "animal_type": "cow",
+          "symptoms": [
+            "not eating",
+            "looks weak"
+          ],
+          "symptoms_since": "two days ago",
+          "animals_affected": 1,
+          "urgent_warning_signs": [],
+          "farmer_name": "Anjali",
+          "village": "Neemgaon",
+          "district": "Demo North district",
+          "previous_treatment": "unknown"
+        },
+        "protocols": [
+          {
+            "id": "DEMO-GENERAL",
+            "title": "General livestock illness intake",
+            "text": "Collect observations and arrange human veterinary review. No diagnosis or treatment advice.",
+            "synthetic": true
+          },
+          {
+            "id": "DEMO-WEAKNESS",
+            "title": "Fever and weakness escalation",
+            "text": "Escalate reported fever or weakness for prompt veterinary assessment.",
+            "synthetic": true
+          },
+          {
+            "id": "DEMO-URGENT",
+            "title": "Animal unable to stand",
+            "text": "Inability to stand, severe breathing difficulty or unconsciousness requires urgent human review.",
+            "synthetic": true
+          },
+          {
+            "id": "DEMO-FOLLOWUP",
+            "title": "Follow-up after veterinary visit",
+            "text": "Obtain the farmer\u2019s independent account; refer disagreements or continuing need to an operator.",
+            "synthetic": true
+          }
+        ],
+        "roster": [
+          {
+            "vet_id": "VET-01",
+            "name": "Dr Asha Rao",
+            "district": "Demo North",
+            "service_area": [
+              "Neemgaon",
+              "Rampur"
+            ],
+            "specialization": "cattle",
+            "availability": true,
+            "telegram_user_id": "synthetic-vet-1",
+            "workload": 0
+          },
+          {
+            "vet_id": "VET-02",
+            "name": "Dr Meera Das",
+            "district": "Demo North",
+            "service_area": [
+              "Sonapur",
+              "Neemgaon"
+            ],
+            "specialization": "emergency livestock",
+            "availability": true,
+            "telegram_user_id": "synthetic-vet-2",
+            "workload": 0
+          },
+          {
+            "vet_id": "VET-03",
+            "name": "Dr Ravi Sen",
+            "district": "Demo South",
+            "service_area": [
+              "Lotuspur",
+              "Rampur"
+            ],
+            "specialization": "cattle",
+            "availability": true,
+            "telegram_user_id": "synthetic-vet-3",
+            "workload": 0
+          },
+          {
+            "vet_id": "VET-04",
+            "name": "Dr Nila Shah",
+            "district": "Demo South",
+            "service_area": [
+              "Jasminpur"
+            ],
+            "specialization": "small ruminants",
+            "availability": false,
+            "telegram_user_id": null,
+            "workload": 0
+          },
+          {
+            "vet_id": "VET-05",
+            "name": "Dr Dev Kumar",
+            "district": "Demo East",
+            "service_area": [
+              "Palashpur"
+            ],
+            "specialization": "general livestock",
+            "availability": true,
+            "telegram_user_id": "synthetic-vet-5",
+            "workload": 0
+          }
+        ]
+      },
+      "result": {
+        "protocol_id": "DEMO-WEAKNESS",
+        "vet_id": "VET-01",
+        "reason": "Cow in Neemgaon, Demo North district with not eating and looks weak for two days. Dr Asha Rao covers Neemgaon in Demo North, specializes in cattle, is available with workload 0. Protocol DEMO-WEAKNESS matches reported weakness for prompt veterinary assessment.",
+        "category": "General livestock illness intake"
+      },
+      "seconds": 2.37
+    },
+    {
+      "instruction": "Extract the vet message into {\"accepted\":boolean,\"declined\":boolean,\"report\":{visit_status,visit_time,reported_location,observations,treatment_reported,follow_up_required},\"confirmed\":boolean}. Report values only if explicitly stated. visit_status must be \"visited\" only if explicitly reporting a visit, never from photo/location alone. confirmed only explicit confirmation of pending report. No invented clinical information.",
+      "payload": {
+        "status": "ASSIGNED",
+        "pending_report": null,
+        "message": "Yes, I accept this assignment.",
+        "media_types": []
+      },
+      "result": {
+        "accepted": true,
+        "declined": false,
+        "report": {},
+        "confirmed": false
+      },
+      "seconds": 0.91
+    },
+    {
+      "instruction": "Extract the vet message into {\"accepted\":boolean,\"declined\":boolean,\"report\":{visit_status,visit_time,reported_location,observations,treatment_reported,follow_up_required},\"confirmed\":boolean}. Report values only if explicitly stated. visit_status must be \"visited\" only if explicitly reporting a visit, never from photo/location alone. confirmed only explicit confirmation of pending report. No invented clinical information.",
+      "payload": {
+        "status": "ACCEPTED",
+        "pending_report": null,
+        "message": "Here is a photograph and the shared location.",
+        "media_types": [
+          "image/png",
+          "location"
+        ]
+      },
+      "result": {
+        "accepted": true,
+        "declined": false,
+        "report": {
+          "visit_status": null,
+          "visit_time": null,
+          "reported_location": null,
+          "observations": null,
+          "treatment_reported": null,
+          "follow_up_required": null
+        },
+        "confirmed": false
+      },
+      "seconds": 1.015
+    },
+    {
+      "instruction": "Extract the vet message into {\"accepted\":boolean,\"declined\":boolean,\"report\":{visit_status,visit_time,reported_location,observations,treatment_reported,follow_up_required},\"confirmed\":boolean}. Report values only if explicitly stated. visit_status must be \"visited\" only if explicitly reporting a visit, never from photo/location alone. confirmed only explicit confirmation of pending report. No invented clinical information.",
+      "payload": {
+        "status": "ACCEPTED",
+        "pending_report": {
+          "visit_status": "visited",
+          "visit_time": "10 AM",
+          "reported_location": "Neemgaon",
+          "observations": "reduced appetite and weakness",
+          "treatment_reported": "no medication",
+          "follow_up_required": false
+        },
+        "message": "I visited the cow today at 10 AM in Neemgaon. I observed reduced appetite and weakness. I examined the animal and gave no medication. No follow-up assistance is required.",
+        "media_types": []
+      },
+      "result": {
+        "accepted": true,
+        "declined": false,
+        "report": {
+          "visit_status": "visited",
+          "visit_time": "10 AM",
+          "reported_location": "Neemgaon",
+          "observations": "reduced appetite and weakness",
+          "treatment_reported": "no medication",
+          "follow_up_required": false
+        },
+        "confirmed": false
+      },
+      "seconds": 1.118
+    },
+    {
+      "instruction": "Extract the vet message into {\"accepted\":boolean,\"declined\":boolean,\"report\":{visit_status,visit_time,reported_location,observations,treatment_reported,follow_up_required},\"confirmed\":boolean}. Report values only if explicitly stated. visit_status must be \"visited\" only if explicitly reporting a visit, never from photo/location alone. confirmed only explicit confirmation of pending report. No invented clinical information.",
+      "payload": {
+        "status": "ACCEPTED",
+        "pending_report": {
+          "visit_status": "visited",
+          "visit_time": "10 AM",
+          "reported_location": "Neemgaon",
+          "observations": "reduced appetite and weakness",
+          "treatment_reported": "no medication",
+          "follow_up_required": false
+        },
+        "message": "Yes, the visit report is correct.",
+        "media_types": []
+      },
+      "result": {
+        "accepted": true,
+        "declined": false,
+        "report": {
+          "visit_status": "visited",
+          "visit_time": "10 AM",
+          "reported_location": "Neemgaon",
+          "observations": "reduced appetite and weakness",
+          "treatment_reported": "no medication",
+          "follow_up_required": false
+        },
+        "confirmed": true
+      },
+      "seconds": 1.044
+    },
+    {
+      "instruction": "Extract farmer feedback only from their message, contextualized by last_question. Return {\"updates\":{visit_confirmed:boolean,farmer_reported_service:string,farmer_reported_condition:string,service_satisfaction:string,further_help_required:boolean},\"disagreement\":boolean}. Do not infer satisfaction, visit or improvement from the vet report. disagreement only explicit contradiction. Omit unknown fields.",
+      "payload": {
+        "existing": {
+          "visit_confirmed": true,
+          "farmer_reported_service": "examined my cow",
+          "farmer_reported_condition": "eating again and has improved",
+          "service_satisfaction": "satisfied",
+          "further_help_required": false,
+          "feedback_timestamp": "2026-10-15T18:02:22.731645+00:00",
+          "verification": "independent farmer account"
+        },
+        "last_question": "Did the vet visit your animal? What did they do?",
+        "message": "Yes, the vet visited and examined my cow. No medicine was given. She is eating again and has improved. I am satisfied, and I do not need any more assistance.",
+        "vet_report": {
+          "visit_status": "visited",
+          "visit_time": "10 AM",
+          "reported_location": "Neemgaon",
+          "observations": "reduced appetite and weakness",
+          "treatment_reported": "no medication",
+          "follow_up_required": false,
+          "vet_confirmation": true,
+          "reported_at": "2026-10-15T18:02:21.357376+00:00",
+          "verification": "vet-reported"
+        }
+      },
+      "result": {
+        "updates": {
+          "visit_confirmed": true,
+          "farmer_reported_service": "examined my cow",
+          "farmer_reported_condition": "eating again and has improved",
+          "service_satisfaction": "satisfied",
+          "further_help_required": false
+        },
+        "disagreement": false
+      },
+      "seconds": 1.363
+    },
+    {
+      "instruction": "Choose the best supported analytical query. Return {\"query_id\": one provided ID or \"unsupported\"}. Select by meaning; never invent a query. Recovery/cause questions use outcomes; causal explanations require more evidence.",
+      "payload": {
+        "question": "Which villages have the most unresolved cases?",
+        "queries": {
+          "unresolved": "Villages with unresolved cases",
+          "urgent_resolution": "Resolution time by priority (closed cases only)",
+          "pending_vets": "Pending assignments by vet",
+          "confirmed_visits": "Independent visit confirmation",
+          "outcomes": "Farmer-reported outcomes by month"
+        }
+      },
+      "result": {
+        "query_id": "unresolved"
+      },
+      "seconds": 0.448
+    },
+    {
+      "instruction": "Choose the best supported analytical query. Return {\"query_id\": one provided ID or \"unsupported\"}. Select by meaning; never invent a query. Recovery/cause questions use outcomes; causal explanations require more evidence.",
+      "payload": {
+        "question": "What percentage of visits were independently confirmed?",
+        "queries": {
+          "unresolved": "Villages with unresolved cases",
+          "urgent_resolution": "Resolution time by priority (closed cases only)",
+          "pending_vets": "Pending assignments by vet",
+          "confirmed_visits": "Independent visit confirmation",
+          "outcomes": "Farmer-reported outcomes by month"
+        }
+      },
+      "result": {
+        "query_id": "confirmed_visits"
+      },
+      "seconds": 0.45
+    }
+  ],
+  "turns": [
+    {
+      "actor": "synthetic-farmer",
+      "text": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+      "response": {
+        "reply": "Is the animal unable to stand, struggling to breathe, or unconscious?",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "INTAKE"
+      },
+      "seconds": 2.159
+    },
+    {
+      "actor": "synthetic-farmer",
+      "text": "No. She can stand and walk, breathes normally, and is conscious. Only one cow is affected.",
+      "response": {
+        "reply": "Has the animal received any treatment so far?",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "INTAKE"
+      },
+      "seconds": 1.296
+    },
+    {
+      "actor": "synthetic-farmer",
+      "text": "I do not know whether she has had any treatment. My name is Anjali. I am in Rampur in Demo North district.",
+      "response": {
+        "reply": "animal type: cow; symptoms: not eating, looks weak; symptoms since: yesterday; animals affected: 1; urgent warning signs: none reported; farmer name: Anjali; village: Rampur; district: Demo North district; previous treatment: unknown. Are these details correct?",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "INTAKE"
+      },
+      "seconds": 1.98
+    },
+    {
+      "actor": "synthetic-farmer",
+      "text": "Correction: my village is Neemgaon, not Rampur. The symptoms began two days ago, not yesterday.",
+      "response": {
+        "reply": "animal type: cow; symptoms: not eating, looks weak; symptoms since: two days ago; animals affected: 1; urgent warning signs: none reported; farmer name: Anjali; village: Neemgaon; district: Demo North district; previous treatment: unknown. Are these details correct?",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "INTAKE"
+      },
+      "seconds": 1.528
+    },
+    {
+      "actor": "synthetic-farmer",
+      "text": "Yes, those details are correct. Please submit the case.",
+      "response": {
+        "reply": "Thank you. Case CASE-3BFF4E2CBC has been submitted for an operator to arrange veterinary assistance.",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "AWAITING_ASSIGNMENT"
+      },
+      "seconds": 3.576
+    },
+    {
+      "actor": "synthetic-vet-1",
+      "text": "Yes, I accept this assignment.",
+      "response": {
+        "reply": "Assignment accepted. After your visit, send your observations, treatment provided and follow-up needs. You can also send a photo and location.",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "ACCEPTED"
+      },
+      "seconds": 0.914
+    },
+    {
+      "actor": "synthetic-vet-1",
+      "text": "Here is a photograph and the shared location.",
+      "response": {
+        "reply": "Evidence saved. Have you visited the animal?",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "ACCEPTED"
+      },
+      "seconds": 1.022
+    },
+    {
+      "actor": "synthetic-vet-1",
+      "text": "I visited the cow today at 10 AM in Neemgaon. I observed reduced appetite and weakness. I examined the animal and gave no medication. No follow-up assistance is required.",
+      "response": {
+        "reply": "Your report: visit status: visited; visit time: 10 AM; reported location: Neemgaon; observations: reduced appetite and weakness; treatment reported: no medication; follow up required: False. Is this correct?",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "ACCEPTED"
+      },
+      "seconds": 1.124
+    },
+    {
+      "actor": "synthetic-vet-1",
+      "text": "Yes, the visit report is correct.",
+      "response": {
+        "reply": "Visit report saved as vet-reported. We will ask the farmer independently about the visit.",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "AWAITING_FEEDBACK"
+      },
+      "seconds": 1.05
+    },
+    {
+      "actor": "synthetic-farmer",
+      "text": "Yes, the vet visited and examined my cow. No medicine was given. She is eating again and has improved. I am satisfied, and I do not need any more assistance.",
+      "response": {
+        "reply": "Thank you. Your feedback is saved for operator review.",
+        "case_id": "CASE-3BFF4E2CBC",
+        "status": "AWAITING_FEEDBACK"
+      },
+      "seconds": 1.369
+    }
+  ],
+  "deliveries": [
+    {
+      "id": 1,
+      "actor_id": "synthetic-vet-1",
+      "case_id": "CASE-3BFF4E2CBC",
+      "text": "You have been assigned CASE-3BFF4E2CBC in Neemgaon. cow: not eating, looks weak. Can you accept this case?",
+      "delivered": 0,
+      "transport": "recording mock"
+    },
+    {
+      "id": 2,
+      "actor_id": "synthetic-farmer",
+      "case_id": "CASE-3BFF4E2CBC",
+      "text": "The vet has reported a visit. Did the vet visit your animal? What did they do?",
+      "delivered": 0,
+      "transport": "recording mock"
+    }
+  ],
+  "checks": [
+    "Whisper recovers animal from synthetic hf_alpha voice note",
+    "First message creates intake draft",
+    "Muse extracts initial animal/symptoms and asks missing urgency",
+    "Negative warning answer retained as answered",
+    "Explicit unknown is preserved",
+    "Village correction replaces old value",
+    "Duration correction replaces old value",
+    "Summary requested before case submission",
+    "Confirmed intake submitted in five farmer turns",
+    "Approved demonstration protocol attached",
+    "Muse recommends available local cattle vet",
+    "Vet is not contacted before operator approval",
+    "Approved assignment queued to separate vet actor",
+    "Vet acceptance advances workflow",
+    "Photo/location do not independently prove a visit",
+    "Vet report asks for confirmation",
+    "Confirmed vet report awaits independent feedback",
+    "Feedback request sent separately to farmer",
+    "Closure rejected before farmer feedback",
+    "Farmer independently confirms visit",
+    "Farmer explicitly declines further help",
+    "Operator closure updates district open count",
+    "Historical and live provenance counted separately",
+    "Muse selects unresolved query",
+    "Unresolved query matches independent count",
+    "Muse selects confirmed_visits query",
+    "Visit percentage matches independent computation",
+    "All original evidence explicitly associated with common case ID",
+    "Photo and location retained in evidence timeline",
+    "Closure summary links underlying evidence"
+  ],
+  "voice": {
+    "voice": "hf_alpha",
+    "language": "en-us",
+    "source_text": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+    "transcript": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+    "seconds": 8.142
+  },
+  "analytics": [
+    {
+      "question": "Which villages have the most unresolved cases?",
+      "answer": "Villages with unresolved cases. village: Neemgaon, unresolved: 17. village: Lotuspur, unresolved: 15. village: Sonapur, unresolved: 11. village: Rampur, unresolved: 11. village: Jasminpur, unresolved: 8. village: Palashpur, unresolved: 5.",
+      "query_id": "unresolved",
+      "sql": "SELECT json_extract(data,'$.village') AS village, count(*) AS unresolved FROM cases WHERE json_extract(data,'$.status') NOT IN ('CLOSED','INTAKE') GROUP BY village ORDER BY unresolved DESC",
+      "rows": [
+        {
+          "village": "Neemgaon",
+          "unresolved": 17
+        },
+        {
+          "village": "Lotuspur",
+          "unresolved": 15
+        },
+        {
+          "village": "Sonapur",
+          "unresolved": 11
+        },
+        {
+          "village": "Rampur",
+          "unresolved": 11
+        },
+        {
+          "village": "Jasminpur",
+          "unresolved": 8
+        },
+        {
+          "village": "Palashpur",
+          "unresolved": 5
+        }
+      ],
+      "chart": {
+        "type": "bar",
+        "title": "Villages with unresolved cases"
+      },
+      "provenance": "Includes synthetic historical and live demonstration cases; intake drafts excluded where relevant."
+    },
+    {
+      "question": "What percentage of visits were independently confirmed?",
+      "answer": "Independent visit confirmation. reported_visits: 115, confirmed_visits: 84, confirmed_percent: 73.0.",
+      "query_id": "confirmed_visits",
+      "sql": "SELECT count(*) AS reported_visits,sum(CASE WHEN json_extract(data,'$.feedback.visit_confirmed')=1 AND coalesce(json_extract(data,'$.feedback.verification'),'independent farmer account')!='single-account roleplay' THEN 1 ELSE 0 END) AS confirmed_visits,round(100.0*sum(CASE WHEN json_extract(data,'$.feedback.visit_confirmed')=1 AND coalesce(json_extract(data,'$.feedback.verification'),'independent farmer account')!='single-account roleplay' THEN 1 ELSE 0 END)/nullif(count(*),0),1) AS confirmed_percent FROM cases WHERE json_extract(data,'$.visited_at') IS NOT NULL",
+      "rows": [
+        {
+          "reported_visits": 115,
+          "confirmed_visits": 84,
+          "confirmed_percent": 73.0
+        }
+      ],
+      "chart": {
+        "type": "bar",
+        "title": "Independent visit confirmation"
+      },
+      "provenance": "Includes synthetic historical and live demonstration cases; intake drafts excluded where relevant."
+    }
+  ],
+  "case": {
+    "case_id": "CASE-3BFF4E2CBC",
+    "telegram_user_id": "synthetic-farmer",
+    "status": "CLOSED",
+    "provenance": "live_demo",
+    "created_at": "2026-10-15T18:02:06.682448+00:00",
+    "updated_at": "2026-10-15T18:02:22.738319+00:00",
+    "fields": {
+      "animal_type": "cow",
+      "symptoms": [
+        "not eating",
+        "looks weak"
+      ],
+      "symptoms_since": "two days ago",
+      "animals_affected": 1,
+      "urgent_warning_signs": [],
+      "farmer_name": "Anjali",
+      "village": "Neemgaon",
+      "district": "Demo North district",
+      "previous_treatment": "unknown"
+    },
+    "unknown_fields": [
+      "previous_treatment"
+    ],
+    "transcript": [
+      {
+        "actor": "farmer",
+        "text": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+        "timestamp": "2026-10-15T18:02:06.682596+00:00",
+        "message_id": "1"
+      },
+      {
+        "actor": "silo",
+        "text": "Is the animal unable to stand, struggling to breathe, or unconscious?",
+        "timestamp": "2026-10-15T18:02:08.837069+00:00"
+      },
+      {
+        "actor": "farmer",
+        "text": "No. She can stand and walk, breathes normally, and is conscious. Only one cow is affected.",
+        "timestamp": "2026-10-15T18:02:08.844599+00:00",
+        "message_id": "2"
+      },
+      {
+        "actor": "silo",
+        "text": "Has the animal received any treatment so far?",
+        "timestamp": "2026-10-15T18:02:10.133063+00:00"
+      },
+      {
+        "actor": "farmer",
+        "text": "I do not know whether she has had any treatment. My name is Anjali. I am in Rampur in Demo North district.",
+        "timestamp": "2026-10-15T18:02:10.138725+00:00",
+        "message_id": "3"
+      },
+      {
+        "actor": "silo",
+        "text": "animal type: cow; symptoms: not eating, looks weak; symptoms since: yesterday; animals affected: 1; urgent warning signs: none reported; farmer name: Anjali; village: Rampur; district: Demo North district; previous treatment: unknown. Are these details correct?",
+        "timestamp": "2026-10-15T18:02:12.113188+00:00"
+      },
+      {
+        "actor": "farmer",
+        "text": "Correction: my village is Neemgaon, not Rampur. The symptoms began two days ago, not yesterday.",
+        "timestamp": "2026-10-15T18:02:12.119789+00:00",
+        "message_id": "4"
+      },
+      {
+        "actor": "silo",
+        "text": "animal type: cow; symptoms: not eating, looks weak; symptoms since: two days ago; animals affected: 1; urgent warning signs: none reported; farmer name: Anjali; village: Neemgaon; district: Demo North district; previous treatment: unknown. Are these details correct?",
+        "timestamp": "2026-10-15T18:02:13.640766+00:00"
+      },
+      {
+        "actor": "farmer",
+        "text": "Yes, those details are correct. Please submit the case.",
+        "timestamp": "2026-10-15T18:02:13.647282+00:00",
+        "message_id": "5"
+      },
+      {
+        "actor": "silo",
+        "text": "Thank you. Case CASE-3BFF4E2CBC has been submitted for an operator to arrange veterinary assistance.",
+        "timestamp": "2026-10-15T18:02:17.218257+00:00"
+      },
+      {
+        "actor": "silo",
+        "recipient": "synthetic-vet-1",
+        "text": "You have been assigned CASE-3BFF4E2CBC in Neemgaon. cow: not eating, looks weak. Can you accept this case?",
+        "timestamp": "2026-10-15T18:02:17.224130+00:00"
+      },
+      {
+        "actor": "vet",
+        "text": "Yes, I accept this assignment.",
+        "timestamp": "2026-10-15T18:02:17.231090+00:00",
+        "message_id": "6"
+      },
+      {
+        "actor": "silo",
+        "text": "Assignment accepted. After your visit, send your observations, treatment provided and follow-up needs. You can also send a photo and location.",
+        "timestamp": "2026-10-15T18:02:18.140794+00:00"
+      },
+      {
+        "actor": "vet",
+        "text": "Here is a photograph and the shared location.",
+        "timestamp": "2026-10-15T18:02:18.167628+00:00",
+        "message_id": "7"
+      },
+      {
+        "actor": "silo",
+        "text": "Evidence saved. Have you visited the animal?",
+        "timestamp": "2026-10-15T18:02:19.182718+00:00"
+      },
+      {
+        "actor": "vet",
+        "text": "I visited the cow today at 10 AM in Neemgaon. I observed reduced appetite and weakness. I examined the animal and gave no medication. No follow-up assistance is required.",
+        "timestamp": "2026-10-15T18:02:19.188995+00:00",
+        "message_id": "8"
+      },
+      {
+        "actor": "silo",
+        "text": "Your report: visit status: visited; visit time: 10 AM; reported location: Neemgaon; observations: reduced appetite and weakness; treatment reported: no medication; follow up required: False. Is this correct?",
+        "timestamp": "2026-10-15T18:02:20.307328+00:00"
+      },
+      {
+        "actor": "vet",
+        "text": "Yes, the visit report is correct.",
+        "timestamp": "2026-10-15T18:02:20.313236+00:00",
+        "message_id": "9"
+      },
+      {
+        "actor": "silo",
+        "recipient": "synthetic-farmer",
+        "text": "The vet has reported a visit. Did the vet visit your animal? What did they do?",
+        "timestamp": "2026-10-15T18:02:21.357513+00:00"
+      },
+      {
+        "actor": "silo",
+        "text": "Visit report saved as vet-reported. We will ask the farmer independently about the visit.",
+        "timestamp": "2026-10-15T18:02:21.357523+00:00"
+      },
+      {
+        "actor": "farmer",
+        "text": "Yes, the vet visited and examined my cow. No medicine was given. She is eating again and has improved. I am satisfied, and I do not need any more assistance.",
+        "timestamp": "2026-10-15T18:02:21.368421+00:00",
+        "message_id": "10"
+      },
+      {
+        "actor": "silo",
+        "text": "Thank you. Your feedback is saved for operator review.",
+        "timestamp": "2026-10-15T18:02:22.731662+00:00"
+      }
+    ],
+    "events": [
+      {
+        "timestamp": "2026-10-15T18:02:06.682579+00:00",
+        "type": "evidence",
+        "text": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-0497E271D3"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:06.682594+00:00",
+        "type": "evidence",
+        "text": "audio/ogg",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-C78107B007"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:08.837057+00:00",
+        "type": "extraction",
+        "text": "Intake observations updated",
+        "actor": "system",
+        "data": {
+          "updates": {
+            "animal_type": "cow",
+            "symptoms": [
+              "not eating",
+              "looks weak"
+            ],
+            "symptoms_since": "yesterday"
+          },
+          "unknown_fields": [],
+          "model": "muse-glimmer-30b"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:08.844591+00:00",
+        "type": "evidence",
+        "text": "No. She can stand and walk, breathes normally, and is conscious. Only one cow is affected.",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-C611FB4F5C"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:10.133046+00:00",
+        "type": "extraction",
+        "text": "Intake observations updated",
+        "actor": "system",
+        "data": {
+          "updates": {
+            "animals_affected": 1,
+            "urgent_warning_signs": []
+          },
+          "unknown_fields": [],
+          "model": "muse-glimmer-30b"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:10.138719+00:00",
+        "type": "evidence",
+        "text": "I do not know whether she has had any treatment. My name is Anjali. I am in Rampur in Demo North district.",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-CAA7F3050B"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:12.113160+00:00",
+        "type": "extraction",
+        "text": "Intake observations updated",
+        "actor": "system",
+        "data": {
+          "updates": {
+            "farmer_name": "Anjali",
+            "village": "Rampur",
+            "district": "Demo North district",
+            "previous_treatment": "unknown"
+          },
+          "unknown_fields": [
+            "previous_treatment"
+          ],
+          "model": "muse-glimmer-30b"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:12.119783+00:00",
+        "type": "evidence",
+        "text": "Correction: my village is Neemgaon, not Rampur. The symptoms began two days ago, not yesterday.",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-F70AAC4FD1"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:13.640735+00:00",
+        "type": "extraction",
+        "text": "Intake observations updated",
+        "actor": "system",
+        "data": {
+          "updates": {
+            "symptoms_since": "two days ago",
+            "village": "Neemgaon"
+          },
+          "unknown_fields": [
+            "previous_treatment"
+          ],
+          "model": "muse-glimmer-30b"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:13.647275+00:00",
+        "type": "evidence",
+        "text": "Yes, those details are correct. Please submit the case.",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-DC63B2D468"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:14.845079+00:00",
+        "type": "extraction",
+        "text": "Intake observations updated",
+        "actor": "system",
+        "data": {
+          "updates": {},
+          "unknown_fields": [
+            "previous_treatment"
+          ],
+          "model": "muse-glimmer-30b"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:14.845098+00:00",
+        "type": "status",
+        "text": "INTAKE \u2192 NEW",
+        "actor": "system",
+        "data": {
+          "from": "INTAKE",
+          "to": "NEW"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.218238+00:00",
+        "type": "recommendation",
+        "text": "Protocol and vet recommendation prepared",
+        "actor": "system",
+        "data": {
+          "vet_id": "VET-01",
+          "name": "Dr Asha Rao",
+          "reason": "Cow in Neemgaon, Demo North district with not eating and looks weak for two days. Dr Asha Rao covers Neemgaon in Demo North, specializes in cattle, is available with workload 0. Protocol DEMO-WEAKNESS matches reported weakness for prompt veterinary assessment.",
+          "model": "muse-glimmer-30b"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.218252+00:00",
+        "type": "status",
+        "text": "NEW \u2192 AWAITING_ASSIGNMENT",
+        "actor": "system",
+        "data": {
+          "from": "NEW",
+          "to": "AWAITING_ASSIGNMENT"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.223979+00:00",
+        "type": "approval",
+        "text": "Assignment approved",
+        "actor": "Synthetic ERC operator",
+        "data": {
+          "vet_id": "VET-01"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.223983+00:00",
+        "type": "status",
+        "text": "AWAITING_ASSIGNMENT \u2192 ASSIGNED",
+        "actor": "system",
+        "data": {
+          "from": "AWAITING_ASSIGNMENT",
+          "to": "ASSIGNED"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.224136+00:00",
+        "type": "notification",
+        "text": "Message queued",
+        "actor": "system",
+        "data": {
+          "recipient": "synthetic-vet-1",
+          "text": "You have been assigned CASE-3BFF4E2CBC in Neemgaon. cow: not eating, looks weak. Can you accept this case?"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.226012+00:00",
+        "type": "evidence",
+        "text": "You have been assigned CASE-3BFF4E2CBC in Neemgaon. cow: not eating, looks weak. Can you accept this case?",
+        "actor": "silo",
+        "data": {
+          "evidence_id": "EV-46AE7F0E58"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:17.231084+00:00",
+        "type": "evidence",
+        "text": "Yes, I accept this assignment.",
+        "actor": "synthetic-vet-1",
+        "data": {
+          "evidence_id": "EV-406D951FD9"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:18.140779+00:00",
+        "type": "status",
+        "text": "ASSIGNED \u2192 ACCEPTED",
+        "actor": "system",
+        "data": {
+          "from": "ASSIGNED",
+          "to": "ACCEPTED"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:18.167551+00:00",
+        "type": "evidence",
+        "text": "Here is a photograph and the shared location.",
+        "actor": "synthetic-vet-1",
+        "data": {
+          "evidence_id": "EV-A9AC54BA73"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:18.167583+00:00",
+        "type": "evidence",
+        "text": "image/png",
+        "actor": "synthetic-vet-1",
+        "data": {
+          "evidence_id": "EV-259BB69C61"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:18.167624+00:00",
+        "type": "evidence",
+        "text": "location",
+        "actor": "synthetic-vet-1",
+        "data": {
+          "evidence_id": "EV-6771245FB7"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:19.188988+00:00",
+        "type": "evidence",
+        "text": "I visited the cow today at 10 AM in Neemgaon. I observed reduced appetite and weakness. I examined the animal and gave no medication. No follow-up assistance is required.",
+        "actor": "synthetic-vet-1",
+        "data": {
+          "evidence_id": "EV-82640B209E"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:20.313230+00:00",
+        "type": "evidence",
+        "text": "Yes, the visit report is correct.",
+        "actor": "synthetic-vet-1",
+        "data": {
+          "evidence_id": "EV-713FB043D3"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:21.357394+00:00",
+        "type": "status",
+        "text": "ACCEPTED \u2192 VISITED",
+        "actor": "system",
+        "data": {
+          "from": "ACCEPTED",
+          "to": "VISITED"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:21.357398+00:00",
+        "type": "status",
+        "text": "VISITED \u2192 AWAITING_FEEDBACK",
+        "actor": "system",
+        "data": {
+          "from": "VISITED",
+          "to": "AWAITING_FEEDBACK"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:21.357520+00:00",
+        "type": "notification",
+        "text": "Message queued",
+        "actor": "system",
+        "data": {
+          "recipient": "synthetic-farmer",
+          "text": "The vet has reported a visit. Did the vet visit your animal? What did they do?"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:21.361830+00:00",
+        "type": "evidence",
+        "text": "The vet has reported a visit. Did the vet visit your animal? What did they do?",
+        "actor": "silo",
+        "data": {
+          "evidence_id": "EV-795EAB2497"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:21.368410+00:00",
+        "type": "evidence",
+        "text": "Yes, the vet visited and examined my cow. No medicine was given. She is eating again and has improved. I am satisfied, and I do not need any more assistance.",
+        "actor": "synthetic-farmer",
+        "data": {
+          "evidence_id": "EV-27EBE14B76"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:22.738304+00:00",
+        "type": "status",
+        "text": "AWAITING_FEEDBACK \u2192 CLOSED",
+        "actor": "system",
+        "data": {
+          "from": "AWAITING_FEEDBACK",
+          "to": "CLOSED"
+        }
+      },
+      {
+        "timestamp": "2026-10-15T18:02:22.738316+00:00",
+        "type": "closure",
+        "text": "CASE-3BFF4E2CBC: cow in Neemgaon. Vet-reported visit confirmed (independent farmer account). Farmer condition: eating again and has improved. No further help requested.",
+        "actor": "Synthetic ERC operator",
+        "data": {
+          "text": "CASE-3BFF4E2CBC: cow in Neemgaon. Vet-reported visit confirmed (independent farmer account). Farmer condition: eating again and has improved. No further help requested.",
+          "evidence_ids": [
+            "EV-0497E271D3",
+            "EV-C78107B007",
+            "EV-C611FB4F5C",
+            "EV-CAA7F3050B",
+            "EV-F70AAC4FD1",
+            "EV-DC63B2D468",
+            "EV-46AE7F0E58",
+            "EV-406D951FD9",
+            "EV-A9AC54BA73",
+            "EV-259BB69C61",
+            "EV-6771245FB7",
+            "EV-82640B209E",
+            "EV-713FB043D3",
+            "EV-795EAB2497",
+            "EV-27EBE14B76"
+          ],
+          "closed_by": "Synthetic ERC operator"
+        }
+      }
+    ],
+    "assigned_vet": "VET-01",
+    "priority": "routine",
+    "category": "General livestock illness intake",
+    "protocol": {
+      "id": "DEMO-WEAKNESS",
+      "title": "Fever and weakness escalation",
+      "text": "Escalate reported fever or weakness for prompt veterinary assessment.",
+      "synthetic": true
+    },
+    "recommendation": {
+      "vet_id": "VET-01",
+      "name": "Dr Asha Rao",
+      "reason": "Cow in Neemgaon, Demo North district with not eating and looks weak for two days. Dr Asha Rao covers Neemgaon in Demo North, specializes in cattle, is available with workload 0. Protocol DEMO-WEAKNESS matches reported weakness for prompt veterinary assessment.",
+      "model": "muse-glimmer-30b"
+    },
+    "report": {
+      "visit_status": "visited",
+      "visit_time": "10 AM",
+      "reported_location": "Neemgaon",
+      "observations": "reduced appetite and weakness",
+      "treatment_reported": "no medication",
+      "follow_up_required": false,
+      "vet_confirmation": true,
+      "reported_at": "2026-10-15T18:02:21.357376+00:00",
+      "verification": "vet-reported"
+    },
+    "feedback": {
+      "visit_confirmed": true,
+      "farmer_reported_service": "examined my cow",
+      "farmer_reported_condition": "eating again and has improved",
+      "service_satisfaction": "satisfied",
+      "further_help_required": false,
+      "feedback_timestamp": "2026-10-15T18:02:22.731645+00:00",
+      "verification": "independent farmer account"
+    },
+    "animal_type": "cow",
+    "symptoms": [
+      "not eating",
+      "looks weak"
+    ],
+    "urgent_warning_signs": [],
+    "symptoms_since": "two days ago",
+    "animals_affected": 1,
+    "previous_treatment": "unknown",
+    "farmer_name": "Anjali",
+    "village": "Neemgaon",
+    "district": "Demo North district",
+    "confirming": true,
+    "last_question": "Are these details correct?",
+    "evidence": [
+      {
+        "evidence_id": "EV-0497E271D3",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "1",
+        "timestamp": "2026-10-15T18:02:06.682464+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "My cow has been unwell since yesterday. She is not eating and looks weak.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-C78107B007",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "1",
+        "timestamp": "2026-10-15T18:02:06.682585+00:00",
+        "media_type": "audio/ogg",
+        "storage_uri": "d0fc3f329aa2406ba4808ac74a09421b.ogg",
+        "extracted_data": {
+          "storage_uri": "d0fc3f329aa2406ba4808ac74a09421b.ogg",
+          "media_type": "audio/ogg",
+          "size": 18698
+        }
+      },
+      {
+        "evidence_id": "EV-C611FB4F5C",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "2",
+        "timestamp": "2026-10-15T18:02:08.844466+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "No. She can stand and walk, breathes normally, and is conscious. Only one cow is affected.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-CAA7F3050B",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "3",
+        "timestamp": "2026-10-15T18:02:10.138584+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "I do not know whether she has had any treatment. My name is Anjali. I am in Rampur in Demo North district.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-F70AAC4FD1",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "4",
+        "timestamp": "2026-10-15T18:02:12.119661+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "Correction: my village is Neemgaon, not Rampur. The symptoms began two days ago, not yesterday.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-DC63B2D468",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "5",
+        "timestamp": "2026-10-15T18:02:13.647139+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "Yes, those details are correct. Please submit the case.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-46AE7F0E58",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "silo",
+        "source_message_id": "mock-out-1",
+        "timestamp": "2026-10-15T18:02:17.225871+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "You have been assigned CASE-3BFF4E2CBC in Neemgaon. cow: not eating, looks weak. Can you accept this case?",
+          "metadata": {
+            "recipient": "synthetic-vet-1"
+          }
+        }
+      },
+      {
+        "evidence_id": "EV-406D951FD9",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-vet-1",
+        "source_message_id": "6",
+        "timestamp": "2026-10-15T18:02:17.230983+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "Yes, I accept this assignment.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-A9AC54BA73",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-vet-1",
+        "source_message_id": "7",
+        "timestamp": "2026-10-15T18:02:18.167427+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "Here is a photograph and the shared location.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-259BB69C61",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-vet-1",
+        "source_message_id": "7",
+        "timestamp": "2026-10-15T18:02:18.167566+00:00",
+        "media_type": "image/png",
+        "storage_uri": "8728beb87db545debaad8f33d86618d5.png",
+        "extracted_data": {
+          "storage_uri": "8728beb87db545debaad8f33d86618d5.png",
+          "media_type": "image/png",
+          "size": 3208
+        }
+      },
+      {
+        "evidence_id": "EV-6771245FB7",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-vet-1",
+        "source_message_id": "7",
+        "timestamp": "2026-10-15T18:02:18.167590+00:00",
+        "media_type": "location",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "location",
+          "latitude": 19.1,
+          "longitude": 73.0,
+          "storage_uri": null,
+          "synthetic": true
+        }
+      },
+      {
+        "evidence_id": "EV-82640B209E",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-vet-1",
+        "source_message_id": "8",
+        "timestamp": "2026-10-15T18:02:19.188873+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "I visited the cow today at 10 AM in Neemgaon. I observed reduced appetite and weakness. I examined the animal and gave no medication. No follow-up assistance is required.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-713FB043D3",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-vet-1",
+        "source_message_id": "9",
+        "timestamp": "2026-10-15T18:02:20.313112+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "Yes, the visit report is correct.",
+          "metadata": {}
+        }
+      },
+      {
+        "evidence_id": "EV-795EAB2497",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "silo",
+        "source_message_id": "mock-out-2",
+        "timestamp": "2026-10-15T18:02:21.361644+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "The vet has reported a visit. Did the vet visit your animal? What did they do?",
+          "metadata": {
+            "recipient": "synthetic-farmer"
+          }
+        }
+      },
+      {
+        "evidence_id": "EV-27EBE14B76",
+        "case_id": "CASE-3BFF4E2CBC",
+        "source_actor": "synthetic-farmer",
+        "source_message_id": "10",
+        "timestamp": "2026-10-15T18:02:21.368253+00:00",
+        "media_type": "text",
+        "storage_uri": null,
+        "extracted_data": {
+          "media_type": "text",
+          "text": "Yes, the vet visited and examined my cow. No medicine was given. She is eating again and has improved. I am satisfied, and I do not need any more assistance.",
+          "metadata": {}
+        }
+      }
+    ],
+    "assigned_at": "2026-10-15T18:02:17.223973+00:00",
+    "assigned_vet_actor": "synthetic-vet-1",
+    "accepted_at": "2026-10-15T18:02:18.140791+00:00",
+    "pending_report": {
+      "visit_status": "visited",
+      "visit_time": "10 AM",
+      "reported_location": "Neemgaon",
+      "observations": "reduced appetite and weakness",
+      "treatment_reported": "no medication",
+      "follow_up_required": false
+    },
+    "report_confirming": false,
+    "visited_at": "2026-10-15T18:02:21.357388+00:00",
+    "closed_at": "2026-10-15T18:02:22.738310+00:00",
+    "summary": {
+      "text": "CASE-3BFF4E2CBC: cow in Neemgaon. Vet-reported visit confirmed (independent farmer account). Farmer condition: eating again and has improved. No further help requested.",
+      "evidence_ids": [
+        "EV-0497E271D3",
+        "EV-C78107B007",
+        "EV-C611FB4F5C",
+        "EV-CAA7F3050B",
+        "EV-F70AAC4FD1",
+        "EV-DC63B2D468",
+        "EV-46AE7F0E58",
+        "EV-406D951FD9",
+        "EV-A9AC54BA73",
+        "EV-259BB69C61",
+        "EV-6771245FB7",
+        "EV-82640B209E",
+        "EV-713FB043D3",
+        "EV-795EAB2497",
+        "EV-27EBE14B76"
+      ],
+      "closed_by": "Synthetic ERC operator"
+    }
+  },
+  "metrics": {
+    "total_cases": 151,
+    "open_cases": 67,
+    "synthetic_cases": 150,
+    "live_cases": 1,
+    "reported_visits": 115,
+    "farmer_confirmed_visits": 84,
+    "independently_confirmed_visits": 84,
+    "unresolved_cases": 67,
+    "assignment_hours": 9.75,
+    "resolution_hours": 64.83,
+    "acceptance_rate": 84.8,
+    "by_status": [
+      {
+        "label": "CLOSED",
+        "value": 84
+      },
+      {
+        "label": "ASSIGNED",
+        "value": 23
+      },
+      {
+        "label": "NEEDS_REVIEW",
+        "value": 16
+      },
+      {
+        "label": "AWAITING_FEEDBACK",
+        "value": 15
+      },
+      {
+        "label": "ACCEPTED",
+        "value": 13
+      }
+    ],
+    "by_category": [
+      {
+        "label": "weakness",
+        "value": 51
+      },
+      {
+        "label": "appetite loss",
+        "value": 50
+      },
+      {
+        "label": "mobility",
+        "value": 49
+      },
+      {
+        "label": "General livestock illness intake",
+        "value": 1
+      }
+    ],
+    "by_priority": [
+      {
+        "label": "routine",
+        "value": 98
+      },
+      {
+        "label": "urgent",
+        "value": 53
+      }
+    ],
+    "by_village": [
+      {
+        "label": "Neemgaon",
+        "value": 35
+      },
+      {
+        "label": "Lotuspur",
+        "value": 29
+      },
+      {
+        "label": "Sonapur",
+        "value": 24
+      },
+      {
+        "label": "Jasminpur",
+        "value": 24
+      },
+      {
+        "label": "Rampur",
+        "value": 22
+      },
+      {
+        "label": "Palashpur",
+        "value": 17
+      }
+    ],
+    "by_district": [
+      {
+        "label": "Demo East",
+        "value": 57
+      },
+      {
+        "label": "Demo North",
+        "value": 47
+      },
+      {
+        "label": "Demo South",
+        "value": 46
+      },
+      {
+        "label": "Demo North district",
+        "value": 1
+      }
+    ],
+    "outcomes": [
+      {
+        "label": "eating again and has improved",
+        "value": 1
+      },
+      {
+        "label": "improved",
+        "value": 25
+      },
+      {
+        "label": "not improved",
+        "value": 16
+      },
+      {
+        "label": "recovered",
+        "value": 27
+      },
+      {
+        "label": "stable",
+        "value": 31
+      },
+      {
+        "label": "unknown",
+        "value": 0
+      }
+    ]
+  },
+  "passed": true
+}

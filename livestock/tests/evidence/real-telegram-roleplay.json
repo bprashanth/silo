@@ -1,0 +1,216 @@
+{
+  "transport": "Real Telegram Bot API and logged-in Telethon test account; browser operator actions via Playwright",
+  "input_audio": "Synthetic hf_alpha voice notes through actual Telegram and Whisper; text corrections used",
+  "case_id": "CASE-4659ADD6FA",
+  "status": "CLOSED",
+  "fields": {
+    "animal_type": "cow",
+    "symptoms": [
+      "not eating",
+      "looks weak"
+    ],
+    "symptoms_since": "two days ago",
+    "animals_affected": 1,
+    "urgent_warning_signs": [],
+    "farmer_name": "Anjali",
+    "village": "Neemgaon",
+    "district": "Demo North district",
+    "previous_treatment": "unknown"
+  },
+  "feedback": {
+    "visit_confirmed": true,
+    "farmer_reported_service": "examined my cow and gave no medication",
+    "farmer_reported_condition": "doing better now",
+    "service_satisfaction": "satisfied with the visit",
+    "further_help_required": false,
+    "feedback_timestamp": "2026-10-15T18:11:38.071421+00:00",
+    "verification": "single-account roleplay"
+  },
+  "report": {
+    "visit_status": "visited",
+    "visit_time": "today",
+    "observations": "cow was weak but standing",
+    "treatment_reported": "examined the animal and provided no medication",
+    "follow_up_required": false,
+    "vet_confirmation": true,
+    "reported_at": "2026-10-15T18:10:31.376630+00:00",
+    "verification": "vet-reported"
+  },
+  "transitions": [
+    {
+      "from": "INTAKE",
+      "to": "NEW"
+    },
+    {
+      "from": "NEW",
+      "to": "AWAITING_ASSIGNMENT"
+    },
+    {
+      "from": "AWAITING_ASSIGNMENT",
+      "to": "ASSIGNED"
+    },
+    {
+      "from": "ASSIGNED",
+      "to": "ACCEPTED"
+    },
+    {
+      "from": "ACCEPTED",
+      "to": "VISITED"
+    },
+    {
+      "from": "VISITED",
+      "to": "AWAITING_FEEDBACK"
+    },
+    {
+      "from": "AWAITING_FEEDBACK",
+      "to": "CLOSED"
+    }
+  ],
+  "evidence_by_type": {
+    "text": 23,
+    "audio/ogg": 16,
+    "image/jpeg": 1,
+    "application/location+json": 1
+  },
+  "delivered_notifications": 2,
+  "pending_notifications": 0,
+  "metrics": {
+    "total_cases": 151,
+    "open_cases": 67,
+    "synthetic_cases": 150,
+    "live_cases": 1,
+    "reported_visits": 115,
+    "farmer_confirmed_visits": 84,
+    "independently_confirmed_visits": 83,
+    "unresolved_cases": 67,
+    "assignment_hours": 9.76,
+    "resolution_hours": 64.84,
+    "acceptance_rate": 84.8,
+    "by_status": [
+      {
+        "label": "CLOSED",
+        "value": 84
+      },
+      {
+        "label": "ASSIGNED",
+        "value": 23
+      },
+      {
+        "label": "NEEDS_REVIEW",
+        "value": 16
+      },
+      {
+        "label": "AWAITING_FEEDBACK",
+        "value": 15
+      },
+      {
+        "label": "ACCEPTED",
+        "value": 13
+      }
+    ],
+    "by_category": [
+      {
+        "label": "weakness",
+        "value": 51
+      },
+      {
+        "label": "appetite loss",
+        "value": 50
+      },
+      {
+        "label": "mobility",
+        "value": 49
+      },
+      {
+        "label": "general",
+        "value": 1
+      }
+    ],
+    "by_priority": [
+      {
+        "label": "routine",
+        "value": 98
+      },
+      {
+        "label": "urgent",
+        "value": 53
+      }
+    ],
+    "by_village": [
+      {
+        "label": "Neemgaon",
+        "value": 35
+      },
+      {
+        "label": "Lotuspur",
+        "value": 29
+      },
+      {
+        "label": "Sonapur",
+        "value": 24
+      },
+      {
+        "label": "Jasminpur",
+        "value": 24
+      },
+      {
+        "label": "Rampur",
+        "value": 22
+      },
+      {
+        "label": "Palashpur",
+        "value": 17
+      }
+    ],
+    "by_district": [
+      {
+        "label": "Demo East",
+        "value": 57
+      },
+      {
+        "label": "Demo North",
+        "value": 47
+      },
+      {
+        "label": "Demo South",
+        "value": 46
+      },
+      {
+        "label": "Demo North district",
+        "value": 1
+      }
+    ],
+    "outcomes": [
+      {
+        "label": "doing better now",
+        "value": 1
+      },
+      {
+        "label": "improved",
+        "value": 25
+      },
+      {
+        "label": "not improved",
+        "value": 16
+      },
+      {
+        "label": "recovered",
+        "value": 27
+      },
+      {
+        "label": "stable",
+        "value": 31
+      },
+      {
+        "label": "unknown",
+        "value": 0
+      }
+    ]
+  },
+  "limitations": [
+    "One account roleplays farmer and vet; not independent verification.",
+    "Synthetic photograph and shared location are stored evidence, not proof of a real visit.",
+    "One Telegram reply connection dropped after location storage; bounded retries added and tested."
+  ],
+  "screenshots": "/mnt/seagate/silo/livestock-v2/ui/actual-closed.png"
+}
