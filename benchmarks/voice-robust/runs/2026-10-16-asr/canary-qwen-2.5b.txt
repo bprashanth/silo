@@ -1,0 +1,10 @@
+== canary-qwen-2.5b  load=261s  clips=422
+edacc   clean        n= 60 WER=  7.7%              p50=  507ms p95= 1184ms
+edacc   farm_phone   n= 60 WER= 32.2%              p50=  456ms p95= 1078ms
+edacc   gsm          n= 60 WER= 17.3%              p50=  480ms p95= 1141ms
+edacc   opus6k_loss  n= 60 WER= 23.6%              p50=  493ms p95= 1094ms
+farmer  clean        n= 44 WER=  4.9% keys= 91.6%  p50=  379ms p95=  794ms
+farmer  farm_phone   n= 44 WER=  8.7% keys= 80.0%  p50=  352ms p95=  819ms
+farmer  gsm          n= 44 WER=  4.9% keys= 91.6%  p50=  375ms p95=  637ms
+farmer  opus6k_loss  n= 44 WER=  4.9% keys= 89.5%  p50=  354ms p95=  777ms
+noise   farm_phone   n=  6 hallucinated=4

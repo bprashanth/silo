@@ -1,0 +1,10 @@
+== or-google_gemini-3.5-flash-lite  load=0s  clips=422  cost=$0.0349
+edacc   clean        n= 60 WER= 10.9%              p50= 2006ms p95= 3012ms
+edacc   farm_phone   n= 60 WER= 42.2%              p50= 1898ms p95= 3994ms
+edacc   gsm          n= 60 WER= 20.9%              p50= 1876ms p95= 3620ms
+edacc   opus6k_loss  n= 60 WER= 33.5%              p50= 1864ms p95= 3643ms
+farmer  clean        n= 44 WER=  4.0% keys= 93.7%  p50= 1960ms p95= 3268ms
+farmer  farm_phone   n= 44 WER= 11.3% keys= 77.9%  p50= 1926ms p95= 3320ms
+farmer  gsm          n= 44 WER=  4.0% keys= 94.7%  p50= 1886ms p95= 3356ms
+farmer  opus6k_loss  n= 44 WER=  6.3% keys= 88.4%  p50= 1848ms p95= 3277ms
+noise   farm_phone   n=  6 hallucinated=6

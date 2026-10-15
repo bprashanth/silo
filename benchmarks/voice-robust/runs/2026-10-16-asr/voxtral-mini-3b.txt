@@ -1,0 +1,10 @@
+== voxtral-mini-3b  load=56s  clips=422
+edacc   clean        n= 60 WER= 12.0%              p50=  896ms p95= 1762ms
+edacc   farm_phone   n= 60 WER= 32.7%              p50=  870ms p95= 1676ms
+edacc   gsm          n= 60 WER= 18.0%              p50=  918ms p95= 1848ms
+edacc   opus6k_loss  n= 60 WER= 34.4%              p50=  898ms p95= 2219ms
+farmer  clean        n= 44 WER=  4.5% keys= 90.5%  p50=  683ms p95=  973ms
+farmer  farm_phone   n= 44 WER=  7.7% keys= 83.2%  p50=  684ms p95=  971ms
+farmer  gsm          n= 44 WER=  3.8% keys= 91.6%  p50=  683ms p95=  971ms
+farmer  opus6k_loss  n= 44 WER=  4.7% keys= 88.4%  p50=  683ms p95=  966ms
+noise   farm_phone   n=  6 hallucinated=3

@@ -1,0 +1,10 @@
+== hf-oriserve-apex-gpu  load=5s  clips=422
+edacc   clean        n= 60 WER= 17.5%              p50=  146ms p95=  275ms
+edacc   farm_phone   n= 60 WER= 61.1%              p50=  122ms p95=  226ms
+edacc   gsm          n= 60 WER= 30.0%              p50=  150ms p95=  284ms
+edacc   opus6k_loss  n= 60 WER= 49.5%              p50=  134ms p95=  231ms
+farmer  clean        n= 44 WER= 10.1% keys= 70.5%  p50=  136ms p95=  248ms
+farmer  farm_phone   n= 44 WER= 45.8% keys= 40.0%  p50=  125ms p95=  253ms
+farmer  gsm          n= 44 WER= 17.1% keys= 67.4%  p50=  132ms p95=  257ms
+farmer  opus6k_loss  n= 44 WER= 13.1% keys= 63.2%  p50=  133ms p95=  178ms
+noise   farm_phone   n=  6 hallucinated=6

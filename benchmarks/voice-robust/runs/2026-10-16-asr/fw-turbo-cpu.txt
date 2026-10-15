@@ -1,0 +1,10 @@
+== fw-turbo-cpu  load=2s  clips=422
+edacc   clean        n= 60 WER= 10.9%              p50= 4893ms p95= 8011ms
+edacc   farm_phone   n= 60 WER= 29.8%              p50= 4958ms p95= 8262ms
+edacc   gsm          n= 60 WER= 17.3%              p50= 4909ms p95= 7648ms
+edacc   opus6k_loss  n= 60 WER= 25.9%              p50= 4897ms p95= 8112ms
+farmer  clean        n= 44 WER=  4.0% keys= 91.6%  p50= 4674ms p95= 6648ms
+farmer  farm_phone   n= 44 WER=  9.4% keys= 77.9%  p50= 4717ms p95= 6726ms
+farmer  gsm          n= 44 WER=  4.9% keys= 90.5%  p50= 4805ms p95= 6375ms
+farmer  opus6k_loss  n= 44 WER=  5.6% keys= 85.3%  p50= 4674ms p95= 6792ms
+noise   farm_phone   n=  6 hallucinated=6

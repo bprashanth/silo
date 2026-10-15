@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Livestock Helpline Call</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="title"><strong>Livestock helpline</strong> <span class="muted">robust voice intake · local</span></div>
+  <div class="controls">
+    <label>Understanding <select id="nlu"></select></label>
+    <label class="check"><input type="checkbox" id="line"> Simulate bad 2G line</label>
+    <label class="check"><input type="checkbox" id="fixture"> Test audio instead of mic</label>
+    <button id="call" class="primary">Call</button>
+    <button id="end" disabled>End call</button>
+    <span id="timer" class="mono">00:00</span>
+    <span id="status" class="pill">idle</span>
+  </div>
+  <div id="fixtures" hidden></div>
+</header>
+<main>
+  <section id="talk">
+    <h2>Conversation</h2>
+    <div id="transcript"><p class="muted">Click Call, allow the microphone, and say what is wrong with your animal. Headphones help.</p></div>
+  </section>
+  <aside>
+    <h2>Intake record <span id="urgency" class="badge" hidden>URGENT</span></h2>
+    <dl id="fields"></dl>
+    <div class="row"><button id="export">Export JSON</button></div>
+  </aside>
+</main>
+<section id="timing">
+  <h2>Per-turn timing <span class="muted" id="engines"></span></h2>
+  <table><thead><tr><th>#</th><th>heard</th><th>end of turn</th><th>ASR</th><th>understanding</th><th>first sound</th><th>reply</th><th>browser</th></tr></thead><tbody id="metrics"></tbody></table>
+  <p class="muted small">"first sound" = farmer stops speaking → agent's instant acknowledgement starts. "reply" = → the actual answer/question starts. "browser" = measured from the audio heard in this page.</p>
+</section>
+<audio id="remote" autoplay></audio>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+== parakeet-v3-boost  load=43s  clips=422
+edacc   clean        n= 60 WER=  6.9%              p50=   58ms p95=   80ms
+edacc   farm_phone   n= 60 WER= 24.8%              p50=   57ms p95=   81ms
+edacc   gsm          n= 60 WER= 12.2%              p50=   58ms p95=   81ms
+edacc   opus6k_loss  n= 60 WER= 18.8%              p50=   57ms p95=   85ms
+farmer  clean        n= 44 WER=  3.1% keys= 94.7%  p50=   49ms p95=   55ms
+farmer  farm_phone   n= 44 WER=  5.9% keys= 89.5%  p50=   49ms p95=   55ms
+farmer  gsm          n= 44 WER=  3.3% keys= 94.7%  p50=   49ms p95=   62ms
+farmer  opus6k_loss  n= 44 WER=  3.1% keys= 93.7%  p50=   49ms p95=   64ms
+noise   farm_phone   n=  6 hallucinated=0

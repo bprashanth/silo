@@ -1,0 +1,10 @@
+== or-qwen_qwen3.8-omni-flash  load=0s  clips=422  cost=$0.0574
+edacc   clean        n= 60 WER=  6.9%              p50= 3867ms p95= 9197ms
+edacc   farm_phone   n= 60 WER= 27.4%              p50= 4935ms p95=17443ms
+edacc   gsm          n= 60 WER= 13.1%              p50= 3902ms p95=12709ms
+edacc   opus6k_loss  n= 60 WER= 20.4%              p50= 4437ms p95=14791ms
+farmer  clean        n= 44 WER=  2.3% keys= 93.7%  p50= 2776ms p95= 6777ms
+farmer  farm_phone   n= 44 WER=  6.3% keys= 86.3%  p50= 3237ms p95= 5448ms
+farmer  gsm          n= 44 WER=  2.6% keys= 95.8%  p50= 2428ms p95= 7133ms
+farmer  opus6k_loss  n= 44 WER=  2.3% keys= 93.7%  p50= 3045ms p95= 4978ms
+noise   farm_phone   n=  6 hallucinated=6
