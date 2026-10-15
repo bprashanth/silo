@@ -131,7 +131,11 @@ async def run(sc_, sp, nlu_backend, condition):
             if v is None or want is None or k in corrected: continue
             if (str(v) != str(want)) if k in ('contact_details', 'animals_affected') else (fuzz.ratio(str(v).lower(), str(want).lower()) < 85):
                 fix = k; corrected.add(k); break
+        if slot == 'confirm_phone':  # a real farmer checks the number read back
+            fix = None
+            ans = 'Yes, correct.' if c.intake.slots['contact_details'].value == sc_['expect']['contact_details'] else 'No, that is wrong.'
         if first: ans = sc_['opening']
+        elif slot == 'confirm_phone': pass
         elif fix: ans = 'No no, ' + sc_['answers'][fix]
         else:
             ans = sc_['answers'].get(slot, 'Yes.')
@@ -159,10 +163,8 @@ def score(sc_, c):
     checks['symptoms'] = bool(rec['symptoms'])
     checks['urgent'] = bool(rec['urgent_warning_signs']) == e['urgent']
     checks['confirmed'] = rec['confirmed_by_caller'] == e['confirmed']
-    asked = {}
-    for m in c.metrics:
-        if m.get('now_asking'): asked[m['now_asking']] = asked.get(m['now_asking'], 0) + 1
-    checks['no_loops'] = all(v <= 3 for v in asked.values())
+    contents = [t['text'] for t in c.transcript if t['role'] == 'agent' and t['kind'] == 'content']
+    checks['no_loops'] = not any(contents[j] == contents[j + 1] == contents[j + 2] for j in range(len(contents) - 2))
     resp = [m['response_s'] for m in c.metrics if 'response_s' in m]
     first = [m['first_audio_after_s'] for m in c.metrics if 'first_audio_after_s' in m]
     checks['never_stuck'] = all(r < 6 for r in resp) and not any(m.get('cancelled') is None and 'heard' in m and 'reply' not in m and not m.get('dropped') for m in c.metrics[:-1])

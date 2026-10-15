@@ -106,7 +106,92 @@ What the results say:
 
 ## Conversations
 
-SIM_RESULTS
+Ten simulated callers (`sim.py`) go through the full engine in real time: VAD, smart-turn, Parakeet, the interpreter,
+Kokoro, plus barge-in and silence handling. The interpreter changes per run. Speech crosses a 2G (GSM) line; `noisy_gruff`
+uses the worst condition (`farm_phone`) with noise bursts. The scenarios are:
+
+- straightforward
+- minimal ("My cow is sick.")
+- everything at once
+- a correction ("not three days, two days")
+- talking over the agent
+- urgent (can't stand, breathing fast)
+- doesn't know when it started
+- "one minute madam" then silence, then "what medicine should I give?"
+- hesitant, with mid-sentence pauses, and silent once
+- noisy and gruff with noise bursts
+
+The simulated farmer corrects wrong read-backs and checks the phone number. Each call has 13 checks:
+- fields: animal, count, symptoms, since, treatment, name, village, district, phone;
+- urgency flag;
+- confirmation;
+- no question three times in a row;
+- no reply slower than 6 s.
+
+Per-scenario tables are in [runs/2026-10-16-sim](runs/2026-10-16-sim/README.md).
+
+| interpreter | private | calls completed + confirmed | checks | first sound p50 / p90 | reply p50 / p95 | interpretation p50 |
+|---|---|---|---|---|---|---|
+| **local Muse 30B** | yes | 10/10 | 119/130 | 0.35 / 0.96 s | 1.95 / 4.14 s | 1.10 s |
+| DeepSeek V4 Flash (text) | no | 10/10 | 120/130 | 0.35 / 0.93 s | 1.93 / 4.15 s | 1.07 s |
+| Gemini 3.5 Flash-Lite **hearing the audio** | no | 10/10 | **127/130** | 0.35 / 0.97 s | 3.45 / 4.83 s | 1.83 s |
+| rules only (the fallback, from a run where the API refused every call) | yes | 5/5 | 50/65 | 0.34 s | 1.71 s | 0.14 s |
+
+What these show:
+
+- **No call hung or looped, under any interpreter.** Every call reached a confirmed record. When interpretation slows
+  down, fillers take up the slack; when it fails outright, the rule fallback still finishes the call.
+- **The first sound comes 0.35 s after the farmer stops, every time.** It is the instant acknowledgement. The p90 of
+  about 0.95 s is phone-number turns, where the agent deliberately waits 0.9 s for the next group of digits.
+- **Village is nearly all of the local misses** (10 of 11). Kokoro can't pronounce Kannada names ("Hosahalli" becomes
+  "Ha Sahali"), so Parakeet hears "Hassan…". The agent reads the value back, and when a correction comes back the same,
+  it marks the field *unclear* and keeps the audio clip. The call doesn't loop.
+- **Direct speech fixes place names.** Gemini hears the audio and knows Karnataka places, so it got the village right
+  in 9 of 10 calls. It costs 1.5 s more per reply, which needed 5–8 fillers per call, and the audio leaves the box.
+- **DeepSeek gains nothing over local Muse.** Same accuracy, same speed.
+
+Real browser calls (`tests/browser_call.py`): Chromium, then WebRTC/Opus, then the server, with farmer audio injected as
+the microphone. These are on the final code, in [runs/2026-10-16-browser](runs/2026-10-16-browser/):
+
+| call | fields | first sound p50 (server / browser) | reply p50 | interruptions | result |
+|---|---|---|---|---|---|
+| plain | 8/8 | 0.37 / 0.43 s | 1.76 s | 0 | completed |
+| simulated 2G line | 7/8 (village) | 0.38 / 0.36 s | 2.05 s | 0 | completed |
+| farmer talks over the agent | 8/8 | 0.37 / 0.51 s | 1.90 s | 1 | completed |
+
+## Bugs found by testing and fixed
+
+The dialogue tests found real failure modes. Each now has a unit test or a scenario. `tests/test_intake.py` has 19
+tests, including a fuzz test of 2,000 random callers per seed (run with 6 seeds): every call ends, and no question is
+asked three times in a row.
+
+| failure | fix |
+|---|---|
+| A phone number said in groups ("nine eight four five six, … seven two …") became two turns, and neither half was a number | Merge a fragment whenever the farmer resumes before the real reply starts. Wait 0.9 s between digit groups. Collect partial digits and say "… Go on." |
+| On a weak line, Silero VAD fired late and **1.5–2 s of speech was lost** | AGC ahead of the VAD (noise-floor tracking), lower thresholds, 1 s pre-roll |
+| Merging duplicated audio ("four four four four") because the pre-roll reached back into the previous turn | Clear the pre-roll at each end of turn |
+| An 11-digit number was accepted | Require exactly 10 digits (after stripping +91/0). Read the number back and ask "is that right?" |
+| **The "is that number right?" question looped forever** when the LLM re-stated the number instead of hearing "yes" | Check yes first; the same number counts as yes. **A generic backstop: no question a third time in a row** |
+| A worried farmer repeating "what medicine should I give?" looped the agent | The full disclaimer once, then short. From the second side-question, it costs an attempt |
+| The LLM marked a village "UNKNOWN", invented "cannot stand" from "No, no, it is a cow", and put a phone number in the name | "Don't know" only if said. Stand/breath facts only when asked about or mentioned. Names/places can't be digits. A later "she is standing" withdraws the urgent flag |
+| The echo filter threw away a farmer repeating the agent's read-back | Off by default (browser/phone echo cancellation handles echo). Opt-in for speakerphones |
+| Re-prompts stacked ("Hello, are you there? Hello, are you there? …") | Re-prompt from the question, not from the last thing said |
+
+## Recommendation
+
+1. **Local is enough, and better, for recognition and the conversation.** Use Parakeet v3 + boosting, Muse, Kokoro
+   `hf_alpha`, and this policy. It is private, and the farmer hears a response 0.35 s after they stop. Hosted models
+   gained nothing in the loop except on place names.
+2. **For names and places, use the hybrid.** Keep the call local. Send *only the saved audio clip* of an *unclear* name
+   or village, plus the question, to an audio model (Gemini Flash-Lite, about 2 s, a fraction of a cent), after the call
+   or in the background. Then put the result to the human reviewer as a suggestion. This keeps the conversation fast
+   and private and fixes the weakest field, though a name or village clip is still personal data leaving the box, so
+   it needs an explicit decision.
+3. **Before trusting any number above,** test with real farmers on real 2G phones, starting with ~20 recorded calls.
+   Get Svarah access to settle v2 vs v3. Load the program's real LGD village list per district.
+4. To isolate from other GPU users, a dedicated small interpreter model would help. When Muse was shared with a busy
+   GPU, interpretation went from 1.1 s to 2.4–3.5 s; calls still finished, with more fillers.
+
 
 ## Limits and what's not shown
 
@@ -119,7 +204,10 @@ SIM_RESULTS
   - after two failures mark it *unclear* and keep that turn's audio for a human.
 
   Constraining the village to the stated district's LGD list would help further.
-- **Muse is shared.** When another job loaded the GPU (93%), interpretation slowed to 2.4–3.5 s and some turns used
-  the rule fallback. Calls slowed but still completed. A dedicated small model would isolate this.
+- **Muse is shared** with the Telegram bot and other jobs on the box.
+- **No real phone network.** The 2G line is simulated (codec, band-limiting, loss), and so is the browser's Opus at
+  normal bitrates. Jitter and long dropouts on real networks aren't modelled.
+- **TTS is Kokoro `hf_alpha` with English G2P.** It has an Indian timbre, but the pronunciation is American-English
+  phonemes. Indic Parler-TTS (gated; access requested) could give an Indian English accent and is untested.
 - **Browser latency is approximate** (RMS onsets in the page; the real phone path is not measured). Server-side timing
   is the primary measure.

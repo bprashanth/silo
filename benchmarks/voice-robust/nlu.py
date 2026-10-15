@@ -147,7 +147,7 @@ async def _openrouter_audio(session, pcm16, heard, asking, last_said, model):
     with wave.open(b, 'wb') as w: w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000); w.writeframes(pcm16)
     text = (_prompt(heard, asking, {}, last_said).replace('Farmer replied (speech recognition)', 'A local speech recognizer heard (may be wrong)')
             + '\nThe farmer\'s actual audio is attached; trust the audio over the recognizer. Return the JSON.')
-    body = {'model': model, 'temperature': 0, 'max_tokens': 400, 'reasoning': {'enabled': False},
+    body = {'model': model, 'temperature': 0, 'max_tokens': 1200, 'reasoning': {'effort': 'minimal'},  # Gemini audio can't disable reasoning
             'response_format': {'type': 'json_schema', 'json_schema': {'name': 'turn', 'strict': True, 'schema': SCHEMA}},
             'messages': [{'role': 'system', 'content': SYSTEM}, {'role': 'user', 'content': [{'type': 'text', 'text': text},
                 {'type': 'input_audio', 'input_audio': {'data': base64.b64encode(b.getvalue()).decode(), 'format': 'wav'}}]}]}
@@ -155,6 +155,21 @@ async def _openrouter_audio(session, pcm16, heard, asking, last_said, model):
         d = await r.json()
     c = d['choices'][0]['message']['content']
     return json.loads(c[c.index('{'):c.rindex('}') + 1])
+
+def _guard(out, heard, asking):
+    """Drop facts the farmer never said: the LLM (and a bare "no") over-reach."""
+    other = [k for k in out['facts'] if k not in ('can_stand', 'breathing_ok')]
+    for k, pat in (('can_stand', r'stand|get(ting)? up|lying|lie down|fall|walk|sit'), ('breathing_ok', r'breath|pant|gasp')):
+        # Only from the question actually asked, unless the farmer was correcting something else ("No, no, it is a cow").
+        free = asking == k and not (out['intent'] == 'correction' and other)
+        if k in out['facts'] and not free and not re.search(pat, heard, re.I): out['facts'].pop(k)
+    out['urgent'] = [u for u in out['urgent'] if u != 'unable to stand' or re.search(r'stand|get(ting)? up|lying|lie down|fall', heard, re.I)]
+    out['urgent'] = [u for u in out['urgent'] if u != 'breathing difficulty' or re.search(r'breath|pant|gasp', heard, re.I)]
+    for k in ('caller_name', 'village', 'district'):
+        v = str(out['facts'].get(k, ''))
+        if v and (re.search(r'\d', v) or len(re.findall(r'\b(zero|one|two|three|four|five|six|seven|eight|nine)\b', v, re.I)) >= 2):
+            out['facts'].pop(k)
+    return out
 
 async def interpret(heard, asking, known, last_said, backend='muse', session=None, pcm16=None, prev_asking=None):
     t = time.perf_counter(); own = session is None
@@ -183,6 +198,7 @@ async def interpret(heard, asking, known, last_said, backend='muse', session=Non
         out = rules(heard, asking); out['source'] = f'rules ({type(e).__name__})'
     finally:
         if own: await session.close()
+    out = _guard(out, heard, asking)
     out['ms'] = round((time.perf_counter() - t) * 1000)
     return out
 

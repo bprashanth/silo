@@ -46,6 +46,8 @@ def main():
             seen = len(contents)
             slot = 'summary' if c.get('record', {}).get('call_status') == 'in_progress' and c.get('asking') == 'summary' else c.get('asking')
             name = ANSWER.get(slot, 'yes') if said else 'opening'
+            if slot == 'confirm_phone':  # check the number read back, like a farmer would
+                name = 'yes' if c['record'].get('slots', {}).get('contact_details', {}).get('value') == EXPECT['contact_details'] else 'no'
             try: page.evaluate(f'speakFixture("{name}.wav")'); said += 1
             except Exception: break  # the page ended the call underneath us
             page.screenshot(path=str(out / f'turn{said:02d}.png'))

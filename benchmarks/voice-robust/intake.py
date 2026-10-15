@@ -83,6 +83,9 @@ class Intake:
         self.advised = False
         self.partial_phone = ''           # digits given so far, when a number comes in pieces
         self.prev_asking = None
+        self.phone_confirmed = False
+        self.same_in_row = 0
+        self.waits = 0
         self.last_said = GREETING
 
     # ---------- applying one interpreted turn ----------
@@ -95,17 +98,32 @@ class Intake:
         if self.asking == 'contact_details' and not self.slots['contact_details'].done():
             got = re.sub(r'\D', '', str(facts.get('contact_details', ''))) or spoken_digits(heard)
             got = re.sub(r'^(91|0)(?=\d{10}$)', '', got)
-            if len(got) > 10 or len(self.partial_phone + got) > 10:
-                # Not a 10-digit mobile number: don't store a wrong number, ask again (this costs an attempt).
-                facts.pop('contact_details', None); self.partial_phone = ''; got = ''
-                events.append(('bad_number', 'contact_details', None))
             if got:
-                whole = self.partial_phone + got if len(got) < 10 else got
-                if len(whole) >= 10: facts['contact_details'] = whole; self.partial_phone = ''
+                restart = bool(self.partial_phone) and got[:3] == self.partial_phone[:3]  # farmer started the number again
+                whole = got if (len(got) >= 10 or restart) else self.partial_phone + got
+                if len(whole) > 10:
+                    # Not a 10-digit mobile number: don't store a wrong number, ask again (this costs an attempt).
+                    facts.pop('contact_details', None); self.partial_phone = ''
+                    events.append(('bad_number', 'contact_details', None))
+                elif len(whole) == 10: facts['contact_details'] = whole; self.partial_phone = ''
                 else:
                     self.partial_phone = whole; facts.pop('contact_details', None)
                     events.append(('partial', 'contact_details', whole))
         nlu = {**nlu, 'facts': facts}
+        if self.asking == 'confirm_phone':
+            s = self.slots['contact_details']
+            said = re.sub(r'\D', '', str(facts.get('contact_details', ''))) or spoken_digits(heard)
+            yes = intent == 'yes' or re.match(r'^\s*(yes|yeah|yep|haan|ha|correct|right|ok|okay)\b', heard, re.I)
+            no = intent in ('no', 'correction') or re.match(r'^\s*(no|nahi|illa|wrong|not)\b', heard, re.I)
+            if (yes and not no) or (said and said == s.value):
+                self.phone_confirmed = True; return [('confirmed', 'contact_details', s.value)]
+            if len(said) == 10:  # a different number: take it and read it back
+                s.value = said; s.evidence.append({'asked': self.last_said, 'heard': heard}); return [('changed', 'contact_details', None, said)]
+            if no:
+                s.evidence.append({'asked': self.last_said, 'heard': heard, 'rejected': s.value})
+                s.value = None; s.state = 'unclear' if s.attempts >= MAX_ATTEMPTS else 'empty'
+                return [('rejected', 'contact_details', None)]
+            return []  # unclear reply: the confirmation is asked again (bounded by the repeat backstop)
         for k, v in (nlu.get('facts') or {}).items():
             if k not in self.slots or v in (None, '', []): continue
             s = self.slots[k]; prev = s.value
@@ -131,6 +149,11 @@ class Intake:
         signs = list(nlu.get('urgent') or [])
         if self.slots['can_stand'].value is False: signs.append('unable to stand')
         if self.slots['breathing_ok'].value is False: signs.append('breathing difficulty')
+        # A later clear answer withdraws a sign (kept in the evidence; a human still reviews).
+        if self.slots['can_stand'].value is True and 'unable to stand' in self.urgent and 'unable to stand' not in (nlu.get('urgent') or []):
+            self.urgent.remove('unable to stand'); self.notes.append('withdrawn: unable to stand')
+        if self.slots['breathing_ok'].value is True and 'breathing difficulty' in self.urgent and 'breathing difficulty' not in (nlu.get('urgent') or []):
+            self.urgent.remove('breathing difficulty'); self.notes.append('withdrawn: breathing difficulty')
         for sign in signs:
             if sign not in self.urgent: self.urgent.append(sign)
         if nlu.get('farmer_question'): self.notes.append(nlu['farmer_question'])
@@ -158,9 +181,14 @@ class Intake:
             if k == 'breathing_ok' and self.slots['can_stand'].value is False and 'breathing difficulty' not in self.urgent:
                 pass  # still ask: two different warning signs
             out.append(k)
+        c = self.slots['contact_details']
+        if c.state == 'filled' and not self.phone_confirmed:
+            out.insert(0, 'confirm_phone')
         return out
 
     def question(self, slot):
+        if slot == 'confirm_phone':
+            return digits_spoken(self.slots['contact_details'].value) + '. Is that number right?'
         s = self.slots[slot]
         first, again = QUESTIONS[slot]
         q = first if s.attempts == 0 else again
@@ -171,14 +199,14 @@ class Intake:
         parts = []
         for e in events:
             k, v = e[1], e[-1]
-            if e[0] in ('partial', 'bad_number'): continue
+            if e[0] in ('partial', 'bad_number') or v is None: continue
             if e[0] == 'unclear':
                 parts.append(f'sorry, I cannot catch the {SPOKEN_LABEL.get(k, k)} clearly, the vet team will confirm it with you'); continue
             if k == 'animal_type': parts.append(f'a {v}' if not v.endswith('s') else str(v))
             elif k in ('caller_name', 'village', 'district'): parts.append(str(v))
             elif k == 'animals_affected': parts.append(f'{number(v)} animal' + ('s' if v != 1 else ''))
             elif k == 'symptoms_since': parts.append(f'since {v}' if not re.match(r'(since|from)\b', str(v)) else str(v))
-            elif k == 'contact_details': parts.append(digits_spoken(v))
+            elif k == 'contact_details': pass  # read back by the explicit confirmation question
         if not parts: return ''
         changed = any(e[0] == 'changed' for e in events)
         return ('Sorry, corrected: ' if changed else '') + ', '.join(parts).capitalize() + '.'
@@ -212,7 +240,9 @@ class Intake:
             pre.append('The vet team will advise you on that when they call.' if self.advised else SAFE_ADVICE)
             self.advised = True
         if intent == 'wait':
-            return self._say('Sure, take your time. I am here.', self.asking, hold=True)
+            self.waits += 1
+            return self._say('Sure, take your time. I am here.' if self.waits == 1 else ['Okay.', 'Hmm.', 'Yes, I am here.'][self.waits % 3], self.asking, hold=True)
+        self.waits = 0
         if intent == 'repeat' and not events:
             return self._say(' '.join(pre + [self.last_said]), self.asking)
 
@@ -237,6 +267,9 @@ class Intake:
         if any(e[0] == 'bad_number' for e in events) and not self.slots['contact_details'].done():
             self.slots['contact_details'].attempts += 1
             return self._say(' '.join(pre + ['Sorry, I did not get the full number. Please say the ten digits slowly.']), 'contact_details')
+        if any(e[0] == 'rejected' for e in events) and not self.slots['contact_details'].done():
+            self.slots['contact_details'].attempts += 1
+            return self._say(' '.join(pre + ['Sorry. Please tell me the number again, slowly.']), 'contact_details')
         if any(e[0] == 'partial' for e in events):
             return self._say(' '.join(pre + [digits_spoken(self.partial_phone) + '. Go on.']), 'contact_details')
         ack = self.echo(events)
@@ -250,7 +283,7 @@ class Intake:
         else:
             lead = ''
         q = self.question(slot)
-        self.slots[slot].attempts += 1
+        if slot in self.slots: self.slots[slot].attempts += 1
         return self._say(' '.join(x for x in pre + [ack, lead, q] if x), slot)
 
     def reprompt(self):
@@ -263,6 +296,17 @@ class Intake:
         return out
 
     def _say(self, text, asking, end=False, hold=False):
+        # Backstop against any loop: the same question may not be asked a third time in a row.
+        if not end and not hold and asking == self.asking and asking and text == self.last_said:
+            self.same_in_row += 1
+            if self.same_in_row >= 2:
+                self.same_in_row = 0
+                if asking == 'confirm_phone': self.phone_confirmed = True; self.notes.append('phone number not confirmed by caller')
+                elif asking in self.slots: self.slots[asking].state = 'unclear'
+                elif asking == 'summary': self.phase = 'closing'; return self._say('Okay. I have noted everything, and the vet team will check the details with you. Goodbye.', None, end=True)
+                return self.next_turn({'intent': 'unclear'}, [])
+        else:
+            self.same_in_row = 0
         if asking != self.asking: self.prev_asking = self.asking
         self.asking = asking
         if not hold: self.last_said = text

@@ -1,0 +1,722 @@
+{
+ "id": "20261016-023748-eddc28",
+ "nlu": "muse",
+ "line": false,
+ "fixture": true,
+ "status": "ended",
+ "created": 1792098468.9304643,
+ "input": {
+  "frames": 6220,
+  "peak": 31937,
+  "rate": 16000
+ },
+ "browser_events": [
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 320
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 438
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 427
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 432
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 404
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 395
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 702
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 547
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 1050
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 324
+  },
+  {
+   "type": "browser_first_audio",
+   "speech_end_to_audible_ms": 345
+  }
+ ],
+ "transcript": [
+  {
+   "role": "agent",
+   "text": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+   "kind": "content",
+   "t": 0.124,
+   "seconds": 5.96
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack",
+   "t": 10.816,
+   "seconds": 1.63
+  },
+  {
+   "role": "farmer",
+   "text": "My buffalo is not eating from yesterday, she is very weak.",
+   "t": 11.622,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn02.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack",
+   "t": 12.027,
+   "seconds": 1.7
+  },
+  {
+   "role": "agent",
+   "text": "A buffalo, since yesterday. Is the buffalo able to stand up?",
+   "kind": "content",
+   "t": 13.726,
+   "seconds": 4.9
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, she is standing.",
+   "t": 21.627,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn03.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 21.983,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "Is the buffalo breathing normally?",
+   "kind": "content",
+   "t": 23.229,
+   "seconds": 2.85
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, breathing is normal.",
+   "t": 29.331,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn04.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 29.684,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "How many animals are sick?",
+   "kind": "content",
+   "t": 31.046,
+   "seconds": 2.47
+  },
+  {
+   "role": "farmer",
+   "text": "Only one buffalo.",
+   "t": 36.624,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn05.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 36.998,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "One animal. Have you given any medicine or treatment already?",
+   "kind": "content",
+   "t": 38.36,
+   "seconds": 4.72
+  },
+  {
+   "role": "farmer",
+   "text": "No, no treatment given.",
+   "t": 46.332,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn06.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 46.721,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "What is your name?",
+   "kind": "content",
+   "t": 48.082,
+   "seconds": 1.8
+  },
+  {
+   "role": "farmer",
+   "text": "My name is Basavaraju.",
+   "t": 53.331,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn07.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack",
+   "t": 53.688,
+   "seconds": 1.63
+  },
+  {
+   "role": "agent",
+   "text": "Basavaraju. Which village are you calling from?",
+   "kind": "content",
+   "t": 55.318,
+   "seconds": 3.38
+  },
+  {
+   "role": "farmer",
+   "text": "Qunegall.",
+   "t": 60.829,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn08.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 61.342,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Let me note that.",
+   "kind": "filler",
+   "t": 63.064,
+   "seconds": 1.82
+  },
+  {
+   "role": "agent",
+   "text": "Kunigal. Which district is that in?",
+   "kind": "content",
+   "t": 64.888,
+   "seconds": 3.0
+  },
+  {
+   "role": "farmer",
+   "text": "Dumakiru District",
+   "t": 70.865,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn09.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 71.235,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler",
+   "t": 72.957,
+   "seconds": 2.64
+  },
+  {
+   "role": "agent",
+   "text": "Tumakuru. What phone number can the vet team call you on?",
+   "kind": "content",
+   "t": 75.597,
+   "seconds": 4.15
+  },
+  {
+   "role": "farmer",
+   "text": "Nine eight four five six seven two three one zero.",
+   "t": 84.892,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn10.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 85.899,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "nine eight four five six, seven two three one zero. Is that number right?",
+   "kind": "content",
+   "t": 87.096,
+   "seconds": 5.55
+  },
+  {
+   "role": "farmer",
+   "text": "Yes that is correct.",
+   "t": 95.612,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn11.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 95.971,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "Let me read it back. One buffalo, not eating, very weak, since yesterday. No treatment given. Your name is Basavaraju from Kunigal, Tumakuru. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "kind": "content",
+   "t": 97.177,
+   "seconds": 14.45
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, that is correct.",
+   "t": 114.653,
+   "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn12.wav"
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 115.009,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "kind": "content",
+   "t": 116.412,
+   "seconds": 7.9
+  }
+ ],
+ "metrics": [
+  {
+   "turn": 1,
+   "speech_end_s": 10.384,
+   "eot_s": 10.722,
+   "asking": null,
+   "asr_ms": 92,
+   "heard": "My buffalo is not eating from yesterday.",
+   "first_audio_s": 10.816,
+   "cancelled": true
+  },
+  {
+   "turn": 2,
+   "speech_end_s": 11.622,
+   "eot_s": 11.926,
+   "asking": null,
+   "asr_ms": 100,
+   "heard": "My buffalo is not eating from yesterday, she is very weak.",
+   "first_audio_s": 12.027,
+   "nlu_ms": 1166,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "buffalo",
+    "symptoms": [
+     "not eating",
+     "very weak"
+    ],
+    "symptoms_since": "yesterday"
+   },
+   "reply": "A buffalo, since yesterday. Is the buffalo able to stand up?",
+   "now_asking": "can_stand",
+   "first_content_audio_s": 13.726,
+   "response_s": 2.104,
+   "first_audio_after_s": 0.405
+  },
+  {
+   "turn": 3,
+   "speech_end_s": 21.627,
+   "eot_s": 21.89,
+   "asking": "can_stand",
+   "asr_ms": 93,
+   "heard": "Yes, she is standing.",
+   "first_audio_s": 21.983,
+   "nlu_ms": 1170,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "buffalo",
+    "symptoms_since": "yesterday",
+    "can_stand": true
+   },
+   "reply": "Is the buffalo breathing normally?",
+   "now_asking": "breathing_ok",
+   "first_content_audio_s": 23.229,
+   "response_s": 1.602,
+   "first_audio_after_s": 0.356
+  },
+  {
+   "turn": 4,
+   "speech_end_s": 29.331,
+   "eot_s": 29.593,
+   "asking": "breathing_ok",
+   "asr_ms": 91,
+   "heard": "Yes, breathing is normal.",
+   "first_audio_s": 29.684,
+   "nlu_ms": 1212,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "buffalo",
+    "breathing_ok": true
+   },
+   "reply": "How many animals are sick?",
+   "now_asking": "animals_affected",
+   "first_content_audio_s": 31.046,
+   "response_s": 1.715,
+   "first_audio_after_s": 0.353
+  },
+  {
+   "turn": 5,
+   "speech_end_s": 36.624,
+   "eot_s": 36.899,
+   "asking": "animals_affected",
+   "asr_ms": 98,
+   "heard": "Only one buffalo.",
+   "first_audio_s": 36.998,
+   "nlu_ms": 942,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "buffalo",
+    "animals_affected": 1
+   },
+   "reply": "One animal. Have you given any medicine or treatment already?",
+   "now_asking": "previous_treatment",
+   "first_content_audio_s": 38.36,
+   "response_s": 1.736,
+   "first_audio_after_s": 0.374
+  },
+  {
+   "turn": 6,
+   "speech_end_s": 46.332,
+   "eot_s": 46.642,
+   "asking": "previous_treatment",
+   "asr_ms": 78,
+   "heard": "No, no treatment given.",
+   "first_audio_s": 46.721,
+   "nlu_ms": 524,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "previous_treatment": "none"
+   },
+   "reply": "What is your name?",
+   "now_asking": "caller_name",
+   "first_content_audio_s": 48.082,
+   "response_s": 1.75,
+   "first_audio_after_s": 0.389
+  },
+  {
+   "turn": 7,
+   "speech_end_s": 53.331,
+   "eot_s": 53.595,
+   "asking": "caller_name",
+   "asr_ms": 92,
+   "heard": "My name is Basavaraju.",
+   "first_audio_s": 53.688,
+   "nlu_ms": 789,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "caller_name": "Basavaraju"
+   },
+   "reply": "Basavaraju. Which village are you calling from?",
+   "now_asking": "village",
+   "first_content_audio_s": 55.318,
+   "response_s": 1.987,
+   "first_audio_after_s": 0.357
+  },
+  {
+   "turn": 8,
+   "speech_end_s": 60.829,
+   "eot_s": 61.293,
+   "asking": "village",
+   "asr_ms": 48,
+   "heard": "Qunegall.",
+   "first_audio_s": 61.342,
+   "filler": true,
+   "nlu_ms": 2102,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "village": "Kunigal"
+   },
+   "reply": "Kunigal. Which district is that in?",
+   "now_asking": "district",
+   "first_content_audio_s": 64.888,
+   "response_s": 4.059,
+   "first_audio_after_s": 0.513
+  },
+  {
+   "turn": 9,
+   "speech_end_s": 70.865,
+   "eot_s": 71.142,
+   "asking": "district",
+   "asr_ms": 92,
+   "heard": "Dumakiru District",
+   "first_audio_s": 71.235,
+   "filler": true,
+   "nlu_ms": 2108,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "district": "Tumakuru"
+   },
+   "reply": "Tumakuru. What phone number can the vet team call you on?",
+   "now_asking": "contact_details",
+   "first_content_audio_s": 75.597,
+   "response_s": 4.732,
+   "first_audio_after_s": 0.37
+  },
+  {
+   "turn": 10,
+   "speech_end_s": 84.892,
+   "eot_s": 85.806,
+   "asking": "contact_details",
+   "asr_ms": 92,
+   "heard": "Nine eight four five six seven two three one zero.",
+   "first_audio_s": 85.899,
+   "nlu_ms": 1074,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "contact_details": "9845672310"
+   },
+   "reply": "nine eight four five six, seven two three one zero. Is that number right?",
+   "now_asking": "confirm_phone",
+   "first_content_audio_s": 87.096,
+   "response_s": 2.204,
+   "first_audio_after_s": 1.007
+  },
+  {
+   "turn": 11,
+   "speech_end_s": 95.612,
+   "eot_s": 95.875,
+   "asking": "confirm_phone",
+   "asr_ms": 95,
+   "heard": "Yes that is correct.",
+   "first_audio_s": 95.971,
+   "nlu_ms": 1008,
+   "nlu_source": "muse",
+   "intent": "yes",
+   "facts": {
+    "contact_details": "9845672310"
+   },
+   "reply": "Let me read it back. One buffalo, not eating, very weak, since yesterday. No treatment given. Your name is Basavaraju from Kunigal, Tumakuru. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "now_asking": "summary",
+   "first_content_audio_s": 97.177,
+   "response_s": 1.565,
+   "first_audio_after_s": 0.359
+  },
+  {
+   "turn": 12,
+   "speech_end_s": 114.653,
+   "eot_s": 114.919,
+   "asking": "summary",
+   "asr_ms": 90,
+   "heard": "Yes, that is correct.",
+   "first_audio_s": 115.009,
+   "nlu_ms": 1285,
+   "nlu_source": "muse",
+   "intent": "yes",
+   "facts": {
+    "animal_type": "buffalo",
+    "symptoms": [
+     "not eating",
+     "very weak"
+    ],
+    "symptoms_since": "yesterday",
+    "previous_treatment": "none"
+   },
+   "reply": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "now_asking": null,
+   "first_content_audio_s": 116.412,
+   "response_s": 1.759,
+   "first_audio_after_s": 0.356
+  }
+ ],
+ "record": {
+  "caller_name": "Basavaraju",
+  "village": "Kunigal",
+  "district": "Tumakuru",
+  "animal_type": "buffalo",
+  "animals_affected": 1,
+  "symptoms": [
+   "not eating",
+   "very weak"
+  ],
+  "symptoms_since": "yesterday",
+  "previous_treatment": "none",
+  "contact_details": "9845672310",
+  "urgent_warning_signs": [],
+  "needs_human_review": true,
+  "urgency": "routine",
+  "confirmed_by_caller": true,
+  "unknown_fields": [],
+  "unclear_fields": [],
+  "missing_fields": [],
+  "farmer_questions": [
+   "What is your name?"
+  ],
+  "call_status": "completed",
+  "slots": {
+   "animal_type": {
+    "value": "buffalo",
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My buffalo is not eating from yesterday, she is very weak.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn02.wav"
+     }
+    ]
+   },
+   "symptoms": {
+    "value": [
+     "not eating",
+     "very weak"
+    ],
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My buffalo is not eating from yesterday, she is very weak.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn02.wav"
+     }
+    ]
+   },
+   "can_stand": {
+    "value": true,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "A buffalo, since yesterday. Is the buffalo able to stand up?",
+      "heard": "Yes, she is standing.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn03.wav"
+     }
+    ]
+   },
+   "breathing_ok": {
+    "value": true,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Is the buffalo breathing normally?",
+      "heard": "Yes, breathing is normal.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn04.wav"
+     }
+    ]
+   },
+   "animals_affected": {
+    "value": 1,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "How many animals are sick?",
+      "heard": "Only one buffalo.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn05.wav"
+     }
+    ]
+   },
+   "symptoms_since": {
+    "value": "yesterday",
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My buffalo is not eating from yesterday, she is very weak.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn02.wav"
+     }
+    ]
+   },
+   "previous_treatment": {
+    "value": "none",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "One animal. Have you given any medicine or treatment already?",
+      "heard": "No, no treatment given.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn06.wav"
+     }
+    ]
+   },
+   "caller_name": {
+    "value": "Basavaraju",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "What is your name?",
+      "heard": "My name is Basavaraju.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn07.wav"
+     }
+    ]
+   },
+   "village": {
+    "value": "Kunigal",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Basavaraju. Which village are you calling from?",
+      "heard": "Qunegall.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn08.wav"
+     }
+    ]
+   },
+   "district": {
+    "value": "Tumakuru",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Kunigal. Which district is that in?",
+      "heard": "Dumakiru District",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn09.wav"
+     }
+    ]
+   },
+   "contact_details": {
+    "value": "9845672310",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Tumakuru. What phone number can the vet team call you on?",
+      "heard": "Nine eight four five six seven two three one zero.",
+      "audio": "/home/beeps/.local/share/silo-voice/calls/20261016-023748-eddc28/turn10.wav"
+     }
+    ]
+   }
+  }
+ },
+ "asking": null,
+ "playing": false
+}

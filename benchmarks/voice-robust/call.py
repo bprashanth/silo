@@ -30,6 +30,8 @@ HOLD_S = float(os.getenv('HOLD_S', '25'))             # after "wait a minute"
 FILLER_AFTER_S = float(os.getenv('FILLER_AFTER_S', '0.6'))
 BARGE_MIN_S = float(os.getenv('BARGE_MIN_S', '0.35'))  # speech this long while agent talks = interruption
 MAX_REPROMPTS = 3
+ECHO_FILTER = os.getenv('ECHO_FILTER') == '1'  # for speakerphone setups without echo cancellation
+DIGIT_PAUSE_S = float(os.getenv('DIGIT_PAUSE_S', '0.9'))
 
 class Call:
     def __init__(self, speech, out, nlu_backend='muse', on_event=None, audio_dir=None):
@@ -37,7 +39,7 @@ class Call:
         self.audio_dir = audio_dir  # each farmer turn saved here, so a human can re-listen to a name
         self.on_event = on_event or (lambda e: None)
         self.intake = intake_mod.Intake()
-        self.vad = SileroVADAnalyzer(sample_rate=SR, params=VADParams(confidence=.6, start_secs=.15, stop_secs=.25, min_volume=.25))
+        self.vad = SileroVADAnalyzer(sample_rate=SR, params=VADParams(confidence=.5, start_secs=.15, stop_secs=.25, min_volume=.1))
         self.turn = LocalSmartTurnAnalyzerV3(sample_rate=SR, params=SmartTurnParams(stop_secs=STOP_S))
         self.vad.set_sample_rate(SR); self.turn.set_sample_rate(SR)
         self.t0 = time.monotonic()
@@ -47,7 +49,7 @@ class Call:
         self.job, self.pending_pcm = None, None
         self.speaking_until = 0.0; self.speaking_text = ''
         self.silence_task = None; self.reprompts = 0
-        self.agc = 1.0; self.ended = False
+        self.agc = 1.0; self.floor = 50.0; self.ended = False; self.over_agent = False
         self.rng = random.Random(7)
 
     def now(self): return time.monotonic() - self.t0
@@ -82,11 +84,13 @@ class Call:
 
     # ---------- input ----------
     def gain(self, frame):
-        """Slow AGC so a quiet cheap mic still reaches the VAD/ASR; capped so hiss isn't blown up."""
+        """AGC ahead of the VAD, so a quiet cheap mic or a weak line still sounds like speech to it.
+        Tracks a noise floor and the level of frames well above it; gain is capped so hiss isn't blown up."""
         x = np.frombuffer(frame, np.int16).astype(np.float32)
         rms = float(np.sqrt(np.mean(x ** 2)) + 1e-6)
-        if self.in_speech and rms > 30:
-            want = min(20.0, max(1.0, 3000 / rms)); self.agc += (want - self.agc) * .05
+        self.floor = min(rms, self.floor * 1.002 + 1e-3) if rms < self.floor * 4 else self.floor * 1.002
+        if rms > max(self.floor * 4, 20):
+            want = min(16.0, max(1.0, 4000 / rms)); self.agc += (want - self.agc) * (.2 if want < self.agc else .03)
         return np.clip(x * self.agc, -32768, 32767).astype(np.int16).tobytes()
 
     async def feed(self, frame):
@@ -96,6 +100,7 @@ class Call:
         speaking = state in (VADState.SPEAKING, VADState.STARTING)
         if state == VADState.SPEAKING and not self.in_speech:
             self.in_speech = True; self.speech_started_at = time.monotonic()
+            self.over_agent = self.playing()  # only speech that starts over our own voice can be an echo of it
             self.buf = bytearray(b''.join(self.pre))
             if self.silence_task: self.silence_task.cancel()
             # Farmer resumed before our real reply started (at most an ack was heard): it was a pause
@@ -117,6 +122,10 @@ class Call:
             eot = self.turn.append_audio(frame, speaking)
             if eot != EndOfTurnState.COMPLETE and state == VADState.QUIET:
                 eot, _ = await self.turn.analyze_end_of_turn()
+            # Numbers come in groups with pauses ("nine eight four five six ... seven two ..."): be patient.
+            if eot == EndOfTurnState.COMPLETE and self.intake.asking == 'contact_details' \
+                    and time.monotonic() - (self.last_voice or 0) < DIGIT_PAUSE_S:
+                eot = EndOfTurnState.INCOMPLETE
             if eot == EndOfTurnState.COMPLETE or len(self.buf) > SR * 2 * 30:
                 self.in_speech = False; pcm = bytes(self.buf); self.buf.clear(); self.turn.clear()
                 self.pre = []  # pre-roll must not reach back into this turn, or a merged turn hears it twice
@@ -124,7 +133,7 @@ class Call:
                     self.job = asyncio.create_task(self.respond(pcm, self.last_voice or time.monotonic()))
                 else:
                     self.arm_silence()
-        self.pre = (self.pre + [frame])[-25:]  # 0.5 s pre-roll: VAD fires late, don't clip the first syllable
+        self.pre = (self.pre + [frame])[-50:]  # 1 s pre-roll: VAD fires late, don't clip the first syllable
 
     # ---------- one turn ----------
     async def respond(self, pcm, speech_end):
@@ -135,7 +144,9 @@ class Call:
             t = time.monotonic()
             heard = await asyncio.to_thread(self.sp.transcribe, pcm)
             m['asr_ms'] = round((time.monotonic() - t) * 1000); m['heard'] = heard
-            if not heard or (self.speaking_text and fuzz.partial_ratio(heard.lower(), self.speaking_text.lower()) > 90 and len(heard) > 12):
+            # Off by default: browser/phone echo cancellation handles echo, and this dropped a farmer repeating a read-back.
+            echo = ECHO_FILTER and self.over_agent and self.speaking_text and fuzz.partial_ratio(heard.lower(), self.speaking_text.lower()) > 90 and len(heard) > 12
+            if not heard or echo:
                 m['dropped'] = 'empty' if not heard else 'echo of agent'
                 self.pending_pcm = None; self.log('dropped', why=m['dropped'], heard=heard); self.arm_silence(); return
             entry = {'role': 'farmer', 'text': heard, 't': m['speech_end_s']}

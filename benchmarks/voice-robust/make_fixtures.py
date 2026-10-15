@@ -10,7 +10,7 @@ LINES = [('opening', 'My buffalo is not eating from yesterday, she is very weak.
          ('breath_yes', 'Yes, breathing is normal.'), ('one', 'Only one buffalo.'), ('treat_no', 'No, no treatment given.'),
          ('name', 'My name is Basavaraju.'), ('village', 'Kunigal.'), ('district', 'Tumakuru district.'),
          ('phone', 'Nine eight four five six, seven two three one zero.'), ('yes', 'Yes, that is correct.'),
-         ('wait', 'One minute madam, wait.'), ('medicine', 'What medicine should I give her?'), ('since', 'From yesterday.')]
+         ('wait', 'One minute madam, wait.'), ('medicine', 'What medicine should I give her?'), ('since', 'From yesterday.'), ('no', 'No, that is wrong.')]
 class _Sp:  # sim.Farmer only needs a lock
     import threading; lock = threading.Lock()
 f = sim.Farmer(_Sp(), os.getenv('CONDITION', 'gsm'), False, 'fixtures')

@@ -1,0 +1,58 @@
+{
+ "call_id": "20261016-023748-eddc28",
+ "turns_spoken": 11,
+ "checks": {
+  "animal_type": true,
+  "animals_affected": true,
+  "caller_name": true,
+  "village": true,
+  "district": true,
+  "contact_details": true,
+  "previous_treatment": true,
+  "confirmed_by_caller": true
+ },
+ "passed": 8,
+ "total": 8,
+ "browser_speech_end_to_audible_ms": [
+  320,
+  438,
+  427,
+  432,
+  404,
+  395,
+  702,
+  547,
+  1050,
+  324,
+  345
+ ],
+ "server_first_audio_s": [
+  0.405,
+  0.356,
+  0.353,
+  0.374,
+  0.389,
+  0.357,
+  0.513,
+  0.37,
+  1.007,
+  0.359,
+  0.356
+ ],
+ "server_reply_s": [
+  2.104,
+  1.602,
+  1.715,
+  1.736,
+  1.75,
+  1.987,
+  4.059,
+  4.732,
+  2.204,
+  1.565,
+  1.759
+ ],
+ "console_errors": [],
+ "line": false,
+ "nlu": "muse"
+}

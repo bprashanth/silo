@@ -66,13 +66,15 @@ def test_dont_know_is_recorded_not_invented():
 
 def test_summary_confirmation_completes():
     i = Intake()
-    for s in REQUIRED: i.slots[s].state = 'filled'; i.slots[s].value = {'can_stand': True, 'breathing_ok': True, 'animals_affected': 1, 'symptoms': ['fever']}.get(s, 'x')
+    for s in REQUIRED: i.slots[s].state = 'filled'; i.slots[s].value = {'can_stand': True, 'breathing_ok': True, 'animals_affected': 1, 'symptoms': ['fever'], 'contact_details': '9845672310'}.get(s, 'x')
+    i.phone_confirmed = True
     r = i.next_turn({'intent': 'answer'}, []); assert r['asking'] == 'summary' and r['text'].endswith('Is that correct?')
     r = turn(i, 'yes correct', 'yes'); assert r['end'] and i.record()['call_status'] == 'completed'
 
 def test_summary_rejections_are_bounded():
     i = Intake()
     for s in REQUIRED: i.slots[s].state = 'filled'; i.slots[s].value = {'animals_affected': 1, 'symptoms': ['fever']}.get(s, 'x')
+    i.phone_confirmed = True
     i.next_turn({'intent': 'answer'}, [])
     for _ in range(6):
         r = turn(i, 'no', 'no')
@@ -97,3 +99,63 @@ def test_eleven_digit_number_is_not_stored():
     assert i.slots['contact_details'].value is None and 'ten digits' in r['text']
     turn(i, '+91 9845672310', contact_details='919845672310')
     assert i.slots['contact_details'].value == '9845672310'
+
+def test_later_standing_withdraws_urgent_sign():
+    i = Intake(); turn(i, 'cow', animal_type='cow'); i.asking = 'can_stand'
+    turn(i, 'no', 'no', can_stand=False); assert i.urgent == ['unable to stand']
+    turn(i, 'sorry she is standing', 'correction', can_stand=True)
+    assert i.urgent == [] and i.record()['urgency'] == 'routine'
+
+def test_phone_is_confirmed_explicitly_and_rejection_reasks():
+    i = Intake(); turn(i, 'cow', animal_type='cow'); i.asking = 'contact_details'
+    r = turn(i, '9845672310', contact_details='9845672310')
+    assert r['asking'] == 'confirm_phone' and r['text'].endswith('Is that number right?')
+    r = turn(i, 'no that is wrong', 'no')
+    assert r['asking'] == 'contact_details' and i.slots['contact_details'].value is None
+    turn(i, '9845672310', contact_details='9845672310'); r = turn(i, 'yes', 'yes')
+    assert i.phone_confirmed and r['asking'] != 'confirm_phone'
+
+def test_restarted_number_replaces_partial():
+    i = Intake(); turn(i, 'cow', animal_type='cow'); i.asking = 'contact_details'
+    turn(i, 'nine eight four five six')
+    turn(i, 'nine eight four five six seven two')
+    assert i.partial_phone == '9845672'
+
+def test_confirm_phone_yes_even_when_llm_restates_number():
+    i = Intake(); turn(i, 'cow', animal_type='cow'); i.asking = 'contact_details'
+    turn(i, '9845672310', contact_details='9845672310')
+    r = turn(i, 'Yes, that is correct.', 'answer', contact_details='9845672310')
+    assert i.phone_confirmed and r['asking'] != 'confirm_phone'
+
+def test_backstop_never_asks_same_thing_three_times():
+    i = Intake(); turn(i, 'cow', animal_type='cow'); i.asking = 'contact_details'
+    turn(i, '9845672310', contact_details='9845672310')
+    asked = [i.asking]
+    for _ in range(6):
+        r = turn(i, 'hmm', 'unclear'); asked.append(r['asking'])
+    run = max(len(list(g)) for _, g in __import__('itertools').groupby(asked))
+    assert run <= 3
+
+def test_random_callers_always_finish():
+    """Fuzz: whatever a caller says (garbled, contradictory, off-topic), the call ends and never repeats itself 3x."""
+    import random, itertools
+    rnd = random.Random(0)
+    intents = ['answer', 'correction', 'question', 'repeat', 'wait', 'yes', 'no', 'unclear']
+    values = {'animal_type': ['cow', 'goat', 'UNKNOWN'], 'animals_affected': [1, 3, 'UNKNOWN'], 'symptoms': [['fever'], ['not eating']],
+              'symptoms_since': ['yesterday', 'two days', 'UNKNOWN'], 'previous_treatment': ['none', 'injection'],
+              'caller_name': ['Ravi', 'Geeta'], 'village': ['Kunigal', 'Hosahalli'], 'district': ['Tumakuru', 'Mandya'],
+              'contact_details': ['9845672310', '98456', '98445672310'], 'can_stand': [True, False], 'breathing_ok': [True, False]}
+    for trial in range(2000):
+        i = Intake(); asked = []; n = 0
+        while i.phase != 'ended' and n < 150:
+            intent = rnd.choice(intents); facts = {}
+            for k in rnd.sample(list(values), rnd.choice([0, 0, 1, 1, 2])): facts[k] = rnd.choice(values[k])
+            if i.asking in values and rnd.random() < .5: facts[i.asking] = rnd.choice(values[i.asking])
+            nlu = {'intent': intent, 'facts': facts, 'urgent': [], 'farmer_question': 'q?' if intent == 'question' else None}
+            r = i.next_turn(nlu, i.update(nlu, 'nine eight' if rnd.random() < .1 else 'x'))
+            asked.append((r['asking'], r['text'])); n += 1
+            if i.phase == 'summary' and rnd.random() < .3:
+                r = turn(i, 'yes', 'yes'); n += 1
+        assert i.phase == 'ended' or n < 150, f'trial {trial} did not finish'
+        assert n < 150, f'trial {trial}: {n} turns'
+        assert max(len(list(g)) for _, g in itertools.groupby(a for a in asked if a[0])) <= 3, f'trial {trial} repeated itself'

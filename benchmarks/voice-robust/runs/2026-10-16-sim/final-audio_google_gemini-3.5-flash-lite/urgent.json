@@ -1,0 +1,1066 @@
+{
+ "scenario": "urgent",
+ "passed": 13,
+ "total": 13,
+ "checks": {
+  "animal_type": true,
+  "animals_affected": true,
+  "previous_treatment": true,
+  "contact_details": true,
+  "caller_name": true,
+  "village": true,
+  "district": true,
+  "symptoms_since": true,
+  "symptoms": true,
+  "urgent": true,
+  "confirmed": true,
+  "no_loops": true,
+  "never_stuck": true
+ },
+ "turns": 12,
+ "response_s": [
+  2.504,
+  4.539,
+  4.731,
+  2.323,
+  2.711,
+  2.018,
+  2.022,
+  1.938,
+  3.858,
+  3.898,
+  2.176,
+  4.579
+ ],
+ "first_audio_s": [
+  0.355,
+  0.32,
+  0.353,
+  0.353,
+  1.006,
+  0.32,
+  0.364,
+  0.378,
+  0.349,
+  0.339,
+  0.356,
+  0.355
+ ],
+ "fillers": 5,
+ "barge_ins": 0,
+ "reprompts": 0,
+ "record": {
+  "caller_name": "Basavaraju",
+  "village": "Hosahalli",
+  "district": "Ramanagara",
+  "animal_type": "buffalo",
+  "animals_affected": 1,
+  "symptoms": [
+   "lying down",
+   "not able to get up"
+  ],
+  "symptoms_since": "yesterday",
+  "previous_treatment": "none",
+  "contact_details": "9845672310",
+  "urgent_warning_signs": [
+   "unable to stand",
+   "breathing difficulty"
+  ],
+  "needs_human_review": true,
+  "urgency": "urgent",
+  "confirmed_by_caller": true,
+  "unknown_fields": [],
+  "unclear_fields": [],
+  "missing_fields": [],
+  "farmer_questions": [],
+  "call_status": "completed",
+  "slots": {
+   "animal_type": {
+    "value": "buffalo",
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My buffalo is lying down, she is not able to get up.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn02.wav"
+     }
+    ]
+   },
+   "symptoms": {
+    "value": [
+     "lying down",
+     "not able to get up"
+    ],
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My buffalo is lying down, she is not able to get up.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn02.wav"
+     }
+    ]
+   },
+   "can_stand": {
+    "value": false,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "This sounds serious. I am marking it urgent for the vet team right now. A buffalo. Is the buffalo able to stand up?",
+      "heard": "No, she cannot get up at all.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn03.wav"
+     }
+    ]
+   },
+   "breathing_ok": {
+    "value": false,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Is the buffalo breathing normally?",
+      "heard": "No, she is breathing very fast.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn04.wav"
+     }
+    ]
+   },
+   "animals_affected": {
+    "value": 1,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Ramanagara. How many animals are sick?",
+      "heard": "Only one buffalo.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn10.wav"
+     }
+    ]
+   },
+   "symptoms_since": {
+    "value": "yesterday",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "One animal. Since when is this problem there?",
+      "heard": "From Yesterday",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn11.wav"
+     }
+    ]
+   },
+   "previous_treatment": {
+    "value": "none",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Since yesterday. Have you given any medicine or treatment already?",
+      "heard": "No, no treatment given.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn12.wav"
+     }
+    ]
+   },
+   "caller_name": {
+    "value": "Basavaraju",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "What is your name?",
+      "heard": "My name is Basavaraju.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn08.wav"
+     }
+    ]
+   },
+   "village": {
+    "value": "Hosahalli",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Which village are you calling from?",
+      "heard": "Ha Sahali Village.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn05.wav"
+     }
+    ]
+   },
+   "district": {
+    "value": "Ramanagara",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Basavaraju. Which district is that in?",
+      "heard": "Ramanagara District",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn09.wav"
+     }
+    ]
+   },
+   "contact_details": {
+    "value": "9845672310",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Hosahalli. What phone number can the vet team call you on?",
+      "heard": "Nine eight four five six seven two three one zero.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-audio_google_gemini-3.5-flash-lite/urgent/turn06.wav"
+     }
+    ]
+   }
+  }
+ },
+ "condition": "gsm",
+ "nlu": "audio:google/gemini-3.5-flash-lite",
+ "transcript": [
+  {
+   "role": "agent",
+   "text": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+   "kind": "content",
+   "t": 1.947,
+   "seconds": 5.96
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack",
+   "t": 17.82,
+   "seconds": 1.63
+  },
+  {
+   "role": "farmer",
+   "text": "My buffalo is lying down, she is not able to get up.",
+   "t": 19.034
+  },
+  {
+   "role": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack",
+   "t": 19.389,
+   "seconds": 1.7
+  },
+  {
+   "role": "agent",
+   "text": "This sounds serious. I am marking it urgent for the vet team right now. A buffalo. Is the buffalo able to stand up?",
+   "kind": "content",
+   "t": 21.538,
+   "seconds": 7.96
+  },
+  {
+   "role": "farmer",
+   "text": "No, she cannot get up at all.",
+   "t": 32.632
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 32.952,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler",
+   "t": 34.532,
+   "seconds": 2.64
+  },
+  {
+   "role": "agent",
+   "text": "Is the buffalo breathing normally?",
+   "kind": "content",
+   "t": 37.171,
+   "seconds": 2.85
+  },
+  {
+   "role": "farmer",
+   "text": "No, she is breathing very fast.",
+   "t": 43.307
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 43.66,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler",
+   "t": 45.399,
+   "seconds": 2.64
+  },
+  {
+   "role": "agent",
+   "text": "Which village are you calling from?",
+   "kind": "content",
+   "t": 48.038,
+   "seconds": 2.67
+  },
+  {
+   "role": "farmer",
+   "text": "Ha Sahali Village.",
+   "t": 53.638
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack",
+   "t": 53.991,
+   "seconds": 1.63
+  },
+  {
+   "role": "agent",
+   "text": "Hosahalli. What phone number can the vet team call you on?",
+   "kind": "content",
+   "t": 55.961,
+   "seconds": 4.19
+  },
+  {
+   "role": "farmer",
+   "text": "Nine eight four five six seven two three one zero.",
+   "t": 65.306
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 66.312,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "nine eight four five six, seven two three one zero. Is that number right?",
+   "kind": "content",
+   "t": 68.017,
+   "seconds": 5.55
+  },
+  {
+   "role": "farmer",
+   "text": "Yes correct.",
+   "t": 76.12
+  },
+  {
+   "role": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack",
+   "t": 76.44,
+   "seconds": 1.7
+  },
+  {
+   "role": "agent",
+   "text": "What is your name?",
+   "kind": "content",
+   "t": 78.138,
+   "seconds": 1.8
+  },
+  {
+   "role": "farmer",
+   "text": "My name is Basavaraju.",
+   "t": 83.346
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 83.71,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Basavaraju. Which district is that in?",
+   "kind": "content",
+   "t": 85.368,
+   "seconds": 3.31
+  },
+  {
+   "role": "farmer",
+   "text": "Ramanagara District",
+   "t": 91.568
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 91.946,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Ramanagara. How many animals are sick?",
+   "kind": "content",
+   "t": 93.506,
+   "seconds": 3.33
+  },
+  {
+   "role": "farmer",
+   "text": "Only one buffalo.",
+   "t": 99.848
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 100.197,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, one moment.",
+   "kind": "filler",
+   "t": 101.781,
+   "seconds": 1.92
+  },
+  {
+   "role": "agent",
+   "text": "One animal. Since when is this problem there?",
+   "kind": "content",
+   "t": 103.706,
+   "seconds": 3.45
+  },
+  {
+   "role": "farmer",
+   "text": "From Yesterday",
+   "t": 109.685
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 110.024,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Let me note that.",
+   "kind": "filler",
+   "t": 111.759,
+   "seconds": 1.82
+  },
+  {
+   "role": "agent",
+   "text": "Since yesterday. Have you given any medicine or treatment already?",
+   "kind": "content",
+   "t": 113.583,
+   "seconds": 4.99
+  },
+  {
+   "role": "farmer",
+   "text": "No, no treatment given.",
+   "t": 121.785
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 122.141,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Let me read it back. One buffalo, lying down, not able to get up, since yesterday. Urgent: unable to stand and breathing difficulty. No treatment given. Your name is Basavaraju from Hosahalli, Ramanagara. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "kind": "content",
+   "t": 123.961,
+   "seconds": 18.41
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, that is correct.",
+   "t": 145.232
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 145.587,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler",
+   "t": 147.172,
+   "seconds": 2.64
+  },
+  {
+   "role": "agent",
+   "text": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "kind": "content",
+   "t": 149.811,
+   "seconds": 7.9
+  }
+ ],
+ "metrics": [
+  {
+   "turn": 1,
+   "speech_end_s": 17.474,
+   "eot_s": 17.748,
+   "asking": null,
+   "asr_ms": 70,
+   "heard": "My buffalo is lying down.",
+   "first_audio_s": 17.82,
+   "cancelled": true
+  },
+  {
+   "turn": 2,
+   "speech_end_s": 19.034,
+   "eot_s": 19.327,
+   "asking": null,
+   "asr_ms": 60,
+   "heard": "My buffalo is lying down, she is not able to get up.",
+   "first_audio_s": 19.389,
+   "nlu_ms": 2035,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "buffalo",
+    "symptoms": [
+     "lying down",
+     "not able to get up"
+    ]
+   },
+   "reply": "This sounds serious. I am marking it urgent for the vet team right now. A buffalo. Is the buffalo able to stand up?",
+   "now_asking": "can_stand",
+   "first_content_audio_s": 21.538,
+   "response_s": 2.504,
+   "first_audio_after_s": 0.355
+  },
+  {
+   "turn": 3,
+   "speech_end_s": 32.632,
+   "eot_s": 32.903,
+   "asking": "can_stand",
+   "asr_ms": 47,
+   "heard": "No, she cannot get up at all.",
+   "first_audio_s": 32.952,
+   "filler": true,
+   "nlu_ms": 1809,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "can_stand": false
+   },
+   "reply": "Is the buffalo breathing normally?",
+   "now_asking": "breathing_ok",
+   "first_content_audio_s": 37.171,
+   "response_s": 4.539,
+   "first_audio_after_s": 0.32
+  },
+  {
+   "turn": 4,
+   "speech_end_s": 43.307,
+   "eot_s": 43.578,
+   "asking": "breathing_ok",
+   "asr_ms": 80,
+   "heard": "No, she is breathing very fast.",
+   "first_audio_s": 43.66,
+   "filler": true,
+   "nlu_ms": 1824,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "breathing_ok": false
+   },
+   "reply": "Which village are you calling from?",
+   "now_asking": "village",
+   "first_content_audio_s": 48.038,
+   "response_s": 4.731,
+   "first_audio_after_s": 0.353
+  },
+  {
+   "turn": 5,
+   "speech_end_s": 53.638,
+   "eot_s": 53.906,
+   "asking": "village",
+   "asr_ms": 83,
+   "heard": "Ha Sahali Village.",
+   "first_audio_s": 53.991,
+   "nlu_ms": 1857,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "village": "Hosahalli"
+   },
+   "reply": "Hosahalli. What phone number can the vet team call you on?",
+   "now_asking": "contact_details",
+   "first_content_audio_s": 55.961,
+   "response_s": 2.323,
+   "first_audio_after_s": 0.353
+  },
+  {
+   "turn": 6,
+   "speech_end_s": 65.306,
+   "eot_s": 66.242,
+   "asking": "contact_details",
+   "asr_ms": 69,
+   "heard": "Nine eight four five six seven two three one zero.",
+   "first_audio_s": 66.312,
+   "nlu_ms": 1705,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "contact_details": "9845672310"
+   },
+   "reply": "nine eight four five six, seven two three one zero. Is that number right?",
+   "now_asking": "confirm_phone",
+   "first_content_audio_s": 68.017,
+   "response_s": 2.711,
+   "first_audio_after_s": 1.006
+  },
+  {
+   "turn": 7,
+   "speech_end_s": 76.12,
+   "eot_s": 76.389,
+   "asking": "confirm_phone",
+   "asr_ms": 50,
+   "heard": "Yes correct.",
+   "first_audio_s": 76.44,
+   "nlu_ms": 1652,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "yes",
+   "facts": {},
+   "reply": "What is your name?",
+   "now_asking": "caller_name",
+   "first_content_audio_s": 78.138,
+   "response_s": 2.018,
+   "first_audio_after_s": 0.32
+  },
+  {
+   "turn": 8,
+   "speech_end_s": 83.346,
+   "eot_s": 83.635,
+   "asking": "caller_name",
+   "asr_ms": 73,
+   "heard": "My name is Basavaraju.",
+   "first_audio_s": 83.71,
+   "nlu_ms": 1601,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "caller_name": "Basavaraju"
+   },
+   "reply": "Basavaraju. Which district is that in?",
+   "now_asking": "district",
+   "first_content_audio_s": 85.368,
+   "response_s": 2.022,
+   "first_audio_after_s": 0.364
+  },
+  {
+   "turn": 9,
+   "speech_end_s": 91.568,
+   "eot_s": 91.857,
+   "asking": "district",
+   "asr_ms": 87,
+   "heard": "Ramanagara District",
+   "first_audio_s": 91.946,
+   "nlu_ms": 1500,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "district": "Ramanagara"
+   },
+   "reply": "Ramanagara. How many animals are sick?",
+   "now_asking": "animals_affected",
+   "first_content_audio_s": 93.506,
+   "response_s": 1.938,
+   "first_audio_after_s": 0.378
+  },
+  {
+   "turn": 10,
+   "speech_end_s": 99.848,
+   "eot_s": 100.116,
+   "asking": "animals_affected",
+   "asr_ms": 80,
+   "heard": "Only one buffalo.",
+   "first_audio_s": 100.197,
+   "filler": true,
+   "nlu_ms": 2329,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "animals_affected": 1
+   },
+   "reply": "One animal. Since when is this problem there?",
+   "now_asking": "symptoms_since",
+   "first_content_audio_s": 103.706,
+   "response_s": 3.858,
+   "first_audio_after_s": 0.349
+  },
+  {
+   "turn": 11,
+   "speech_end_s": 109.685,
+   "eot_s": 109.956,
+   "asking": "symptoms_since",
+   "asr_ms": 66,
+   "heard": "From Yesterday",
+   "first_audio_s": 110.024,
+   "filler": true,
+   "nlu_ms": 1833,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "symptoms_since": "yesterday"
+   },
+   "reply": "Since yesterday. Have you given any medicine or treatment already?",
+   "now_asking": "previous_treatment",
+   "first_content_audio_s": 113.583,
+   "response_s": 3.898,
+   "first_audio_after_s": 0.339
+  },
+  {
+   "turn": 12,
+   "speech_end_s": 121.785,
+   "eot_s": 122.057,
+   "asking": "previous_treatment",
+   "asr_ms": 82,
+   "heard": "No, no treatment given.",
+   "first_audio_s": 122.141,
+   "nlu_ms": 1574,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "answer",
+   "facts": {
+    "previous_treatment": "none"
+   },
+   "reply": "Let me read it back. One buffalo, lying down, not able to get up, since yesterday. Urgent: unable to stand and breathing difficulty. No treatment given. Your name is Basavaraju from Hosahalli, Ramanagara. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "now_asking": "summary",
+   "first_content_audio_s": 123.961,
+   "response_s": 2.176,
+   "first_audio_after_s": 0.356
+  },
+  {
+   "turn": 13,
+   "speech_end_s": 145.232,
+   "eot_s": 145.501,
+   "asking": "summary",
+   "asr_ms": 84,
+   "heard": "Yes, that is correct.",
+   "first_audio_s": 145.587,
+   "filler": true,
+   "nlu_ms": 1686,
+   "nlu_source": "audio:google/gemini-3.5-flash-lite",
+   "intent": "yes",
+   "facts": {},
+   "reply": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "now_asking": null,
+   "first_content_audio_s": 149.811,
+   "response_s": 4.579,
+   "first_audio_after_s": 0.355
+  }
+ ],
+ "events": [
+  {
+   "t": 1.947,
+   "event": "agent",
+   "text": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+   "kind": "content"
+  },
+  {
+   "t": 15.794,
+   "event": "speech_start"
+  },
+  {
+   "t": 17.819,
+   "event": "farmer",
+   "text": "My buffalo is lying down."
+  },
+  {
+   "t": 17.82,
+   "event": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 18.013,
+   "event": "merged_fragment"
+  },
+  {
+   "t": 18.013,
+   "event": "speech_start"
+  },
+  {
+   "t": 19.388,
+   "event": "farmer",
+   "text": "My buffalo is lying down, she is not able to get up."
+  },
+  {
+   "t": 19.389,
+   "event": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 21.538,
+   "event": "agent",
+   "text": "This sounds serious. I am marking it urgent for the vet team right now. A buffalo. Is the buffalo able to stand up?",
+   "kind": "content"
+  },
+  {
+   "t": 30.974,
+   "event": "speech_start"
+  },
+  {
+   "t": 32.951,
+   "event": "farmer",
+   "text": "No, she cannot get up at all."
+  },
+  {
+   "t": 32.952,
+   "event": "agent",
+   "text": "Right.",
+   "kind": "ack"
+  },
+  {
+   "t": 34.532,
+   "event": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler"
+  },
+  {
+   "t": 34.813,
+   "event": "agent",
+   "text": "Is the buffalo breathing normally?",
+   "kind": "content"
+  },
+  {
+   "t": 41.628,
+   "event": "speech_start"
+  },
+  {
+   "t": 43.659,
+   "event": "farmer",
+   "text": "No, she is breathing very fast."
+  },
+  {
+   "t": 43.66,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 45.399,
+   "event": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler"
+  },
+  {
+   "t": 45.529,
+   "event": "agent",
+   "text": "Which village are you calling from?",
+   "kind": "content"
+  },
+  {
+   "t": 52.439,
+   "event": "speech_start"
+  },
+  {
+   "t": 53.989,
+   "event": "farmer",
+   "text": "Ha Sahali Village."
+  },
+  {
+   "t": 53.991,
+   "event": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 55.961,
+   "event": "agent",
+   "text": "Hosahalli. What phone number can the vet team call you on?",
+   "kind": "content"
+  },
+  {
+   "t": 61.787,
+   "event": "speech_start"
+  },
+  {
+   "t": 66.311,
+   "event": "farmer",
+   "text": "Nine eight four five six seven two three one zero."
+  },
+  {
+   "t": 66.312,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 68.017,
+   "event": "agent",
+   "text": "nine eight four five six, seven two three one zero. Is that number right?",
+   "kind": "content"
+  },
+  {
+   "t": 75.121,
+   "event": "speech_start"
+  },
+  {
+   "t": 76.439,
+   "event": "farmer",
+   "text": "Yes correct."
+  },
+  {
+   "t": 76.44,
+   "event": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 78.091,
+   "event": "agent",
+   "text": "What is your name?",
+   "kind": "content"
+  },
+  {
+   "t": 81.486,
+   "event": "speech_start"
+  },
+  {
+   "t": 83.709,
+   "event": "farmer",
+   "text": "My name is Basavaraju."
+  },
+  {
+   "t": 83.71,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 85.368,
+   "event": "agent",
+   "text": "Basavaraju. Which district is that in?",
+   "kind": "content"
+  },
+  {
+   "t": 90.247,
+   "event": "speech_start"
+  },
+  {
+   "t": 91.944,
+   "event": "farmer",
+   "text": "Ramanagara District"
+  },
+  {
+   "t": 91.946,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 93.506,
+   "event": "agent",
+   "text": "Ramanagara. How many animals are sick?",
+   "kind": "content"
+  },
+  {
+   "t": 98.467,
+   "event": "speech_start"
+  },
+  {
+   "t": 100.196,
+   "event": "farmer",
+   "text": "Only one buffalo."
+  },
+  {
+   "t": 100.197,
+   "event": "agent",
+   "text": "Right.",
+   "kind": "ack"
+  },
+  {
+   "t": 101.781,
+   "event": "agent",
+   "text": "Hmm, one moment.",
+   "kind": "filler"
+  },
+  {
+   "t": 102.526,
+   "event": "agent",
+   "text": "One animal. Since when is this problem there?",
+   "kind": "content"
+  },
+  {
+   "t": 108.807,
+   "event": "speech_start"
+  },
+  {
+   "t": 110.022,
+   "event": "farmer",
+   "text": "From Yesterday"
+  },
+  {
+   "t": 110.024,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 111.759,
+   "event": "agent",
+   "text": "Let me note that.",
+   "kind": "filler"
+  },
+  {
+   "t": 111.856,
+   "event": "agent",
+   "text": "Since yesterday. Have you given any medicine or treatment already?",
+   "kind": "content"
+  },
+  {
+   "t": 120.109,
+   "event": "speech_start"
+  },
+  {
+   "t": 122.139,
+   "event": "farmer",
+   "text": "No, no treatment given."
+  },
+  {
+   "t": 122.141,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 123.961,
+   "event": "agent",
+   "text": "Let me read it back. One buffalo, lying down, not able to get up, since yesterday. Urgent: unable to stand and breathing difficulty. No treatment given. Your name is Basavaraju from Hosahalli, Ramanagara. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "kind": "content"
+  },
+  {
+   "t": 143.891,
+   "event": "speech_start"
+  },
+  {
+   "t": 145.585,
+   "event": "farmer",
+   "text": "Yes, that is correct."
+  },
+  {
+   "t": 145.587,
+   "event": "agent",
+   "text": "Right.",
+   "kind": "ack"
+  },
+  {
+   "t": 147.172,
+   "event": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler"
+  },
+  {
+   "t": 147.271,
+   "event": "agent",
+   "text": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "kind": "content"
+  },
+  {
+   "t": 157.81,
+   "event": "ended"
+  }
+ ]
+}

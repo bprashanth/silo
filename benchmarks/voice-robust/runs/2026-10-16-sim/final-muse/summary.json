@@ -1,0 +1,17 @@
+{
+ "nlu": "muse",
+ "condition": "gsm",
+ "calls": 10,
+ "checks_passed": 118,
+ "checks_total": 130,
+ "response_s_p50_p90_p95": [
+  1.95,
+  3.94,
+  4.14
+ ],
+ "first_audio_s_p50_p90_p95": [
+  0.35,
+  0.96,
+  0.98
+ ]
+}
