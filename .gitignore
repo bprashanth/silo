@@ -227,3 +227,4 @@ __pycache__/
 .env
 *.gguf
 .agents/
+.prompts/
