@@ -1,0 +1,313 @@
+{
+  "id": "a5a4a4b5-bc08-4f47-9da7-ec1ab4b4fedd",
+  "backend": "pipecat",
+  "status": "ended",
+  "created_at": 1792083967.2167635,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Hello, you've reached the livestock assistance service. Please tell me what's happening.",
+      "final": true
+    },
+    {
+      "role": "user",
+      "text": "My cow is sick.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "What symptoms are you seeing in your cow?",
+      "generated_text": "What symptoms are you seeing in your cow?",
+      "final": true,
+      "transcript_basis": "audio_queued",
+      "question_field": "symptoms"
+    },
+    {
+      "role": "user",
+      "text": "She is not eating and seems weak.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Is the animal unable to stand, struggling to breathe, or unconscious?",
+      "generated_text": "Is the animal unable to stand, struggling to breathe, or unconscious?",
+      "final": true,
+      "transcript_basis": "audio_queued",
+      "question_field": "urgent_warning_signs"
+    },
+    {
+      "role": "user",
+      "text": "No.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "When did these symptoms begin?",
+      "generated_text": "When did these symptoms begin?",
+      "final": true,
+      "transcript_basis": "audio_queued",
+      "question_field": "symptoms_since"
+    },
+    {
+      "role": "user",
+      "text": "Could you repeat the question?",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I did not catch that clearly. When did the symptoms start?",
+      "generated_text": "I did not catch that clearly. When did the symptoms start? ",
+      "final": true,
+      "transcript_basis": "audio_queued",
+      "question_field": "symptoms_since"
+    },
+    {
+      "role": "user",
+      "text": "Two days ago.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "May I have your name?",
+      "generated_text": "May I have your name?",
+      "final": true,
+      "transcript_basis": "audio_queued",
+      "question_field": "caller_name"
+    }
+  ],
+  "fields": {
+    "caller_name": null,
+    "village": null,
+    "district": null,
+    "animal_type": "cow",
+    "animals_affected": 1,
+    "symptoms": [
+      "not eating",
+      "weak"
+    ],
+    "symptoms_since": "Two days ago",
+    "previous_treatment": null,
+    "urgent_warning_signs": [],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": false,
+    "missing_fields": [
+      "caller_name",
+      "village",
+      "district",
+      "previous_treatment",
+      "contact_details"
+    ],
+    "call_status": "ended_unconfirmed",
+    "unknown_fields": [],
+    "evidence": {
+      "animal_type": {
+        "answer": "My cow is sick.",
+        "source": "explicit caller statement"
+      },
+      "symptoms": {
+        "answer": "She is not eating and seems weak.",
+        "source": "explicit caller statement"
+      },
+      "urgent_warning_signs": {
+        "question": "Is the animal unable to stand, struggling to breathe, or unconscious?",
+        "answer": "No."
+      },
+      "symptoms_since": {
+        "question": "I did not catch that clearly. When did the symptoms start?",
+        "answer": "Two days ago."
+      },
+      "animals_affected": {
+        "answer": "My cow is sick.",
+        "source": "explicit caller statement"
+      }
+    }
+  },
+  "metrics": [
+    {
+      "turn": 1,
+      "speech_end_monotonic": 2967616.199331766,
+      "end_of_turn_monotonic": 2967616.616474465,
+      "vad_ms": 417.1426990069449,
+      "asr_ms": 600.4815208725631,
+      "llm_first_token_ms": 1470.6964520737529,
+      "tts_first_chunk_ms": 455.8177669532597,
+      "server_first_audio_ms": 2944.210453890264,
+      "generation_complete_ms": 2944.512196816504
+    },
+    {
+      "turn": 2,
+      "speech_end_monotonic": 2967624.038772887,
+      "end_of_turn_monotonic": 2967624.454452414,
+      "vad_ms": 415.67952698096633,
+      "asr_ms": 388.5352620854974,
+      "llm_first_token_ms": 957.0965878665447,
+      "tts_first_chunk_ms": 711.153794080019,
+      "server_first_audio_ms": 2472.4952187389135,
+      "generation_complete_ms": 2472.676210105419
+    },
+    {
+      "turn": 3,
+      "speech_end_monotonic": 2967632.273494865,
+      "end_of_turn_monotonic": 2967632.710653281,
+      "vad_ms": 437.15841602534056,
+      "asr_ms": 312.9391330294311,
+      "llm_first_token_ms": 848.5754267312586,
+      "tts_first_chunk_ms": 319.21622017398477,
+      "server_first_audio_ms": 1917.913820128888,
+      "generation_complete_ms": 1918.0525243282318
+    },
+    {
+      "turn": 4,
+      "speech_end_monotonic": 2967638.354365463,
+      "end_of_turn_monotonic": 2967638.791415529,
+      "vad_ms": 437.0500659570098,
+      "asr_ms": 337.29557041078806,
+      "llm_first_token_ms": 0.4517580382525921,
+      "tts_first_chunk_ms": 301.75828700885177,
+      "server_first_audio_ms": 1076.755872927606,
+      "generation_complete_ms": 1369.2169883288443
+    },
+    {
+      "turn": 5,
+      "speech_end_monotonic": 2967644.51800405,
+      "end_of_turn_monotonic": 2967644.93626936,
+      "vad_ms": 418.26531011611223,
+      "asr_ms": 311.6077408194542,
+      "llm_first_token_ms": 841.9922417961061,
+      "tts_first_chunk_ms": 265.3818503022194,
+      "server_first_audio_ms": 1837.2831591404974,
+      "generation_complete_ms": 1837.444247212261
+    }
+  ],
+  "events": [
+    {
+      "event": "speech_start",
+      "monotonic": 2967615.378881946
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 3237,
+      "client_ms": 12316.200000286102,
+      "speech_end_client_ms": 9079.433333714804,
+      "first_audio_client_ms": 12316.200000286102,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967622.450629563
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2789,
+      "client_ms": 19699.10000038147,
+      "speech_end_client_ms": 16909.641667048138,
+      "first_audio_client_ms": 19699.10000038147,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967631.974139724
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2207,
+      "client_ms": 27382.400000095367,
+      "speech_end_client_ms": 25175.61666695277,
+      "first_audio_client_ms": 27382.400000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967637.191885746
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1350,
+      "client_ms": 32615.400000095367,
+      "speech_end_client_ms": 31265.450000286102,
+      "first_audio_client_ms": 32615.400000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967643.794517831
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2130,
+      "client_ms": 39548.5,
+      "speech_end_client_ms": 37418.3250002861,
+      "first_audio_client_ms": 39548.5,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ],
+  "answer_states": {
+    "animal_type": "answered",
+    "animals_affected": "answered",
+    "symptoms": "answered",
+    "urgent_warning_signs": "answered",
+    "symptoms_since": "answered"
+  },
+  "clarification_needed": null,
+  "routing_target": "caller_name",
+  "routing_action": "ask",
+  "routing_hint": "Your ONLY next question must ask for caller_name. The following are already addressed; do not ask again: animal_type, animals_affected, symptoms, symptoms_since, urgent_warning_signs.",
+  "extracting": false,
+  "fields_revision": 11,
+  "question_guard_used": true,
+  "dialogue_policy": "field-backed deterministic summary/completion guard",
+  "ended_at": 1792084008.295697,
+  "browser_metrics": [
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 3237,
+      "client_ms": 12316.200000286102,
+      "speech_end_client_ms": 9079.433333714804,
+      "first_audio_client_ms": 12316.200000286102,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2789,
+      "client_ms": 19699.10000038147,
+      "speech_end_client_ms": 16909.641667048138,
+      "first_audio_client_ms": 19699.10000038147,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2207,
+      "client_ms": 27382.400000095367,
+      "speech_end_client_ms": 25175.61666695277,
+      "first_audio_client_ms": 27382.400000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1350,
+      "client_ms": 32615.400000095367,
+      "speech_end_client_ms": 31265.450000286102,
+      "first_audio_client_ms": 32615.400000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2130,
+      "client_ms": 39548.5,
+      "speech_end_client_ms": 37418.3250002861,
+      "first_audio_client_ms": 39548.5,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ]
+}

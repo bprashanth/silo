@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 4.178789058700204,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nWhat symptoms are you seeing in your cow?"
+  },
+  {
+    "fixture": "symptoms",
+    "wall_seconds_to_agent_transcript": 4.482145021669567,
+    "farmer": "FARMER\nShe is not eating and seems weak.",
+    "agent": "AGENT\nIs the animal unable to stand, struggling to breathe, or unconscious?"
+  },
+  {
+    "fixture": "no",
+    "wall_seconds_to_agent_transcript": 2.6092733698897064,
+    "farmer": "FARMER\nNo.",
+    "agent": "AGENT\nWhen did these symptoms begin?"
+  },
+  {
+    "fixture": "unclear",
+    "wall_seconds_to_agent_transcript": 3.024098454043269,
+    "farmer": "FARMER\nCould you repeat the question?",
+    "agent": "AGENT\nI did not catch that clearly. When did the symptoms start?"
+  },
+  {
+    "fixture": "onset",
+    "wall_seconds_to_agent_transcript": 3.070651820860803,
+    "farmer": "FARMER\nTwo days ago.",
+    "agent": "AGENT\nMay I have your name?"
+  }
+]

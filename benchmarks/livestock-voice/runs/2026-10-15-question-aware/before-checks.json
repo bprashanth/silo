@@ -1,0 +1,20 @@
+{
+  "received_non_silent_agent_audio": true,
+  "agent_audio_rms": 0.036700348400213995,
+  "all_fixture_utterances_transcribed": true,
+  "caller_name_captured": false,
+  "animal_cow": true,
+  "urgent_flag": false,
+  "confirmed": false,
+  "missing_fields": [
+    "caller_name",
+    "village",
+    "district",
+    "animals_affected",
+    "symptoms_since",
+    "previous_treatment",
+    "urgent_warning_signs",
+    "contact_details"
+  ],
+  "browser_audible_metrics_count": 4
+}

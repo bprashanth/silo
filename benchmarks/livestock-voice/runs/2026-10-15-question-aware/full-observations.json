@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 3.137176539283246,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nWhat symptoms are you seeing in your cow?"
+  },
+  {
+    "fixture": "out_of_order",
+    "wall_seconds_to_agent_transcript": 11.55539239384234,
+    "farmer": "FARMER\nMy name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+    "agent": "AGENT\nIs the animal unable to stand, struggling to breathe, or unconscious?"
+  },
+  {
+    "fixture": "warning",
+    "wall_seconds_to_agent_transcript": 5.4360662628896534,
+    "farmer": "FARMER\nShe cannot stand up, and she is breathing very fast.",
+    "agent": "AGENT\nThis needs urgent veterinary attention. Has the cow received any treatment before?"
+  },
+  {
+    "fixture": "treatment",
+    "wall_seconds_to_agent_transcript": 8.70725122699514,
+    "farmer": "FARMER\nThere has been no previous treatment. I do not have a contact number to share.",
+    "agent": "AGENT\nLet me check the details. Caller: Ramesh. village: Demo Village. district: Demo District. animal: cow. number affected: 1. symptoms: not been eating, very weak. started: yesterday. previous treatment: none. contact details unavailable. flagged for urgent human review. Is that summary correct?"
+  },
+  {
+    "fixture": "confirm",
+    "wall_seconds_to_agent_transcript": 4.403846141882241,
+    "farmer": "FARMER\nYes, that summary is correct. Thank you.",
+    "agent": "AGENT\nThank you. Your demo request is recorded for human review. This demonstration does not dispatch a veterinarian. Goodbye."
+  }
+]

@@ -71,3 +71,13 @@ Only the hosted candidate sends test speech to OpenRouter. Catalog discovery and
 ## Evidence
 
 Small synthetic raw records: [runs/2026-10-15-browser](runs/2026-10-15-browser/). Large audio, screenshots, raw resources, dependency cache and downloaded sources: `/mnt/seagate/silo/livestock-voice/`. Final user call state is private on NVMe in `~/.local/share/silo-livestock-voice/`. Test scripts and protocol: [tests/README.md](tests/README.md).
+
+## Question-aware follow-up regression
+
+A human call exposed repeated warning-sign questions after a short “No”. The controller had treated an empty warning list as unanswered. Replies now retain their preceding spoken question and explicit answered/unknown state, with polarity-aware handling and clarification of ambiguous replies. The private human record remains outside the repository.
+
+Synthetic speech sent through the browser at `http://100.82.28.38:8765` reproduced the loop before the fix. After the fix, “No” advanced to onset; “Could you repeat the question?” clarified onset; “Two days ago” advanced to caller name. See `runs/2026-10-15-question-aware/`. Twenty-three intake unit tests pass. The question guard now buffers the proposed Muse question before checking its field, so the legacy `llm_first_token_ms` measurement includes that buffering; browser audible latency remains the end-to-end comparison. Speech recognition errors are still possible.
+
+Dograh was separately tested at `http://100.82.28.38:13010` with actual WebRTC audio, eight transcript entries, and non-silent received replies. The main app redirects to that address with demo authentication. This verifies remote address configuration from the demo machine, not a second physical client's network path. See `runs/2026-10-15-candidates/dograh-tailnet.json`.
+
+The full post-fix synthetic browser intake also completed with 10/10 semantic field matches and caller confirmation. The symptom assertion accepts both “not eating” and “not been eating”; the recorded caller wording and stored symptoms retain the latter.

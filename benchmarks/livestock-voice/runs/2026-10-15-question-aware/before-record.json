@@ -1,0 +1,236 @@
+{
+  "id": "355e90c0-711e-4f83-8cb0-bcfbb2b43e89",
+  "backend": "pipecat",
+  "status": "ended",
+  "created_at": 1792083736.9075243,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Hello, you've reached the livestock assistance service. Please tell me what's happening.",
+      "final": true
+    },
+    {
+      "role": "user",
+      "text": "My cow is sick.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I understand. What symptoms are you seeing in your cow?",
+      "generated_text": "I understand. What symptoms are you seeing in your cow?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "She is not eating and seems weak.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Is she able to stand, breathing normally, and conscious?",
+      "generated_text": "Is she able to stand, breathing normally, and conscious?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "No.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I see. Is she able to stand, breathing normally, and conscious?",
+      "generated_text": "I see. Is she able to stand, breathing normally, and conscious?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "Could you repeat the question?",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Is she able to stand, breathing normally, and conscious?",
+      "generated_text": "Is she able to stand, breathing normally, and conscious?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    }
+  ],
+  "fields": {
+    "caller_name": null,
+    "village": null,
+    "district": null,
+    "animal_type": "cow",
+    "animals_affected": null,
+    "symptoms": [
+      "not eating",
+      "weak"
+    ],
+    "symptoms_since": null,
+    "previous_treatment": null,
+    "urgent_warning_signs": [],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": false,
+    "missing_fields": [
+      "caller_name",
+      "village",
+      "district",
+      "animals_affected",
+      "symptoms_since",
+      "previous_treatment",
+      "urgent_warning_signs",
+      "contact_details"
+    ],
+    "call_status": "ended_unconfirmed",
+    "unknown_fields": [],
+    "evidence": {
+      "animal_type": "My cow is sick.",
+      "symptoms": "She is not eating and seems weak."
+    }
+  },
+  "metrics": [
+    {
+      "turn": 1,
+      "speech_end_monotonic": 2967385.833716378,
+      "end_of_turn_monotonic": 2967386.271960886,
+      "vad_ms": 438.2445081137121,
+      "asr_ms": 334.2548180371523,
+      "llm_first_token_ms": 212.04235823825002,
+      "tts_first_chunk_ms": 289.5894441753626,
+      "server_first_audio_ms": 1390.223684720695,
+      "generation_complete_ms": 1803.9639820344746
+    },
+    {
+      "turn": 2,
+      "speech_end_monotonic": 2967393.076954121,
+      "end_of_turn_monotonic": 2967393.494410219,
+      "vad_ms": 417.45609836652875,
+      "asr_ms": 335.95861261710525,
+      "llm_first_token_ms": 448.9896120503545,
+      "tts_first_chunk_ms": 580.0327947363257,
+      "server_first_audio_ms": 2351.5621623955667,
+      "generation_complete_ms": 2351.7797132954
+    },
+    {
+      "turn": 3,
+      "speech_end_monotonic": 2967400.129450747,
+      "end_of_turn_monotonic": 2967400.577649615,
+      "vad_ms": 448.19886796176434,
+      "asr_ms": 312.9823599010706,
+      "llm_first_token_ms": 477.16393508017063,
+      "tts_first_chunk_ms": 281.8341590464115,
+      "server_first_audio_ms": 1868.4299821034074,
+      "generation_complete_ms": 2372.231448069215
+    },
+    {
+      "turn": 4,
+      "speech_end_monotonic": 2967408.330597067,
+      "end_of_turn_monotonic": 2967408.76762765,
+      "vad_ms": 437.0305831544101,
+      "asr_ms": 322.3896212875843,
+      "llm_first_token_ms": 490.89040607213974,
+      "tts_first_chunk_ms": 576.639792881906,
+      "server_first_audio_ms": 1946.1191352456808,
+      "generation_complete_ms": 1946.3581889867783
+    }
+  ],
+  "events": [
+    {
+      "event": "speech_start",
+      "monotonic": 2967385.056146797
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1639,
+      "client_ms": 10547.400000095367,
+      "speech_end_client_ms": 8908.433333237967,
+      "first_audio_client_ms": 10547.400000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967391.487885562
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2672,
+      "client_ms": 18780.200000286102,
+      "speech_end_client_ms": 16107.841666857401,
+      "first_audio_client_ms": 18780.200000286102,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967399.830027615
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2139,
+      "client_ms": 25329.900000095367,
+      "speech_end_client_ms": 23191.216666857403,
+      "first_audio_client_ms": 25329.900000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2967407.167660776
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2200,
+      "client_ms": 33613,
+      "speech_end_client_ms": 31413.25,
+      "first_audio_client_ms": 33613,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ],
+  "routing_hint": "Your ONLY next question must ask for urgent_warning_signs. The following are already addressed; do not ask again: animal_type, animals_affected, symptoms.",
+  "extracting": false,
+  "fields_revision": 9,
+  "ended_at": 1792083774.1350117,
+  "browser_metrics": [
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1639,
+      "client_ms": 10547.400000095367,
+      "speech_end_client_ms": 8908.433333237967,
+      "first_audio_client_ms": 10547.400000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2672,
+      "client_ms": 18780.200000286102,
+      "speech_end_client_ms": 16107.841666857401,
+      "first_audio_client_ms": 18780.200000286102,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2139,
+      "client_ms": 25329.900000095367,
+      "speech_end_client_ms": 23191.216666857403,
+      "first_audio_client_ms": 25329.900000095367,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2200,
+      "client_ms": 33613,
+      "speech_end_client_ms": 31413.25,
+      "first_audio_client_ms": 33613,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ]
+}

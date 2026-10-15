@@ -6,6 +6,8 @@ Question: can an isolated browser voice intake collect a fictional farmer's repo
 
 Open **http://127.0.0.1:8765** on the demonstration machine. Select a backend, click **Call**, allow microphone access, and say “My cow is sick.” Headphones help avoid acoustic feedback when testing interruptions. Click **End call** to save the transcript and intake record, then use the export buttons.
 
+For the existing Tailscale connection, open **http://100.82.28.38:8765**. Dograh opens **http://100.82.28.38:13010/workflow/1** from the backend selector. For microphone testing over plain HTTP in Chrome, enable `chrome://flags/#unsafely-treat-insecure-origin-as-secure` with both origins, comma-separated: `http://100.82.28.38:8765,http://100.82.28.38:13010`, then relaunch Chrome. This is a development browser exception; no HTTPS or Tailscale Serve is configured. The servers bind to all interfaces.
+
 OpenRouter is explicitly non-private: use fictional information only. Its API receives a complete audio utterance and streams its spoken reply; it is not a native realtime audio session. The local option uses continuous WebRTC microphone audio, Silero turn detection, Whisper, Muse and Kokoro. No telephone call or veterinarian dispatch occurs.
 
 ```sh

@@ -78,6 +78,159 @@ def urgency(text):
             found.append(label); break
     return found
 
+QUESTION_TEXT = {
+ 'symptoms': 'What symptoms have you noticed?',
+ 'urgent_warning_signs': 'Is the animal unable to stand, struggling to breathe, or unconscious?',
+ 'symptoms_since': 'When did the symptoms start?',
+ 'animal_type': 'What kind of animal is affected?',
+ 'animals_affected': 'How many animals are affected?',
+ 'caller_name': 'What is your name?',
+ 'village': 'Which village are you calling from?',
+ 'district': 'Which district is that in?',
+ 'previous_treatment': 'Has the animal received any treatment already?',
+ 'contact_details': 'Is there a contact number you would like to share?'
+}
+
+def question_field(entry):
+    """Interpret the question actually spoken, not merely the planned field."""
+    text=entry.get('text','').lower()
+    if '?' not in text: return None
+    text=re.split(r'[.!]',text)[-1]
+    if re.search(r'summary.*correct|is that correct|details.*correct',text): return None
+    patterns=[('symptoms_since',r'when|how long'),('urgent_warning_signs',r'urgent|warning|stand|breath|unconscious'),
+      ('previous_treatment',r'treatment|medicine|medication'),('contact_details',r'contact|phone|mobile'),
+      ('animals_affected',r'how many|number of animals'),('animal_type',r'kind of animal|type of animal|animal type'),
+      ('caller_name',r'your name|caller.name'),('district',r'district'),('village',r'village'),('symptoms',r'symptom|what.*noticed|what.*happening')]
+    for field,pattern in patterns:
+        if re.search(pattern,text): return field
+    return entry.get('question_field')
+
+def volunteered_values(text):
+    """Only concrete stated values; mentioning a field name alone answers nothing."""
+    out={}
+    animal=re.search(r'\b(cow|buffalo|goat|sheep|calf|bull|ox|pig|horse|chicken)\b',text,re.I)
+    if animal:
+        out['animal_type']=animal.group().lower()
+        count=re.search(r'\b(\d+|one|two|three|four|five)\s+(?:cow|buffalo|goat|sheep|animal|calf)',text,re.I)
+        if count: out['animals_affected']=int(count.group(1)) if count.group(1).isdigit() else ['zero','one','two','three','four','five'].index(count.group(1).lower())
+        elif re.search(r'\bmy '+animal.group()+r'\b',text,re.I): out['animals_affected']=1
+    name=re.search(r'(?:my name is|i am called)\s+([^.,!?]+)',text,re.I)
+    if name: out['caller_name']=name.group(1).strip()
+    for field,label in [('village','Village'),('district','District')]:
+        match=re.search(r'\b(?:in|from)\s+([A-Z][\w-]*(?:\s+[A-Z][\w-]*)*\s+'+label+r')\b',text)
+        if match: out[field]=match.group(1)
+    symptoms=re.findall(r'not (?:been )?eating|very weak|weakness|weak|regurgitation|vomiting|diarrh(?:ea|oea)|fever|coughing',text,re.I)
+    if symptoms: out['symptoms']=symptoms
+    onset=re.search(r'(?:started|began|since|sorry,?)\s+(yesterday|today|last night|(?:one|two|three|four|five|\d+)\s+(?:hours?|days?|weeks?)\s+(?:ago|back))',text,re.I)
+    if onset: out['symptoms_since']=onset.group(1)
+    if re.search(r'no (?:previous )?treatment|not received (?:any )?treatment',text,re.I): out['previous_treatment']='none'
+    signs=urgency(text)
+    if signs: out['urgent_warning_signs']=signs
+    return out
+
+def contextual_answers(c):
+    """Replay caller answers with their spoken question; no private text leaves this process."""
+    answers={}; previous=None; clarification=None
+    unknown=re.compile(r"^(?:i )?(?:do not know|don't know|dont know|not sure|unsure|unknown|no idea)\b",re.I)
+    negative=re.compile(r"^(?:no|nope|none|not at all)(?:[.! ,]|$)",re.I)
+    affirmative=re.compile(r"^(?:yes|yeah|yep|correct)(?:[.! ,]|$)",re.I)
+    duration=re.compile(r'\b(yesterday|today|last night|last week|(?:one|two|three|four|five|six|seven|eight|nine|ten|a|an|\d+)\s+(?:hours?|days?|weeks?|months?)(?:\s+(?:ago|back))?)\b',re.I)
+    for entry in c['transcript']:
+        if entry['role']=='assistant':
+            if entry.get('text'): previous=entry
+            continue
+        text=entry.get('text','').strip()
+        explicit=volunteered_values(text)
+        if not urgency(text):
+            old=answers.get('urgent_warning_signs',{}).get('value') or []
+            cleared=[]
+            if re.search(r'\bcan stand|\bable to stand',text,re.I): cleared.append('unable to stand')
+            if re.search(r'breathing normally|breathing is normal',text,re.I): cleared.append('breathing difficulty')
+            if re.search(r'not unconscious|not unresponsive|is conscious',text,re.I): cleared.append('unresponsive')
+            if cleared: explicit['urgent_warning_signs']=[item for item in old if item not in cleared]
+        for key,value in explicit.items():
+            answers[key]={'state':'answered','value':value,'evidence':{'answer':text,'source':'explicit caller statement'}}
+        if re.search(r'do not have.{0,20}(?:contact|phone)|no contact number',text,re.I):
+            answers['contact_details']={'state':'unknown','value':None,'evidence':{'answer':text}}
+        if re.search(r'(?:do not|don.t) know when',text,re.I):
+            answers['symptoms_since']={'state':'unknown','value':None,'evidence':{'answer':text}}
+        field=question_field(previous or {})
+        if not field:
+            clarification=None
+            continue
+        if field in explicit:
+            clarification=None
+            continue
+        if explicit and re.search(r'sorry|correction|actually|got that wrong',text,re.I):
+            clarification=None
+            continue
+        q=previous['text'].lower(); value=None; state='answered'
+        if unknown.search(text): state='unknown'
+        elif '?' in text or re.search(r'(?:repeat|say that again|what do you mean)',text,re.I): state='ambiguous'
+        elif field=='urgent_warning_signs':
+            signs=urgency(text)
+            if signs: value=signs
+            elif negative.search(text) and re.search(r'unable|inability|struggling|severe|urgent|warning|unconscious',q) and not re.search(r'\bable to stand.*(?:or|and)',q): value=[]
+            elif re.search(r'\b(?:can|able to) .*stand',q) and not re.search(r'breath|unconscious',q):
+                if affirmative.search(text): value=[]
+                elif negative.search(text): value=['unable to stand']
+                else: state='ambiguous'
+            elif affirmative.search(text) or negative.search(text): state='ambiguous'
+            elif re.search(r'can stand|breathing normally|not unconscious|no warning signs',text,re.I): value=[]
+            else: state='ambiguous'
+        elif field=='previous_treatment':
+            if negative.search(text): value='none'
+            elif affirmative.search(text): state='ambiguous'
+            else: value=text
+        elif field=='contact_details':
+            if negative.search(text) or re.search(r'do not have|not available|unavailable|rather not',text,re.I): state='unknown'
+            elif affirmative.search(text): state='ambiguous'
+            elif len(re.sub(r'\D','',text))>=6: value=text
+            else: state='ambiguous'
+        elif field=='symptoms_since':
+            match=duration.search(text)
+            if match: value=match.group(1)
+            else: state='ambiguous'
+        elif field=='symptoms':
+            if negative.search(text) and 'other' in q:
+                value=answers.get(field,{}).get('value') or c['fields'].get(field) or []
+            elif affirmative.search(text) or negative.search(text) or '?' in text: state='ambiguous'
+            elif len(text.split())<2 and not re.search(r'vomit|regurgitat|diarrh|fever|weak|cough',text,re.I): state='ambiguous'
+            else: value=[text]
+        elif field=='animal_type':
+            match=re.search(r'\b(cow|buffalo|goat|sheep|calf|bull|ox|pig|horse|chicken)\b',text,re.I)
+            if match: value=match.group(1).lower()
+            else: state='ambiguous'
+        elif field=='animals_affected':
+            number=re.search(r'\b(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\b',text,re.I)
+            if number: value=int(number.group()) if number.group().isdigit() else ['zero','one','two','three','four','five','six','seven','eight','nine','ten'].index(number.group().lower())
+            else: state='ambiguous'
+        else:
+            if affirmative.search(text) or negative.search(text) or '?' in text: state='ambiguous'
+            else: value=text
+        evidence={'question':previous['text'],'answer':text}
+        if state=='ambiguous':
+            clarification={'field':field,'question':previous['text'],'answer':text}
+        else:
+            answers[field]={'state':state,'value':value,'evidence':evidence}; clarification=None
+        # The next fragment is still about this question until an actual new question is spoken.
+    return answers,clarification
+
+
+def apply_contextual_answers(c,data):
+    answers,clarification=contextual_answers(c)
+    for field,answer in answers.items():
+        data[field]=answer['value']
+        prior=data.setdefault('evidence',{}).get(field)
+        data['evidence'][field]={**prior,'contextual_answer':answer['evidence']} if field=='urgent_warning_signs' and isinstance(prior,dict) and prior.get('later_corrections') else answer['evidence']
+        unknown=data.setdefault('unknown_fields',[])
+        if answer['state']=='unknown' and field not in unknown: unknown.append(field)
+        elif answer['state']!='unknown': data['unknown_fields']=[k for k in unknown if k!=field]
+    c['answer_states']={field:answer['state'] for field,answer in answers.items()}
+    c['clarification_needed']=clarification
+    return data
+
+
 def validate_fields(c,data):
     callers=[x['text'] for x in c['transcript'] if x['role']=='user']
     signs=[]; quotes=[]; resolved=[]
@@ -113,6 +266,8 @@ def validate_fields(c,data):
         if data.get(key) in (None, [], '') and key not in data['unknown_fields'] and c['fields'].get(key) not in (None, [], '') and not (key=='urgent_warning_signs' and resolved):
             data[key]=c['fields'][key]
             if key in c['fields'].get('evidence',{}): evidence[key]=c['fields']['evidence'][key]
+    data=apply_contextual_answers(c,data)
+    data['unknown_fields']=list(dict.fromkeys(data['unknown_fields']))
     data['missing_fields']=[key for key in Q['required_fields'] if (data.get(key) is None or data.get(key)==[] or data.get(key)=='') and key not in data['unknown_fields']]
     if 'urgent_warning_signs' in evidence and 'urgent_warning_signs' in data['missing_fields']: data['missing_fields'].remove('urgent_warning_signs')
     if c.get('backend')=='pipecat':
@@ -121,19 +276,22 @@ def validate_fields(c,data):
     return data
 
 def routing_hint(c):
-    """Lightweight dialog guard; extraction still supplies values and provenance."""
-    text=' '.join(x['text'] for x in c['transcript'] if x['role']=='user').lower()
-    f=c['fields']; known={k for k in Q['required_fields'] if f.get(k) not in (None, [], '')}|set(f.get('unknown_fields',[]))
-    cues={'caller_name':r'my name is|i am called', 'village':r'village', 'district':r'district',
-      'animal_type':r'cow|buffalo|goat|sheep|calf|bull', 'animals_affected':r'my cow|one cow|one animal|[0-9]+ (?:cows|animals)',
-      'symptoms':r'not (?:been )?eating|weak|fever|breath|cannot stand|diarrh',
-      'symptoms_since':r'yesterday|days? ago|since |symptoms started|do not know when|started two|started three',
-      'previous_treatment':r'treatment|medicine|medication', 'urgent_warning_signs':r'stand|breath|unconscious|unresponsive',
-      'contact_details':r'contact|phone|mobile|number to share'}
-    known|={key for key,pattern in cues.items() if re.search(pattern,text)}
-    priority=['symptoms','urgent_warning_signs','symptoms_since','animals_affected','caller_name','village','district','previous_treatment','contact_details']
+    """Route from collected values and question-aware answers, not keyword presence."""
+    f=validate_fields(c,json.loads(json.dumps(c['fields'])))
+    c['fields']=f
+    known={k for k in Q['required_fields'] if f.get(k) not in (None, [], '')}|set(f.get('unknown_fields',[]))
+    known|={field for field,state in c.get('answer_states',{}).items() if state in ('answered','unknown')}
+    if 'urgent_warning_signs' in f.get('evidence',{}): known.add('urgent_warning_signs')
+    clarification=c.get('clarification_needed')
+    if clarification:
+        c['routing_target']=clarification['field']; c['routing_action']='clarify'
+        return 'Clarify the latest unclear answer for '+clarification['field']+'. Do not revisit previously answered fields.'
+    priority=['symptoms','urgent_warning_signs','animal_type','symptoms_since','animals_affected','caller_name','village','district','previous_treatment','contact_details']
     missing=[k for k in priority if k not in known]
-    if missing: return 'Your ONLY next question must ask for '+missing[0]+'. The following are already addressed; do not ask again: '+', '.join(sorted(known))+'.'
+    if missing:
+        c['routing_target']=missing[0]; c['routing_action']='ask'
+        return 'Your ONLY next question must ask for '+missing[0]+'. The following are already addressed; do not ask again: '+', '.join(sorted(known))+'.'
+    c['routing_target']=None; c['routing_action']='summary'
     previous=[x['text'] for x in c['transcript'] if x['role']=='assistant' and x.get('text')]
     latest=[x['text'] for x in c['transcript'] if x['role']=='user'][-1]
     if previous and re.search(r'correct|confirm|right|accurate',previous[-1],re.I) and re.search(r'^(yes|correct|that.s right)',latest,re.I):
@@ -283,13 +441,25 @@ class Intake(FrameProcessor):
                 last=hist[-1]['content']
                 hint=routing_hint(c); c['routing_hint']=hint
                 guarded_reply=completion_reply(c,hint)
+                entry['question_field']=c.get('routing_target')
+                if c.get('routing_action')=='clarify':
+                    guarded_reply='I did not catch that clearly. '+QUESTION_TEXT[c['routing_target']]
+                    if c['routing_target']=='urgent_warning_signs' and re.match(r'^(yes|no|yeah|nope)\b',c['clarification_needed']['answer'],re.I):
+                        guarded_reply='Which warning sign have you noticed: trouble standing, trouble breathing, or loss of consciousness?'
                 hist[-1]={**hist[-1],'content':last+'\n\n[Operator reminder: Respond to the farmer above. Already collected: '+json.dumps(known)+'. '+hint+(' Urgent veterinary attention has ALREADY been spoken; do not repeat that warning.' if c.get('urgent_notified') else '')+' Follow the ONLY next-action instruction above exactly.]'}
                 async def reply_chunks():
                     if guarded_reply:
                         c['dialogue_policy']='field-backed deterministic summary/completion guard'
                         for sentence in re.split(r'(?<=[.!?])\s+',guarded_reply): yield sentence+' '
                     else:
-                        async for piece in muse([{'role':'system','content':Q['instructions']},*hist]): yield piece
+                        proposed=''
+                        async for piece in muse([{'role':'system','content':Q['instructions']},*hist]): proposed+=piece
+                        target=c.get('routing_target')
+                        actual=question_field({'text':proposed})
+                        if target and (actual!=target or target=='urgent_warning_signs'):
+                            c['question_guard_used']=True
+                            proposed=QUESTION_TEXT[target]
+                        yield proposed
                 async for chunk in reply_chunks():
                     if first: m['llm_first_token_ms']=(time.monotonic()-t)*1000; first=False
                     entry['generated_text']+=chunk; pending+=chunk
@@ -326,7 +496,7 @@ async def open_dograh(req:Request):
     if not path.exists(): raise HTTPException(503,'Dograh local demo authentication is not configured')
     auth=json.loads(path.read_text())
     hostname=req.url.hostname or '127.0.0.1'
-    if hostname not in ('localhost','127.0.0.1'): hostname='127.0.0.1'
+    if hostname not in ('localhost','127.0.0.1','100.82.28.38'): hostname='127.0.0.1'
     response=RedirectResponse('http://'+hostname+':13010/workflow/1')
     response.set_cookie('dograh_auth_token',auth['token'],httponly=True,samesite='lax',path='/')
     response.set_cookie('dograh_auth_user',quote(json.dumps(auth['user'])),httponly=True,samesite='lax',path='/')

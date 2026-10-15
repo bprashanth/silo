@@ -33,7 +33,7 @@ async def latest_call(run_id=None):
             raise ValueError('Native call transcript is not available yet.')
         # Native local URL only. Capability path never reaches exported result.
         parsed=urlparse(url)
-        if parsed.hostname and parsed.hostname not in ('localhost','127.0.0.1'):
+        if parsed.hostname and parsed.hostname not in ('localhost','127.0.0.1','100.82.28.38'):
             raise ValueError('Refusing a nonlocal Dograh artifact URL')
         async with session.get(BASE+parsed.path+('?' + parsed.query if parsed.query else '')) as response:
             response.raise_for_status(); raw=await response.text()

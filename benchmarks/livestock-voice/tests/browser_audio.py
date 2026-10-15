@@ -10,7 +10,7 @@ p=argparse.ArgumentParser();p.add_argument('--url',default='http://127.0.0.1:876
 out=Path(args.output);out.mkdir(parents=True,exist_ok=True)
 logs=[]
 with sync_playwright() as pw:
- browser=pw.chromium.launch(headless=not args.headed,args=['--autoplay-policy=no-user-gesture-required','--no-sandbox'])
+ browser=pw.chromium.launch(headless=not args.headed,args=['--autoplay-policy=no-user-gesture-required','--no-sandbox','--unsafely-treat-insecure-origin-as-secure='+args.url])
  page=browser.new_page(viewport={'width':1280,'height':1000})
  page.on('console',lambda msg:logs.append({'type':msg.type,'text':msg.text}))
  page.on('pageerror',lambda err:logs.append({'type':'pageerror','text':str(err)}))
@@ -50,7 +50,7 @@ with sync_playwright() as pw:
   checks={'received_non_silent_agent_audio':rms>.001,'agent_audio_rms':rms,'all_fixture_utterances_transcribed':len(observations)>=len(args.fixtures.split(',')),'caller_name_captured':bool(fields.get('caller_name')),'animal_cow':fields.get('animal_type')=='cow','urgent_flag':bool(fields.get('urgent_warning_signs')),'confirmed':fields.get('confirmed_by_caller') is True,'missing_fields':fields.get('missing_fields'),'browser_audible_metrics_count':len(record.get('browser_metrics',[]))}
   if {'out_of_order','warning','treatment','confirm'}.issubset(set(args.fixtures.split(','))):
    symptoms=' '.join(fields.get('symptoms',[])).lower();urgent=' '.join(fields.get('urgent_warning_signs',[])).lower()
-   exact={'caller_name':fields.get('caller_name')=='Ramesh','village':fields.get('village')=='Demo Village','district':fields.get('district')=='Demo District','animal_type':fields.get('animal_type')=='cow','animals_affected':fields.get('animals_affected')==1,'symptoms':'not eating' in symptoms and 'weak' in symptoms,'symptoms_since':fields.get('symptoms_since')=='yesterday','previous_treatment':str(fields.get('previous_treatment','')).lower() in ['none','no treatment','no previous treatment'],'urgent_warning_signs':'stand' in urgent and 'breath' in urgent,'contact_details':fields.get('contact_details') is None and 'contact_details' in fields.get('unknown_fields',[])}
+   exact={'caller_name':fields.get('caller_name')=='Ramesh','village':fields.get('village')=='Demo Village','district':fields.get('district')=='Demo District','animal_type':fields.get('animal_type')=='cow','animals_affected':fields.get('animals_affected')==1,'symptoms':any(phrase in symptoms for phrase in ['not eating','not been eating']) and 'weak' in symptoms,'symptoms_since':fields.get('symptoms_since')=='yesterday','previous_treatment':str(fields.get('previous_treatment','')).lower() in ['none','no treatment','no previous treatment'],'urgent_warning_signs':'stand' in urgent and 'breath' in urgent,'contact_details':fields.get('contact_details') is None and 'contact_details' in fields.get('unknown_fields',[])}
    checks['expected_fields_exact']=exact;checks['expected_fields_correct_count']=sum(exact.values());checks['expected_fields_total']=len(exact)
   (out/'checks.json').write_text(json.dumps(checks,indent=2))
   assert checks['received_non_silent_agent_audio'], 'No actual agent speech audio received'

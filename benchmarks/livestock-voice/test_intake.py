@@ -62,6 +62,56 @@ class CompletionGuardTests(unittest.TestCase):
         extracted=new_fields(); extracted['confirmed_by_caller']=True
         self.assertFalse(validate_fields(c,extracted)['confirmed_by_caller'])
 
+class QuestionAwareDialogueTests(unittest.TestCase):
+    def dialogue(self,*turns):
+        c=call(); c['backend']='pipecat'
+        for role,text in turns: c['transcript'].append({'role':role,'text':text,'final':True})
+        return c
+    def test_no_warning_answer_remains_answered_after_unclear_duration(self):
+        c=self.dialogue(('user','My goat is vomiting.'),('assistant','Are there any urgent warning signs such as inability to stand or severe breathing trouble?'),('user','No.'),('assistant','When did the symptoms start?'),('user','Could you repeat the question?'))
+        hint=routing_hint(c)
+        self.assertEqual(c['fields']['urgent_warning_signs'],[])
+        self.assertNotIn('urgent_warning_signs',c['fields']['missing_fields'])
+        self.assertEqual(c['routing_target'],'symptoms_since')
+        self.assertEqual(c['routing_action'],'clarify')
+        self.assertIn('No.',str(c['fields']['evidence']['urgent_warning_signs']))
+    def test_no_to_can_stand_is_positive_warning(self):
+        c=self.dialogue(('assistant','Can the animal stand up?'),('user','No.'))
+        data=validate_fields(c,new_fields())
+        self.assertEqual(data['urgent_warning_signs'],['unable to stand'])
+    def test_no_to_compound_normal_question_is_ambiguous(self):
+        c=self.dialogue(('assistant','Is she able to stand, breathing normally, and conscious?'),('user','No.'))
+        routing_hint(c)
+        self.assertEqual(c['routing_action'],'clarify')
+        self.assertEqual(c['routing_target'],'urgent_warning_signs')
+        self.assertNotIn('urgent_warning_signs',c['answer_states'])
+    def test_yes_to_warning_screen_requires_specific_sign(self):
+        c=self.dialogue(('assistant','Are there any urgent warning signs?'),('user','Yes.'))
+        routing_hint(c)
+        self.assertEqual(c['routing_action'],'clarify')
+        c['transcript'] += [{'role':'assistant','text':'Which warning sign have you noticed?'},{'role':'user','text':'She cannot stand.'}]
+        self.assertEqual(validate_fields(c,new_fields())['urgent_warning_signs'],['unable to stand'])
+    def test_short_unknown_then_later_correction(self):
+        c=self.dialogue(('assistant','When did the symptoms start?'),('user',"I don't know."),('assistant','How many animals are affected?'),('user','Actually, it started two days ago.'))
+        data=validate_fields(c,new_fields())
+        self.assertEqual(data['symptoms_since'],'two days ago')
+        self.assertNotIn('symptoms_since',data['unknown_fields'])
+    def test_no_other_symptoms_preserves_initial_description(self):
+        c=self.dialogue(('assistant','What symptoms have you noticed?'),('user','Vomiting.'),('assistant','Any other symptoms?'),('user','No.'))
+        data=validate_fields(c,new_fields())
+        self.assertTrue(data['symptoms'])
+        self.assertNotIn('symptoms',data['missing_fields'])
+    def test_missing_animal_type_is_actually_requested(self):
+        c=call('The animal is very weak.')
+        c['fields'].update(symptoms=['weakness'],urgent_warning_signs=[],evidence={'urgent_warning_signs':'Caller denied warning signs'})
+        routing_hint(c)
+        self.assertEqual(c['routing_target'],'animal_type')
+    def test_field_mention_is_not_an_answer(self):
+        c=self.dialogue(('assistant','Has any treatment been given?'),('user','What do you mean by treatment?'))
+        routing_hint(c)
+        self.assertEqual(c['routing_action'],'clarify')
+        self.assertNotIn('previous_treatment',c['answer_states'])
+
 class CompletionPersistenceTests(unittest.IsolatedAsyncioTestCase):
     async def test_same_call_id_has_one_completion_file(self):
         request=type('Request',(),{})()

@@ -1,0 +1,26 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 3.143952677026391,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nI understand. What symptoms are you seeing in your cow?"
+  },
+  {
+    "fixture": "symptoms",
+    "wall_seconds_to_agent_transcript": 4.439592842012644,
+    "farmer": "FARMER\nShe is not eating and seems weak.",
+    "agent": "AGENT\nIs she able to stand, breathing normally, and conscious?"
+  },
+  {
+    "fixture": "no",
+    "wall_seconds_to_agent_transcript": 3.056714878883213,
+    "farmer": "FARMER\nNo.",
+    "agent": "AGENT\nI see. Is she able to stand, breathing normally, and conscious?"
+  },
+  {
+    "fixture": "unclear",
+    "wall_seconds_to_agent_transcript": 3.7719763796776533,
+    "farmer": "FARMER\nCould you repeat the question?",
+    "agent": "AGENT\nIs she able to stand, breathing normally, and conscious?"
+  }
+]

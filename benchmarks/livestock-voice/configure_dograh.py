@@ -90,7 +90,7 @@ def main():
     else:
         workflow = api('/workflow/create/definition', {'name':'Synthetic livestock intake — local only','workflow_definition':graph})
     private('workflow.json', workflow)
-    print('Native local workflow ready: http://127.0.0.1:13010/workflow/'+str(workflow['id']))
+    print('Native workflow ready: http://100.82.28.38:13010/workflow/'+str(workflow['id']))
 
 if __name__ == '__main__':
     main()

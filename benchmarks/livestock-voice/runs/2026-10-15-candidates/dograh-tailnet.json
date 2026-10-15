@@ -1,0 +1,22 @@
+{
+  "ui": "http://100.82.28.38:13010/workflow/1",
+  "api": "http://100.82.28.38:18000",
+  "api_health": "ok",
+  "api_host_network": true,
+  "tailscale_ice_candidate_present": true,
+  "main_authenticated_redirect_verified": true,
+  "browser": "full Chromium149 channel=chromium",
+  "insecure_origin_flag": [
+    "http://100.82.28.38:8765",
+    "http://100.82.28.38:13010"
+  ],
+  "secure_context": true,
+  "transcript_entries_at_80s": 8,
+  "received_audio_bytes": 179588,
+  "received_audio_mean_db": -34.8,
+  "received_audio_max_db": -8.8,
+  "screenshot_inspected": true,
+  "artifact_dir": "/mnt/seagate/silo/livestock-voice/runs/dograh-20261015-223429",
+  "scope": "Synthetic browser running on demo host and accessing its tailnet IP; not a separate remote-device test",
+  "completed_intake": false
+}

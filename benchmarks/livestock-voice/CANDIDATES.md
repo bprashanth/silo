@@ -65,3 +65,22 @@ Hosted billing caveat: cancelling/barge-in can stop receipt of the final usage e
 A subsequent attempt at a complete native intake using an adaptive virtual microphone did **not** complete: recognition lagged the injected utterances and the run did not reach a confirmed summary within the test deadlines. Its evidence is retained under `runs/dograh-browser-complete`; it must not be counted as a completed intake. The earlier native static-microphone multi-turn test remains the successful native voice demonstration.
 
 Final operational check: the native local speech shim was detached into its own process session, with the PID managed by `dograh.sh`. Kokoro ONNX is capped at four CPU threads in this isolated shim. A local PCM speech response returned 91,136 bytes in 0.575 seconds after this change; this is a direct TTS check, not a new end-to-end latency benchmark. Production speech code remains unchanged. Whisper still uses the existing CPU turbo model and is loaded on first request. Fresh browser opens through `/api/dograh/open` were verified on both `localhost` and `127.0.0.1` without manual login; the server sets HTTP-only local demo session cookies.
+
+## Tailscale address access
+
+The user requested plain HTTP on the existing tailnet address. Native UI is now reachable at `http://100.82.28.38:13010/workflow/1`; its API advertises `http://100.82.28.38:18000`. Only these two native application ports bind all host interfaces. Postgres, Redis and MinIO retain loopback-only published ports. The API uses Docker host networking so native WebRTC can advertise the host's Tailscale ICE candidate rather than an unreachable container bridge address. Public STUN remains disabled. The UI's server-side API URL uses the Docker host gateway; browser API calls use the advertised tailnet URL. No Tailscale Serve, Funnel, HTTPS or public tunnel was enabled.
+
+For the user's chosen Chrome HTTP microphone setup, the insecure-origin flag must include both `http://100.82.28.38:8765` and `http://100.82.28.38:13010`, since the shared and native interfaces are different origins. Database and storage URLs are not browser entry points. The post-call importer accepts the configured tailnet artifact hostname but fetches its authenticated artifact path through loopback locally.
+
+The authoritative native deployment configuration is `dograh-compose.yaml` beside this document, with existing API/UI image digests pinned. `dograh.sh start` reapplies the host-only ICE patch after recreation.
+
+Tailnet-origin browser check can be repeated with:
+
+```sh
+DOGRAH_BROWSER_URL=http://100.82.28.38:13010 \
+  python3 benchmarks/livestock-voice/tests/dograh_browser.py --output /mnt/seagate/silo/livestock-voice/runs/dograh-tailnet
+```
+
+This test uses full Chromium (`channel='chromium'`), because the installed Playwright headless-shell binary did not honor the insecure-origin flag. Full Chromium reported a secure context and exposed the microphone API with that flag. This is a test-browser setting, not a server claim that plain HTTP is HTTPS.
+
+Verification through the tailnet address passed using full Chromium: secure context true with the requested flag, native browser connected, eight transcript entries after two synthetic fixtures, and 179,588 bytes of recorded incoming audio (mean -34.8 dB, peak -8.8 dB). Screenshot inspected; actual spoken follow-ups included the symptom question and previous-treatment question. A fresh browser opening the main `/api/dograh/open` URL stayed on `100.82.28.38` and arrived authenticated at native workflow 1. Evidence: `runs/2026-10-15-candidates/dograh-tailnet.json`; recordings/screenshot under `/mnt/seagate/silo/livestock-voice/runs/dograh-20261015-223429`. This used a browser on the demo host accessing the tailnet IP; a separate remote-device network path was not available to this test.

@@ -3,11 +3,13 @@ import argparse
 import datetime
 import base64
 import json
+import os
 from pathlib import Path
 import wave
 import subprocess
 from playwright.sync_api import sync_playwright
 ROOT=Path('/mnt/seagate/silo/livestock-voice')
+NATIVE_URL=os.environ.get('DOGRAH_BROWSER_URL','http://127.0.0.1:13010').rstrip('/')
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output', type=Path, default=ROOT/'runs'/('dograh-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')))
 args=parser.parse_args()
@@ -21,15 +23,15 @@ with wave.open(str(fixture),'wb') as f:
     f.setparams((1,2,16000,0,'NONE','NONE'))
     for part in [bytes(16000*2*20),load('missing.wav'),bytes(16000*2*15),load('out_of_order.wav'),bytes(16000*2*70)]:f.writeframes(part)
 with sync_playwright() as p:
-    browser=p.chromium.launch(headless=True,args=['--no-sandbox','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',f'--use-file-for-fake-audio-capture={fixture}'])
+    browser=p.chromium.launch(channel='chromium',headless=True,args=['--no-sandbox',f'--unsafely-treat-insecure-origin-as-secure={NATIVE_URL}','--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream',f'--use-file-for-fake-audio-capture={fixture}'])
     page=browser.new_page(permissions=['microphone'])
     page.add_init_script('''window.receivedAudio=[];window.audioBytes=0;
     const Original=window.RTCPeerConnection;
     window.RTCPeerConnection=class extends Original {constructor(config){super(config);this.addEventListener('track',e=>{if(e.track.kind!=='audio')return;let recorder=new MediaRecorder(new MediaStream([e.track]));recorder.ondataavailable=async ev=>{window.audioBytes+=ev.data.size;let a=new Uint8Array(await ev.data.arrayBuffer());let s='';for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);window.receivedAudio.push(btoa(s));};recorder.start(1000);});}};''')
-    page.goto('http://127.0.0.1:13010/auth/login')
+    page.goto(NATIVE_URL+'/auth/login')
     credentials=json.loads(Path.home().joinpath('.local/share/silo-livestock/dograh/account.json').read_text())
     page.get_by_label('Email',exact=True).fill(credentials['email']);page.get_by_label('Password',exact=True).fill(credentials['password']);page.get_by_role('button',name='Sign in',exact=True).click();page.wait_for_timeout(2500)
-    page.goto('http://127.0.0.1:13010/workflow/1');page.wait_for_timeout(3000)
+    page.goto(NATIVE_URL+'/workflow/1');page.wait_for_timeout(3000)
     if page.get_by_role('button',name='Close',exact=True).count():page.get_by_role('button',name='Close',exact=True).click()
     page.get_by_role('button',name='Run Test',exact=True).click()
     samples=[]

@@ -12,6 +12,10 @@ OUT = Path(os.environ.get('LIVESTOCK_FIXTURES', '/mnt/seagate/silo/livestock-voi
 OUT.mkdir(parents=True, exist_ok=True)
 CASES = {
  'name': 'My name is Ramesh.',
+ 'symptoms': 'She is not eating and seems weak.',
+ 'no': 'No.',
+ 'onset': 'Two days ago.',
+ 'unclear': 'Could you repeat the question?',
  'missing': 'My cow is sick.',
  'out_of_order': 'My name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.',
  'warning': 'She cannot stand up, and she is breathing very fast.',
@@ -21,7 +25,10 @@ CASES = {
  'difficult': 'Um, my cow, she is, uh, not eating. I think it started yesterday. She is very weak.',
  'confirm': 'Yes, that summary is correct. Thank you.'
 }
-model = Kokoro(str(Path(speech.MODELS) / 'kokoro/kokoro-v1.0.onnx'), str(Path(speech.MODELS) / 'kokoro/voices-v1.0.bin'))
+import onnxruntime as ort
+options=ort.SessionOptions(); options.intra_op_num_threads=4; options.inter_op_num_threads=1
+session=ort.InferenceSession(str(Path(speech.MODELS) / 'kokoro/kokoro-v1.0.onnx'),sess_options=options,providers=['CPUExecutionProvider'])
+model = Kokoro.from_session(session,str(Path(speech.MODELS) / 'kokoro/voices-v1.0.bin'))
 for name, text in CASES.items():
  if not (OUT / (name+'.wav')).exists():
   samples, rate = model.create(text, voice='am_adam', speed=1., lang='en-us')

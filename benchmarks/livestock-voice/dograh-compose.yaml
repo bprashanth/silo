@@ -139,11 +139,13 @@ services:
       - app-network
 
   api:
+    network_mode: host
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    image: ${REGISTRY:-dograhai}/dograh-api:latest
+    image: dograhai/dograh-api@sha256:89fab00598200db3440ea6cca2945cfe1ea6202c9907e83ed4cf174ff22a7402
     environment:
       # Core application config
+      UVICORN_BASE_PORT: "18000"
       ENVIRONMENT: "${ENVIRONMENT:-local}"
       LOG_LEVEL: "INFO"
 
@@ -161,13 +163,13 @@ services:
       # embed links from. Defaults to PUBLIC_BASE_URL. When the value is non-public
       # (localhost or a private/reserved IP), the API resolves a running Cloudflare
       # tunnel's URL at runtime instead (see api/utils/common.py).
-      BACKEND_API_ENDPOINT: "http://127.0.0.1:18000"
+      BACKEND_API_ENDPOINT: "http://100.82.28.38:18000"
 
       # Database configuration (using containerized postgres)
-      DATABASE_URL: "postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres"
+      DATABASE_URL: "postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@127.0.0.1:15432/postgres"
 
       # Redis configuration (using containerized redis)
-      REDIS_URL: "redis://:${REDIS_PASSWORD:-redissecret}@redis:6379"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:-redissecret}@127.0.0.1:16379"
 
       # Storage configuration - bundled MinIO by default. Set ENABLE_AWS_S3=true
       # in .env to make the API use AWS S3 or another S3-compatible server.
@@ -192,7 +194,7 @@ services:
       S3_ADDRESSING_STYLE: "${S3_ADDRESSING_STYLE:-}"
 
       # MinIO
-      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ENDPOINT: "127.0.0.1:19000"
       # Full URL (with scheme) browsers use to reach MinIO. Defaults to
       # PUBLIC_BASE_URL for remote deployments (nginx proxies /voice-audio/) and to
       # http://localhost:9000 for local; override only for a separate object store.
@@ -267,8 +269,6 @@ services:
       POSTHOG_API_KEY: "phc_ItizB1dP6yv7ZYobbcqrpxTdbomDA8hJFSEmAMdYvIr"
       POSTHOG_HOST: "https://us.i.posthog.com"
 
-    ports:
-      - "127.0.0.1:18000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -280,23 +280,23 @@ services:
       test:
         [
           "CMD-SHELL",
-          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/api/v1/health'').read()"',
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:18000/api/v1/health'').read()"',
         ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    networks:
-      - app-network
 
   ui:
-    image: ${REGISTRY:-dograhai}/dograh-ui:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    image: dograhai/dograh-ui@sha256:293b355fa16738d49249d8af756d67f9269f12e65351e0f8d9d3b5cd8eb67e45
     environment:
       # Bind the Next.js standalone server to all interfaces
       HOSTNAME: "0.0.0.0"
 
       # Server-side URL (SSR, internal Docker network)
-      BACKEND_URL: "${BACKEND_URL:-http://api:8000}"
+      BACKEND_URL: "${BACKEND_URL:-http://host.docker.internal:18000}"
       NODE_ENV: "oss"
 
       # Flag to enable/ disable posthog
@@ -306,7 +306,7 @@ services:
       POSTHOG_KEY: "phc_ItizB1dP6yv7ZYobbcqrpxTdbomDA8hJFSEmAMdYvIr"
       POSTHOG_HOST: "https://us.posthog.com"
     ports:
-      - "127.0.0.1:13010:3010"
+      - "0.0.0.0:13010:3010"
     depends_on:
       api:
         condition: service_healthy
@@ -328,7 +328,7 @@ services:
   # so public-IP installs (served directly by nginx) never start it, and the api
   # service no longer hard-depends on it. Two modes, chosen by the token:
   #   - CLOUDFLARE_TUNNEL_TOKEN set  -> named tunnel with a stable hostname. Point
-  #     its ingress at http://api:8000 in the Cloudflare dashboard and set
+  #     its ingress at http://host.docker.internal:18000 in the Cloudflare dashboard and set
   #     BACKEND_API_ENDPOINT in .env to that hostname.
   #   - token unset                  -> quick tunnel with an ephemeral
   #     *.trycloudflare.com URL the API discovers from the metrics endpoint
@@ -348,7 +348,7 @@ services:
     #     tunnel (cloudflared reads TUNNEL_TOKEN from the env above).
     #   - token unset -> the default below runs a quick tunnel with an ephemeral
     #     *.trycloudflare.com URL the API discovers from the metrics endpoint.
-    command: ${CLOUDFLARED_COMMAND:-tunnel --url http://api:8000 --metrics 0.0.0.0:2000}
+    command: ${CLOUDFLARED_COMMAND:-tunnel --url http://host.docker.internal:18000 --metrics 0.0.0.0:2000}
     ports:
       - "2000:2000" # metrics endpoint (quick-tunnel URL discovery)
     networks:
