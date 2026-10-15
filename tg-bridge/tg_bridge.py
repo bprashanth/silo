@@ -15,7 +15,8 @@ Env (see docs/deployment.md):
   IDLI_BASE_URL       local OpenAI-compatible server (default http://127.0.0.1:8181/v1)
   IDLI_MODEL          model name the local server expects (default muse-glimmer-30b)
   IDLI_KEY            bearer token for the local server, if it wants one
-  TG_ALLOWED          comma-separated Telegram user ids/usernames; empty = anyone
+  TG_ALLOWED          comma-separated Telegram user ids/usernames, added to $SILO_CONFIG/allowed.txt;
+                      with neither, anyone can use the bot
   SYSTEM_PROMPT       override the system prompt
 """
 import base64
@@ -74,7 +75,26 @@ MODELS = {
 MODELS = {k: m for k, m in MODELS.items() if m["kind"] != "external" or OR_KEY}
 DEFAULT_MODEL = "idli"
 chat_model = defaultdict(lambda: DEFAULT_MODEL)
-ALLOWED = {a.strip().lstrip("@").lower() for a in os.environ.get("TG_ALLOWED", "").split(",") if a.strip()}
+ALLOWED_FILE = os.path.join(CFG, "allowed.txt")
+ENV_ALLOWED = {a.strip().lstrip("@").lower() for a in os.environ.get("TG_ALLOWED", "").split(",") if a.strip()}
+_allowed = {"mtime": None, "names": set()}
+
+
+def allowed_names():
+    """TG_ALLOWED plus allowed.txt (one username or id per line, # for comments). The file is
+    re-read whenever it changes, so edits take effect on the next message, with no restart.
+    None means anyone: only when TG_ALLOWED is empty and the file doesn't exist. An empty file
+    allows nobody, so clearing it never opens the bot up."""
+    try:
+        mtime = os.stat(ALLOWED_FILE).st_mtime
+    except FileNotFoundError:
+        return ENV_ALLOWED or None
+    if mtime != _allowed["mtime"]:
+        with open(ALLOWED_FILE) as f:
+            names = {line.split("#")[0].strip().lstrip("@").lower() for line in f}
+        _allowed.update(mtime=mtime, names=names - {""})
+        print(f"allow list: {sorted(ENV_ALLOWED | _allowed['names'])}", flush=True)
+    return ENV_ALLOWED | _allowed["names"]
 SYSTEM = os.environ.get(
     "SYSTEM_PROMPT",
     "You are a helpful assistant chatting over Telegram. Keep replies concise.",
@@ -395,9 +415,10 @@ def file_content(chat, name, mime, data, caption):
 
 
 def allowed(user):
-    if not ALLOWED:
+    names = allowed_names()
+    if names is None:
         return True
-    return str(user.get("id")) in ALLOWED or (user.get("username") or "").lower() in ALLOWED
+    return str(user.get("id")) in names or (user.get("username") or "").lower() in names
 
 
 def handle(msg):
@@ -937,7 +958,7 @@ def main():
         drive.serve(drive_signed_in)
     todos.start_loop(lambda chat, text: send(chat, text, aloud=True))
     print(f"tg bridge up default={model_name(DEFAULT_MODEL)} idli={MODELS['idli']['base']} "
-          f"allowed={sorted(ALLOWED) or 'anyone'}", flush=True)
+          f"allowed={sorted(allowed_names() or ['anyone'])}", flush=True)
     tg("setMyCommands", commands=[
         {"command": "todos", "description": "Your todo list"},
         {"command": "files", "description": "Your files"},
