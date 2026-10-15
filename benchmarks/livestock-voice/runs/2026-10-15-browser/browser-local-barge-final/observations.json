@@ -1,0 +1,8 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 3.18593518063426,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nI understand. Could you describe the symptoms you're seeing?"
+  }
+]

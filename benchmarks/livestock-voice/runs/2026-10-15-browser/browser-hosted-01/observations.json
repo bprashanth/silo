@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 5.2348800878971815,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nI'm sorry to hear that. Could you tell me your name, please?"
+  },
+  {
+    "fixture": "out_of_order",
+    "wall_seconds_to_agent_transcript": 12.817423650994897,
+    "farmer": "FARMER\nMy name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+    "agent": "AGENT\nThank you, Ramesh. Noted: one cow, weak and not eating since yesterday. Have you noticed any other symptoms, like trouble breathing or not being able to stand?"
+  },
+  {
+    "fixture": "warning",
+    "wall_seconds_to_agent_transcript": 6.854903468862176,
+    "farmer": "FARMER\nShe cannot stand up, and she is breathing very fast.",
+    "agent": "AGENT\nIt sounds like this needs urgent veterinary attention. We should flag this for immediate review. Could you share your contact details so we can follow up?"
+  },
+  {
+    "fixture": "treatment",
+    "wall_seconds_to_agent_transcript": 8.604609068948776,
+    "farmer": "FARMER\nThere has been no previous treatment. I do not have a contact number to share.",
+    "agent": "AGENT\nUnderstood. Let\u2019s summarize: Ramesh from Demo Village, Demo District, one cow affected, not eating, very weak since yesterday, cannot stand, fast breathing, no previous treatment, no contact number. Is that all correct?"
+  },
+  {
+    "fixture": "confirm",
+    "wall_seconds_to_agent_transcript": 6.166390898637474,
+    "farmer": "FARMER\nYes, that summary is correct. Thank you.",
+    "agent": "AGENT\nThank you for confirming. This situation needs urgent veterinary attention. I\u2019ll flag this for human review. Please hold on. This is a demo request, no real service dispatched."
+  }
+]

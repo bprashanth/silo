@@ -1,0 +1,20 @@
+[
+  {
+    "fixture": "difficult",
+    "wall_seconds_to_agent_transcript": 7.331541606225073,
+    "farmer": "FARMER\nOn my cow she is not eating. I think it started yesterday. She is very weak.",
+    "agent": "AGENT\nI understand. Is she able to stand on her own, or is she having trouble breathing?"
+  },
+  {
+    "fixture": "unknown",
+    "wall_seconds_to_agent_transcript": 4.72294753883034,
+    "farmer": "FARMER\nI do not know when the symptoms started.",
+    "agent": "AGENT\nI understand. Is she able to stand on her own, or is she having trouble breathing?"
+  },
+  {
+    "fixture": "correction",
+    "wall_seconds_to_agent_transcript": 6.688975587952882,
+    "farmer": "FARMER\nSorry, I got that wrong. It started two days ago, not three days ago.",
+    "agent": "AGENT\nI understand. Is she able to stand on her own, or is she having trouble breathing?"
+  }
+]

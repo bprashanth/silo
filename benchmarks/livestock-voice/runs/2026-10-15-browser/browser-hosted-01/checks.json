@@ -1,0 +1,11 @@
+{
+  "received_non_silent_agent_audio": true,
+  "agent_audio_rms": 0.04799367545002209,
+  "all_fixture_utterances_transcribed": true,
+  "caller_name_captured": true,
+  "animal_cow": true,
+  "urgent_flag": true,
+  "confirmed": true,
+  "missing_fields": [],
+  "browser_audible_metrics_count": 5
+}

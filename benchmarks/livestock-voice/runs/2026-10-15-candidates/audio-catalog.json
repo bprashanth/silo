@@ -1,0 +1,46 @@
+[
+  {
+    "id": "openai/gpt-audio",
+    "architecture": {
+      "modality": "text+audio->text+audio",
+      "input_modalities": [
+        "text",
+        "audio"
+      ],
+      "output_modalities": [
+        "text",
+        "audio"
+      ],
+      "tokenizer": "GPT",
+      "instruct_type": null
+    },
+    "pricing": {
+      "prompt": "0.0000025",
+      "completion": "0.00001",
+      "audio": "0.000032",
+      "audio_output": "0.000064"
+    }
+  },
+  {
+    "id": "openai/gpt-audio-mini",
+    "architecture": {
+      "modality": "text+audio->text+audio",
+      "input_modalities": [
+        "text",
+        "audio"
+      ],
+      "output_modalities": [
+        "text",
+        "audio"
+      ],
+      "tokenizer": "GPT",
+      "instruct_type": null
+    },
+    "pricing": {
+      "prompt": "0.0000006",
+      "completion": "0.0000024",
+      "audio": "0.0000006",
+      "audio_output": "0.0000024"
+    }
+  }
+]

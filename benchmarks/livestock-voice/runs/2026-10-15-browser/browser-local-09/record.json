@@ -1,0 +1,361 @@
+{
+  "id": "818e9b26-49ad-460a-8fe0-7fdd916428bc",
+  "backend": "pipecat",
+  "status": "ended",
+  "created_at": 1792081513.3858664,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Hello, you've reached the livestock assistance service. Please tell me what's happening.",
+      "final": true
+    },
+    {
+      "role": "user",
+      "text": "My cow is sick.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "What symptoms are you seeing in your cow?",
+      "generated_text": "What symptoms are you seeing in your cow?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "My name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I understand. Is your cow able to stand, breathing normally, and conscious?",
+      "generated_text": "I understand. Is your cow able to stand, breathing normally, and conscious?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "She cannot stand up, and she is breathing very fast.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "This needs urgent veterinary attention. I understand. Is your cow able to stand, breathing normally, and conscious?",
+      "generated_text": "I understand. Is your cow able to stand, breathing normally, and conscious?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "There has been no previous treatment. I do not have a contact number to share.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Let me check the details. Caller: Ramesh. village: Demo Village. district: Demo District. animal: cow. number affected: 1. symptoms: not eating, very weak, cannot stand up, breathing very fast. started: yesterday. no previous treatment. contact details unavailable. flagged for urgent human review. Is that summary correct?",
+      "generated_text": "Let me check the details. Caller: Ramesh. village: Demo Village. district: Demo District. animal: cow. number affected: 1. symptoms: not eating, very weak, cannot stand up, breathing very fast. started: yesterday. no previous treatment. contact details unavailable. flagged for urgent human review. Is that summary correct? ",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "Yes, that summary is correct, thank you.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Thank you. Your demo request is recorded for human review. This demonstration does not dispatch a veterinarian. Goodbye.",
+      "generated_text": "Thank you. Your demo request is recorded for human review. This demonstration does not dispatch a veterinarian. Goodbye. ",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    }
+  ],
+  "fields": {
+    "caller_name": "Ramesh",
+    "village": "Demo Village",
+    "district": "Demo District",
+    "animal_type": "cow",
+    "animals_affected": 1,
+    "symptoms": [
+      "not eating",
+      "very weak",
+      "cannot stand up",
+      "breathing very fast"
+    ],
+    "symptoms_since": "yesterday",
+    "previous_treatment": "none",
+    "urgent_warning_signs": [
+      "unable to stand",
+      "breathing difficulty"
+    ],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": true,
+    "missing_fields": [],
+    "call_status": "completed",
+    "unknown_fields": [
+      "contact_details"
+    ],
+    "evidence": {
+      "caller_name": "My name is Ramesh.",
+      "village": "I live in Demo Village in Demo District.",
+      "district": "I live in Demo Village in Demo District.",
+      "animal_type": "My cow is sick.",
+      "animals_affected": "One cow is affected.",
+      "symptoms": [
+        "She has not been eating and is very weak since yesterday.",
+        "She cannot stand up, and she is breathing very fast."
+      ],
+      "symptoms_since": "My name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+      "previous_treatment": "There has been no previous treatment.",
+      "urgent_warning_signs": {
+        "positive_quotes": [
+          "She cannot stand up, and she is breathing very fast."
+        ],
+        "later_corrections": []
+      },
+      "contact_details": "There has been no previous treatment. I do not have a contact number to share."
+    },
+    "inferred_classifications": {
+      "urgency": "urgent veterinary review",
+      "basis": "explicit caller warning signs and subsequent corrections; not a diagnosis"
+    }
+  },
+  "metrics": [
+    {
+      "turn": 1,
+      "speech_end_monotonic": 2965162.31066386,
+      "end_of_turn_monotonic": 2965162.750172507,
+      "vad_ms": 439.50864719226956,
+      "asr_ms": 332.618054933846,
+      "llm_first_token_ms": 476.4763689599931,
+      "tts_first_chunk_ms": 344.7007709182799,
+      "server_first_audio_ms": 1943.024038337171,
+      "generation_complete_ms": 1943.1655290536582
+    },
+    {
+      "turn": 2,
+      "speech_end_monotonic": 2965175.590793311,
+      "end_of_turn_monotonic": 2965176.030346933,
+      "vad_ms": 439.5536216907203,
+      "asr_ms": 428.451981395483,
+      "llm_first_token_ms": 481.93408362567425,
+      "tts_first_chunk_ms": 289.2406051978469,
+      "server_first_audio_ms": 1874.7751619666815,
+      "generation_complete_ms": 2849.974373821169
+    },
+    {
+      "turn": 3,
+      "speech_end_monotonic": 2965185.71423041,
+      "end_of_turn_monotonic": 2965186.131174707,
+      "vad_ms": 416.9442970305681,
+      "asr_ms": 347.98810025677085,
+      "tts_first_chunk_ms": 435.59442227706313,
+      "server_first_audio_ms": 1201.9394054077566,
+      "llm_first_token_ms": 612.1392380446196,
+      "generation_complete_ms": 2335.150479339063
+    },
+    {
+      "turn": 4,
+      "speech_end_monotonic": 2965198.366299768,
+      "end_of_turn_monotonic": 2965198.814347491,
+      "vad_ms": 448.0477231554687,
+      "asr_ms": 369.1734247840941,
+      "llm_first_token_ms": 0.32619666308164597,
+      "tts_first_chunk_ms": 298.3520198613405,
+      "server_first_audio_ms": 1115.961718838662,
+      "generation_complete_ms": 4792.883738875389
+    },
+    {
+      "turn": 5,
+      "speech_end_monotonic": 2965222.11144038,
+      "end_of_turn_monotonic": 2965222.551612293,
+      "vad_ms": 440.1719127781689,
+      "asr_ms": 393.19574274122715,
+      "llm_first_token_ms": 0.14224322512745857,
+      "tts_first_chunk_ms": 634.664751123637,
+      "server_first_audio_ms": 1468.2166818529367,
+      "generation_complete_ms": 2276.0365176945925
+    }
+  ],
+  "events": [
+    {
+      "event": "speech_start",
+      "monotonic": 2965161.532835782
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2208,
+      "client_ms": 11053.10000038147,
+      "speech_end_client_ms": 8845.533333619436,
+      "first_audio_client_ms": 11053.10000038147,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965167.549605558
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2165,
+      "client_ms": 24269,
+      "speech_end_client_ms": 22103.60000038147,
+      "first_audio_client_ms": 24269,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965183.025759425
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1525,
+      "client_ms": 33735.2000002861,
+      "speech_end_client_ms": 32210.095833619434,
+      "first_audio_client_ms": 33735.2000002861,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965194.547849426
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1377,
+      "client_ms": 46302.2000002861,
+      "speech_end_client_ms": 44924.90000009537,
+      "first_audio_client_ms": 46302.2000002861,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965220.348615098
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1754,
+      "client_ms": 70416.90000009537,
+      "speech_end_client_ms": 68663.17916695277,
+      "first_audio_client_ms": 70416.90000009537,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ],
+  "routing_hint": "The caller has confirmed your summary. Thank them, say the demo request is recorded and no real dispatch occurs, and end politely. Do not ask another question.",
+  "extracting": false,
+  "fields_revision": 11,
+  "urgent_notified": true,
+  "dialogue_policy": "field-backed deterministic summary/completion guard",
+  "summary_requested": true,
+  "summary_fields": {
+    "caller_name": "Ramesh",
+    "village": "Demo Village",
+    "district": "Demo District",
+    "animal_type": "cow",
+    "animals_affected": 1,
+    "symptoms": [
+      "not eating",
+      "very weak",
+      "cannot stand up",
+      "breathing very fast"
+    ],
+    "symptoms_since": "yesterday",
+    "previous_treatment": null,
+    "urgent_warning_signs": [
+      "unable to stand",
+      "breathing difficulty"
+    ],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": false,
+    "missing_fields": [
+      "previous_treatment",
+      "contact_details"
+    ],
+    "call_status": "in_progress",
+    "unknown_fields": [],
+    "evidence": {
+      "caller_name": "My name is Ramesh.",
+      "village": "I live in Demo Village",
+      "district": "in Demo District",
+      "animal_type": "My cow is sick.",
+      "animals_affected": "One cow is affected.",
+      "symptoms": [
+        "She has not been eating",
+        "and is very weak",
+        "She cannot stand up",
+        "she is breathing very fast"
+      ],
+      "symptoms_since": "My name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+      "urgent_warning_signs": {
+        "positive_quotes": [
+          "She cannot stand up, and she is breathing very fast."
+        ],
+        "later_corrections": []
+      }
+    },
+    "inferred_classifications": {
+      "urgency": "urgent veterinary review",
+      "basis": "explicit caller warning signs and subsequent corrections; not a diagnosis"
+    }
+  },
+  "confirmed_summary": true,
+  "completion": {
+    "id": "71826e8d-c5b9-4bd7-b146-ad431a620b82",
+    "mock": true,
+    "dispatched": false
+  },
+  "completion_fingerprint": "0227d4f26a0bd5873bee98c1f65c87063ad0908db554f6837db6265ee750a0f3",
+  "ended_at": 1792081591.5413547,
+  "browser_metrics": [
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2208,
+      "client_ms": 11053.10000038147,
+      "speech_end_client_ms": 8845.533333619436,
+      "first_audio_client_ms": 11053.10000038147,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2165,
+      "client_ms": 24269,
+      "speech_end_client_ms": 22103.60000038147,
+      "first_audio_client_ms": 24269,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1525,
+      "client_ms": 33735.2000002861,
+      "speech_end_client_ms": 32210.095833619434,
+      "first_audio_client_ms": 33735.2000002861,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1377,
+      "client_ms": 46302.2000002861,
+      "speech_end_client_ms": 44924.90000009537,
+      "first_audio_client_ms": 46302.2000002861,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1754,
+      "client_ms": 70416.90000009537,
+      "speech_end_client_ms": 68663.17916695277,
+      "first_audio_client_ms": 70416.90000009537,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ]
+}

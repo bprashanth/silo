@@ -1,0 +1,26 @@
+{
+  "browser-local-01": {
+    "samples": 118,
+    "host_cpu_mean_percent": 5.65,
+    "host_cpu_max_percent": 27.7,
+    "host_used_memory_GiB_range": [
+      61.33,
+      66.09
+    ],
+    "gpu_first_sample": "NVIDIA GB10, 0, 0, [N/A], [N/A], 10.34",
+    "gpu_processes_first_sample": "1233280, /home/beeps/src/github.com/bprashanth/io/.venv-pii/bin/python, 4969\n3715943, /app/llama-server, 27090",
+    "scope": "Whole host including unrelated services, not isolated per-candidate resources."
+  },
+  "browser-local-root-edge": {
+    "samples": 44,
+    "host_cpu_mean_percent": 4.27,
+    "host_cpu_max_percent": 18.77,
+    "host_used_memory_GiB_range": [
+      62.94,
+      63.88
+    ],
+    "gpu_first_sample": "NVIDIA GB10, 0, 0, [N/A], [N/A], 11.71",
+    "gpu_processes_first_sample": "1233280, /home/beeps/src/github.com/bprashanth/io/.venv-pii/bin/python, 4969\n3715943, /app/llama-server, 27090",
+    "scope": "Whole host including unrelated services, not isolated per-candidate resources."
+  }
+}

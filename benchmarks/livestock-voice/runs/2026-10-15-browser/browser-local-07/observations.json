@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 3.1347745256498456,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nI understand. What symptoms are you seeing in your cow?"
+  },
+  {
+    "fixture": "out_of_order",
+    "wall_seconds_to_agent_transcript": 11.755467501934618,
+    "farmer": "FARMER\nMy name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+    "agent": "AGENT\nI understand. Can you tell me if she is able to stand or is having severe breathing trouble or unconsciousness?"
+  },
+  {
+    "fixture": "warning",
+    "wall_seconds_to_agent_transcript": 6.340580307878554,
+    "farmer": "FARMER\nShe cannot stand up, and she is breathing very fast.",
+    "agent": "AGENT\nThis needs urgent veterinary attention. She cannot stand and is breathing fast, which needs urgent veterinary attention. Has she received any previous treatment?"
+  },
+  {
+    "fixture": "treatment",
+    "wall_seconds_to_agent_transcript": 7.089803590904921,
+    "farmer": "FARMER\nThere has been no previous treatment. I do not have a contact number to share.",
+    "agent": "AGENT\nI understand. Can you tell me if she is able to stand or is having severe breathing trouble or unconsciousness?"
+  },
+  {
+    "fixture": "confirm",
+    "wall_seconds_to_agent_transcript": 5.181204542052001,
+    "farmer": "FARMER\nYes, that summary is correct, thank you.",
+    "agent": "AGENT\nI understand. Can you tell me if she is able to stand or is having severe breathing trouble or unconsciousness?"
+  }
+]

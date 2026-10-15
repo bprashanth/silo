@@ -1,0 +1,25 @@
+{
+  "received_non_silent_agent_audio": true,
+  "agent_audio_rms": 0.041088334479208045,
+  "all_fixture_utterances_transcribed": true,
+  "caller_name_captured": true,
+  "animal_cow": true,
+  "urgent_flag": true,
+  "confirmed": true,
+  "missing_fields": [],
+  "browser_audible_metrics_count": 5,
+  "expected_fields_exact": {
+    "caller_name": true,
+    "village": true,
+    "district": true,
+    "animal_type": true,
+    "animals_affected": true,
+    "symptoms": true,
+    "symptoms_since": true,
+    "previous_treatment": true,
+    "urgent_warning_signs": true,
+    "contact_details": true
+  },
+  "expected_fields_correct_count": 10,
+  "expected_fields_total": 10
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 3.4860223829746246,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nI'm sorry to hear that. Could you tell me your name, please?"
+  },
+  {
+    "fixture": "out_of_order",
+    "wall_seconds_to_agent_transcript": 11.703122086357325,
+    "farmer": "FARMER\nMy name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+    "agent": "AGENT\nThank you, Ramesh. Is your cow having trouble standing or breathing? That would be important to know."
+  },
+  {
+    "fixture": "warning",
+    "wall_seconds_to_agent_transcript": 6.0717435092665255,
+    "farmer": "FARMER\nShe cannot stand up, and she is breathing very fast.",
+    "agent": "AGENT\nThis sounds like an urgent situation. This needs urgent veterinary attention. Could you share your contact details, please?"
+  },
+  {
+    "fixture": "treatment",
+    "wall_seconds_to_agent_transcript": 8.788974412716925,
+    "farmer": "FARMER\nThere has been no previous treatment. I do not have a contact number to share.",
+    "agent": "AGENT\nThank you, Ramesh. Let\u2019s summarize: One cow, not eating, very weak since yesterday, cannot stand, fast breathing, no previous treatment, no contact number. Is that correct?"
+  },
+  {
+    "fixture": "confirm",
+    "wall_seconds_to_agent_transcript": 5.431777321267873,
+    "farmer": "FARMER\nYes, that summary is correct, thank you.",
+    "agent": "AGENT\nUnderstood. This situation needs urgent veterinary attention. I\u2019ll flag this for review. This demo request is recorded. No real service is dispatched. Please seek professional help immediately."
+  }
+]

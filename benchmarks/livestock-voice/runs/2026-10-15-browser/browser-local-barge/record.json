@@ -1,0 +1,110 @@
+{
+  "id": "5a8a9d35-94e6-4a77-b463-2e5b44461f33",
+  "backend": "pipecat",
+  "status": "ended",
+  "created_at": 1792081880.7940824,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Hello, you've reached the livestock assistance service. Please tell me what's happening.",
+      "final": true
+    },
+    {
+      "role": "user",
+      "text": "My cow is sick.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I understand. Can you describe the symptoms you are seeing?",
+      "generated_text": "I understand. Can you describe the symptoms you are seeing?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    }
+  ],
+  "fields": {
+    "caller_name": null,
+    "village": null,
+    "district": null,
+    "animal_type": "cow",
+    "animals_affected": null,
+    "symptoms": [],
+    "symptoms_since": null,
+    "previous_treatment": null,
+    "urgent_warning_signs": [],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": false,
+    "missing_fields": [
+      "caller_name",
+      "village",
+      "district",
+      "animals_affected",
+      "symptoms",
+      "symptoms_since",
+      "previous_treatment",
+      "urgent_warning_signs",
+      "contact_details"
+    ],
+    "call_status": "ended_unconfirmed",
+    "unknown_fields": [],
+    "evidence": {
+      "animal_type": "My cow is sick."
+    }
+  },
+  "metrics": [
+    {
+      "turn": 1,
+      "speech_end_monotonic": 2965523.405300129,
+      "end_of_turn_monotonic": 2965523.853989288,
+      "vad_ms": 448.68915900588036,
+      "asr_ms": 327.19904696568847,
+      "llm_first_token_ms": 439.32446697726846,
+      "tts_first_chunk_ms": 286.256100051105,
+      "server_first_audio_ms": 1617.343823891133,
+      "generation_complete_ms": 2176.750152837485
+    }
+  ],
+  "events": [
+    {
+      "type": "browser_barge_in",
+      "interruption_to_audio_stop_ms": 167,
+      "client_ms": 1814.8999996185303,
+      "method": "approximate local caller RMS onset to first received-audio quiet frame; natural pauses can affect this estimate"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965522.583503409
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1906,
+      "client_ms": 4465.199999809265,
+      "speech_end_client_ms": 2559.3333333333335,
+      "first_audio_client_ms": 4465.199999809265,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ],
+  "routing_hint": "Your ONLY next question must ask for symptoms. The following are already addressed; do not ask again: animal_type, animals_affected.",
+  "extracting": false,
+  "fields_revision": 3,
+  "ended_at": 1792081888.860306,
+  "browser_metrics": [
+    {
+      "type": "browser_barge_in",
+      "interruption_to_audio_stop_ms": 167,
+      "client_ms": 1814.8999996185303,
+      "method": "approximate local caller RMS onset to first received-audio quiet frame; natural pauses can affect this estimate"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1906,
+      "client_ms": 4465.199999809265,
+      "speech_end_client_ms": 2559.3333333333335,
+      "first_audio_client_ms": 4465.199999809265,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ]
+}

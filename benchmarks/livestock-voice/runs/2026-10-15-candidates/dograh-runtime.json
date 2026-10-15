@@ -1,0 +1,25 @@
+{
+  "images": [
+    {
+      "tags": [
+        "dograhai/dograh-api:latest"
+      ],
+      "digests": [
+        "dograhai/dograh-api@sha256:89fab00598200db3440ea6cca2945cfe1ea6202c9907e83ed4cf174ff22a7402"
+      ],
+      "architecture": "arm64",
+      "size_bytes": 1441228589
+    },
+    {
+      "tags": [
+        "dograhai/dograh-ui:latest"
+      ],
+      "digests": [
+        "dograhai/dograh-ui@sha256:293b355fa16738d49249d8af756d67f9269f12e65351e0f8d9d3b5cd8eb67e45"
+      ],
+      "architecture": "arm64",
+      "size_bytes": 324257966
+    }
+  ],
+  "source_commit": "417c9a74156f518de814cc55b579eb96a9656d5a"
+}

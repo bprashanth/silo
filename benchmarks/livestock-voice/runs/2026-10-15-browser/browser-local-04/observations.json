@@ -1,0 +1,32 @@
+[
+  {
+    "fixture": "missing",
+    "wall_seconds_to_agent_transcript": 3.487785294186324,
+    "farmer": "FARMER\nMy cow is sick.",
+    "agent": "AGENT\nI understand. Could you share your name and village and district?"
+  },
+  {
+    "fixture": "out_of_order",
+    "wall_seconds_to_agent_transcript": 11.064328449312598,
+    "farmer": "FARMER\nMy name is Ramish. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+    "agent": "AGENT\nThank you, Ramish. What symptoms do you see besides not eating and weakness?"
+  },
+  {
+    "fixture": "warning",
+    "wall_seconds_to_agent_transcript": 5.129439706914127,
+    "farmer": "FARMER\nShe cannot stand up, and she is breathing very fast.",
+    "agent": "AGENT\nI see. Has she received any treatment before?"
+  },
+  {
+    "fixture": "treatment",
+    "wall_seconds_to_agent_transcript": 7.205295471008867,
+    "farmer": "FARMER\nThere has been no previous treatment. I do not have a contact number to share.",
+    "agent": "AGENT\nThank you. Are there any urgent signs like inability to stand, severe breathing trouble, or unconsciousness?"
+  },
+  {
+    "fixture": "confirm",
+    "wall_seconds_to_agent_transcript": 5.45978563092649,
+    "farmer": "FARMER\nYes, that summary is correct, thank you.",
+    "agent": "AGENT\nI understand. To confirm, is the cow unable to stand, breathing fast, and not eating since yesterday?"
+  }
+]

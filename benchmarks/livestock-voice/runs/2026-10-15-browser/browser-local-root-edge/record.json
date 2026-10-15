@@ -1,0 +1,192 @@
+{
+  "id": "3d240e8c-973d-4db9-8b9d-43f69b24e4ee",
+  "backend": "pipecat",
+  "status": "ended",
+  "created_at": 1792080744.3227859,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Hello, you've reached the livestock assistance service. Please tell me what's happening.",
+      "final": true
+    },
+    {
+      "role": "user",
+      "text": "On my cow she is unnot eating. I think it started yesterday. She is very weak.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I understand. Can she stand up on her own right now?",
+      "generated_text": "I understand. Can she stand up on her own right now?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "I do not know when the symptoms started.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I see. Is she having severe breathing trouble or is she unconscious?",
+      "generated_text": "I see. Is she having severe breathing trouble or is she unconscious?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    },
+    {
+      "role": "user",
+      "text": "Sorry, I got that wrong. It started two days ago, not three days ago.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Thank you for clarifying. Is she able to stand up on her own right now?",
+      "generated_text": "Thank you for clarifying. Is she able to stand up on her own right now?",
+      "final": true,
+      "transcript_basis": "audio_queued"
+    }
+  ],
+  "fields": {
+    "caller_name": null,
+    "village": null,
+    "district": null,
+    "animal_type": "cow",
+    "animals_affected": null,
+    "symptoms": [
+      "not eating",
+      "very weak"
+    ],
+    "symptoms_since": null,
+    "previous_treatment": null,
+    "urgent_warning_signs": [],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": false,
+    "missing_fields": [
+      "caller_name",
+      "village",
+      "district",
+      "animals_affected",
+      "symptoms_since",
+      "previous_treatment",
+      "urgent_warning_signs",
+      "contact_details"
+    ],
+    "call_status": "ended_unconfirmed",
+    "unknown_fields": [],
+    "evidence": {
+      "animal_type": "On my cow she is unnot eating.",
+      "symptoms": [
+        "On my cow she is unnot eating.",
+        "She is very weak."
+      ]
+    }
+  },
+  "metrics": [
+    {
+      "turn": 1,
+      "speech_end_monotonic": 2964396.676100887,
+      "end_of_turn_monotonic": 2964397.123581047,
+      "vad_ms": 447.48016027733684,
+      "asr_ms": 393.2804740034044,
+      "llm_first_token_ms": 475.1185141503811,
+      "tts_first_chunk_ms": 293.8260668888688,
+      "server_first_audio_ms": 1726.6376689076424,
+      "generation_complete_ms": 2628.429108299315
+    },
+    {
+      "turn": 2,
+      "speech_end_monotonic": 2964412.100249521,
+      "end_of_turn_monotonic": 2964412.538797317,
+      "vad_ms": 438.5477961041033,
+      "asr_ms": 334.878743160516,
+      "llm_first_token_ms": 516.6554660536349,
+      "tts_first_chunk_ms": 325.7264639250934,
+      "server_first_audio_ms": 1851.2441790662706,
+      "generation_complete_ms": 2350.501134991646
+    },
+    {
+      "turn": 3,
+      "speech_end_monotonic": 2964429.476310975,
+      "end_of_turn_monotonic": 2964429.923877255,
+      "vad_ms": 447.5662801414728,
+      "asr_ms": 361.80947721004486,
+      "llm_first_token_ms": 623.0281130410731,
+      "tts_first_chunk_ms": 346.12752217799425,
+      "server_first_audio_ms": 2014.951264951378,
+      "generation_complete_ms": 2411.393398884684
+    }
+  ],
+  "events": [
+    {
+      "event": "speech_start",
+      "monotonic": 2964392.398581147
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1795,
+      "client_ms": 14355.099999904633,
+      "speech_end_client_ms": 12559.708333333334,
+      "first_audio_client_ms": 14355.099999904633,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2964410.404300497
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2119,
+      "client_ms": 29905.099999904633,
+      "speech_end_client_ms": 27786.02499961853,
+      "first_audio_client_ms": 29905.099999904633,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2964425.818043226
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2326,
+      "client_ms": 47504,
+      "speech_end_client_ms": 45178.129166285195,
+      "first_audio_client_ms": 47504,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ],
+  "fields_revision": 7,
+  "ended_at": 1792080802.4350774,
+  "browser_metrics": [
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 1795,
+      "client_ms": 14355.099999904633,
+      "speech_end_client_ms": 12559.708333333334,
+      "first_audio_client_ms": 14355.099999904633,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2119,
+      "client_ms": 29905.099999904633,
+      "speech_end_client_ms": 27786.02499961853,
+      "first_audio_client_ms": 29905.099999904633,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2326,
+      "client_ms": 47504,
+      "speech_end_client_ms": 45178.129166285195,
+      "first_audio_client_ms": 47504,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ]
+}

@@ -1,0 +1,441 @@
+{
+  "id": "856e8674-420a-41c9-a21e-571e3076da70",
+  "backend": "openrouter",
+  "status": "ended",
+  "created_at": 1792081676.6854758,
+  "transcript": [
+    {
+      "role": "assistant",
+      "text": "Hello, you've reached the livestock assistance service. Please tell me what's happening.",
+      "final": true
+    },
+    {
+      "role": "user",
+      "text": "My cow is sick.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "I'm sorry to hear that. Could you tell me your name, please?",
+      "final": true,
+      "transcript_basis": "provider_audio_transcript"
+    },
+    {
+      "role": "user",
+      "text": "My name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Thank you, Ramesh. Is your cow having trouble standing or breathing? That would be important to know.",
+      "final": true,
+      "transcript_basis": "provider_audio_transcript"
+    },
+    {
+      "role": "user",
+      "text": "She cannot stand up, and she is breathing very fast.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "This sounds like an urgent situation. This needs urgent veterinary attention. Could you share your contact details, please?",
+      "final": true,
+      "transcript_basis": "provider_audio_transcript"
+    },
+    {
+      "role": "user",
+      "text": "There has been no previous treatment. I do not have a contact number to share.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Thank you, Ramesh. Let’s summarize: One cow, not eating, very weak since yesterday, cannot stand, fast breathing, no previous treatment, no contact number. Is that correct?",
+      "final": true,
+      "transcript_basis": "provider_audio_transcript"
+    },
+    {
+      "role": "user",
+      "text": "Yes, that summary is correct, thank you.",
+      "final": true
+    },
+    {
+      "role": "assistant",
+      "text": "Understood. This situation needs urgent veterinary attention. I’ll flag this for review. This demo request is recorded. No real service is dispatched. Please seek professional help immediately.",
+      "final": true,
+      "transcript_basis": "provider_audio_transcript"
+    }
+  ],
+  "fields": {
+    "caller_name": "Ramesh",
+    "village": "Demo Village",
+    "district": "Demo District",
+    "animal_type": "cow",
+    "animals_affected": 1,
+    "symptoms": [
+      "not eating",
+      "very weak",
+      "cannot stand",
+      "fast breathing"
+    ],
+    "symptoms_since": "yesterday",
+    "previous_treatment": "none",
+    "urgent_warning_signs": [
+      "unable to stand",
+      "breathing difficulty"
+    ],
+    "contact_details": null,
+    "needs_human_review": true,
+    "confirmed_by_caller": true,
+    "missing_fields": [],
+    "call_status": "completed",
+    "unknown_fields": [
+      "contact_details"
+    ],
+    "evidence": {
+      "caller_name": "My name is Ramesh.",
+      "village": "I live in Demo Village in Demo District.",
+      "district": "I live in Demo Village in Demo District.",
+      "animal_type": "My cow is sick.",
+      "animals_affected": "One cow is affected.",
+      "symptoms": [
+        "She has not been eating",
+        "is very weak since yesterday.",
+        "She cannot stand up",
+        "she is breathing very fast."
+      ],
+      "symptoms_since": "My name is Ramesh. I live in Demo Village in Demo District. One cow is affected. She has not been eating and is very weak since yesterday.",
+      "previous_treatment": "There has been no previous treatment.",
+      "urgent_warning_signs": {
+        "positive_quotes": [
+          "She cannot stand up, and she is breathing very fast."
+        ],
+        "later_corrections": []
+      },
+      "contact_details": "There has been no previous treatment. I do not have a contact number to share."
+    },
+    "inferred_classifications": {
+      "urgency": "urgent veterinary review",
+      "basis": "explicit caller warning signs and subsequent corrections; not a diagnosis"
+    }
+  },
+  "metrics": [
+    {
+      "turn": 1,
+      "speech_end_monotonic": 2965325.622608318,
+      "end_of_turn_monotonic": 2965326.039384583,
+      "vad_ms": 416.7762650176883,
+      "local_transcript_asr_ms": 337.8695137798786,
+      "server_first_audio_ms": 1835.5615139007568,
+      "hosted_first_audio_ms": 1417.9335730150342,
+      "hosted_first_text_ms": 1302.562166005373,
+      "hosted_total_ms": 1841.5788682177663,
+      "asr_ms": null,
+      "llm_ms": null,
+      "tts_ms": null,
+      "usage": {
+        "prompt_tokens": 267,
+        "completion_tokens": 93,
+        "total_tokens": 360,
+        "cost": 0.0003834,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 15,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0003834,
+          "upstream_inference_prompt_cost": 0.0001602,
+          "upstream_inference_completions_cost": 0.0002232
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 68
+        }
+      },
+      "observed_cost_usd": 0.0003834,
+      "generation_complete_ms": 2259.20114479959
+    },
+    {
+      "turn": 2,
+      "speech_end_monotonic": 2965340.022621327,
+      "end_of_turn_monotonic": 2965340.439850049,
+      "vad_ms": 417.2287220135331,
+      "local_transcript_asr_ms": 437.84832023084164,
+      "server_first_audio_ms": 2524.673764128238,
+      "hosted_first_audio_ms": 2106.8213847465813,
+      "hosted_first_text_ms": 1892.397060059011,
+      "hosted_total_ms": 2791.1769500933588,
+      "asr_ms": null,
+      "llm_ms": null,
+      "tts_ms": null,
+      "usage": {
+        "prompt_tokens": 352,
+        "completion_tokens": 144,
+        "total_tokens": 496,
+        "cost": 0.0005568,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 87,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0005568,
+          "upstream_inference_prompt_cost": 0.0002112,
+          "upstream_inference_completions_cost": 0.0003456
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 109
+        }
+      },
+      "observed_cost_usd": 0.0005568,
+      "generation_complete_ms": 3209.0710578486323
+    },
+    {
+      "turn": 3,
+      "speech_end_monotonic": 2965351.500827081,
+      "end_of_turn_monotonic": 2965351.940790184,
+      "vad_ms": 439.96310280635953,
+      "local_transcript_asr_ms": 349.8994968831539,
+      "server_first_audio_ms": 2136.4261489361525,
+      "hosted_first_audio_ms": 1696.0092796944082,
+      "hosted_first_text_ms": 1496.830936986953,
+      "hosted_total_ms": 2482.4270429089665,
+      "asr_ms": null,
+      "llm_ms": null,
+      "tts_ms": null,
+      "usage": {
+        "prompt_tokens": 347,
+        "completion_tokens": 171,
+        "total_tokens": 518,
+        "cost": 0.0006186,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 33,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0006186,
+          "upstream_inference_prompt_cost": 0.0002082,
+          "upstream_inference_completions_cost": 0.0004104
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 137
+        }
+      },
+      "observed_cost_usd": 0.0006186,
+      "generation_complete_ms": 2922.8634480386972
+    },
+    {
+      "turn": 4,
+      "speech_end_monotonic": 2965365.324721783,
+      "end_of_turn_monotonic": 2965365.762981636,
+      "vad_ms": 438.2598530501127,
+      "local_transcript_asr_ms": 377.2085141390562,
+      "server_first_audio_ms": 1872.5485000759363,
+      "hosted_first_audio_ms": 1433.8025273755193,
+      "hosted_first_text_ms": 1082.1671071462333,
+      "hosted_total_ms": 3894.8732260614634,
+      "asr_ms": null,
+      "llm_ms": null,
+      "tts_ms": null,
+      "usage": {
+        "prompt_tokens": 378,
+        "completion_tokens": 270,
+        "total_tokens": 648,
+        "cost": 0.0008748,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 45,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0008748,
+          "upstream_inference_prompt_cost": 0.0002268,
+          "upstream_inference_completions_cost": 0.000648
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 214
+        }
+      },
+      "observed_cost_usd": 0.0008748,
+      "generation_complete_ms": 4333.668814972043
+    },
+    {
+      "turn": 5,
+      "speech_end_monotonic": 2965380.257315505,
+      "end_of_turn_monotonic": 2965380.705433596,
+      "vad_ms": 448.1180910952389,
+      "local_transcript_asr_ms": 334.9640523083508,
+      "server_first_audio_ms": 1951.7757981084287,
+      "hosted_first_audio_ms": 1503.326646052301,
+      "hosted_first_text_ms": 1075.9931118227541,
+      "hosted_total_ms": 2564.11474570632,
+      "asr_ms": null,
+      "llm_ms": null,
+      "tts_ms": null,
+      "usage": {
+        "prompt_tokens": 400,
+        "completion_tokens": 301,
+        "total_tokens": 701,
+        "cost": 0.0009624,
+        "is_byok": false,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0,
+          "audio_tokens": 24,
+          "video_tokens": 0
+        },
+        "cost_details": {
+          "upstream_inference_cost": 0.0009624,
+          "upstream_inference_prompt_cost": 0.00024,
+          "upstream_inference_completions_cost": 0.0007224
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "image_tokens": 0,
+          "audio_tokens": 248
+        }
+      },
+      "observed_cost_usd": 0.0009624,
+      "generation_complete_ms": 3012.527849059552
+    }
+  ],
+  "events": [
+    {
+      "event": "speech_start",
+      "monotonic": 2965324.801835254
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2105,
+      "client_ms": 10997.599999904633,
+      "speech_end_client_ms": 8892.833333333334,
+      "first_audio_client_ms": 10997.599999904633,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965332.001833568
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2754,
+      "client_ms": 26080.89999961853,
+      "speech_end_client_ms": 23327.39999961853,
+      "first_audio_client_ms": 26080.89999961853,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965348.845413613
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2421,
+      "client_ms": 37196.699999809265,
+      "speech_end_client_ms": 34775.795832951866,
+      "first_audio_client_ms": 37196.699999809265,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965361.505946319
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2104,
+      "client_ms": 50729.59999990463,
+      "speech_end_client_ms": 48625.699999809265,
+      "first_audio_client_ms": 50729.59999990463,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "event": "speech_start",
+      "monotonic": 2965378.497881947
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2174,
+      "client_ms": 65762.19999980927,
+      "speech_end_client_ms": 63588.5791665713,
+      "first_audio_client_ms": 65762.19999980927,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ],
+  "extracting": false,
+  "fields_revision": 11,
+  "ended_at": 1792081754.6346483,
+  "completion": {
+    "id": "6a5230ec-0c3c-412c-8c92-a62420019899",
+    "mock": true,
+    "dispatched": false
+  },
+  "completion_fingerprint": "44b1953b8531b716f04395b4885ecea70f8fc2e2d40a8f02f6087159dbeb9a5a",
+  "browser_metrics": [
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2105,
+      "client_ms": 10997.599999904633,
+      "speech_end_client_ms": 8892.833333333334,
+      "first_audio_client_ms": 10997.599999904633,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2754,
+      "client_ms": 26080.89999961853,
+      "speech_end_client_ms": 23327.39999961853,
+      "first_audio_client_ms": 26080.89999961853,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2421,
+      "client_ms": 37196.699999809265,
+      "speech_end_client_ms": 34775.795832951866,
+      "first_audio_client_ms": 37196.699999809265,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2104,
+      "client_ms": 50729.59999990463,
+      "speech_end_client_ms": 48625.699999809265,
+      "first_audio_client_ms": 50729.59999990463,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    },
+    {
+      "type": "browser_first_audio",
+      "speech_end_to_audible_ms": 2174,
+      "client_ms": 65762.19999980927,
+      "speech_end_client_ms": 63588.5791665713,
+      "first_audio_client_ms": 65762.19999980927,
+      "synthetic": true,
+      "method": "scheduled last non-silent fixture sample to received audio RMS onset"
+    }
+  ]
+}
