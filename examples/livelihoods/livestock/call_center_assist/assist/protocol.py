@@ -142,7 +142,7 @@ class Protocol:
         for cid in self.open:
             c = self.cards[cid]
             cards.append({'id': cid, 'title': c['title'], 'level': self.card_level(cid, record), 'notifiable': c['notifiable'],
-                          'fields': [{'id': f['id'], 'label': f['label'], 'ask': f['ask'], **self.fields[f['id']].as_dict()} for f in c['fields']],
+                          'fields': [{'id': f['id'], 'label': f['label'], 'ask': f['ask'], 'type': f['type'], **self.fields[f['id']].as_dict()} for f in c['fields']],
                           'say': [{'text': s['text'], 'said': self._said(s['heard_if'], transcript)} for s in c['say']]})
         return {'level': lvl, 'label': L['label'], 'response': L['response'], 'escalate': L['escalate'],
                 'escalated': L['escalate'] and self._said(self.spec['escalated_if'], transcript),

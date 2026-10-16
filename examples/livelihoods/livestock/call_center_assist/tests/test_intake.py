@@ -160,3 +160,21 @@ def test_random_callers_always_finish():
         assert i.phase == 'ended' or n < 150, f'trial {trial} did not finish'
         assert n < 150, f'trial {trial}: {n} turns'
         assert max(len(list(g)) for _, g in itertools.groupby(a for a in asked if a[0])) <= 3, f'trial {trial} repeated itself'
+
+# From the 23:40 assist call on 16 Oct: the count, the onset and the name were all lost.
+def test_farmer_count_since_and_name_backstops():
+    import nlu
+    assert nlu.count_sick('Sorry the line is bad. My three Adu have bidi for three days.') == 3
+    assert nlu.count_sick('I have ten goats, three are sick') == 3
+    assert nlu.count_sick('for three days') is None
+    g = nlu._guard({'intent': 'answer', 'facts': {'symptoms_since': 'three', 'symptoms': ['pidi']}, 'urgent': []},
+                   'No I said tank, my three Adu are sick with pidi.', None)
+    assert g['facts'] == {'symptoms': ['pidi'], 'animals_affected': 3}
+    g = nlu._guard({'intent': 'answer', 'facts': {'symptoms': ['Lakshmama from Hasa Hali']}, 'urgent': []}, 'My name is Lakshmama from Hasa Hali.', None)
+    assert g['facts'] == {'caller_name': 'Lakshmamma', 'village': 'Hosahalli'}
+
+def test_village_not_the_taluk_or_district():
+    import nlu
+    g = nlu._guard({'intent': 'answer', 'facts': {'village': 'Kanakapura', 'district': 'Ramanagara'}, 'urgent': []},
+                   'Hassaheli Kanikapura Talak, Ramanagara District', 'village')
+    assert g['facts']['village'] == 'Hosahalli'

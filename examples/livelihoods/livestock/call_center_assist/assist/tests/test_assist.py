@@ -92,3 +92,23 @@ def test_symptoms_in_other_words_merge_not_differ():
 
 def test_qa_without_a_phone_number():
     assert {q['check']: q['ok'] for q in assist.Assist().qa()}['Read the phone number back'] is False
+
+# From the 23:40 call on 16 Oct: "is the breathing normal." (no "?") showed as a confirmed "yes".
+def test_yes_no_question_is_not_a_confirmation():
+    assert assist.said_by_operator({'breathing_ok': True}, 'is the breathing normal.') == {}
+    assert assist.said_by_operator({'breathing_ok': True}, 'Um is the breathing normal.') == {}
+    assert assist.said_by_operator({'can_stand': False}, 'Not able to stand, right?') == {'can_stand': False}
+    assert assist.said_by_operator({'breathing_ok': True}, 'Okay, breathing is fine. Which village?') == {'breathing_ok': True}
+    assert assist.said_by_operator({'symptoms': ['breathing normal'], 'breathing_ok': True}, 'And the breathing is normal.') == {'breathing_ok': True}
+
+def test_operator_edit_wins_and_survives_later_turns():
+    a = assist.Assist()
+    a.on_farmer('Hasa Hali', {'facts': {'village': 'Hasa Hali'}})
+    a.edit('village', 'Hosahalli'); a.edit('animals_affected', 'three'); a.edit('breathing_ok', 'no')
+    a.on_farmer('Hasa Hali', {'facts': {'village': 'Hasa Hali'}})
+    r = a.record()
+    assert (r['village'], r['animals_affected'], r['breathing_ok']) == ('Hosahalli', 3, False)
+    assert a.fields['village'].state == 'edited' and 'village' in r['confirmed_fields']
+    a.edit('village', ''); assert a.fields['village'].value == 'Hasa Hali'   # cleared: back to what was heard
+    import pytest
+    with pytest.raises(ValueError): assist.parse_edit('animals_affected', 'many')

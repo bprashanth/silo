@@ -31,3 +31,8 @@ dt.empty { color: var(--soft); }
 .lvl.lvlE { border-color: var(--warn); color: var(--warn); } .lvl.lvlD { border-color: #c58a00; color: #c58a00; }
 .say { font-size: 14px; margin: 3px 0; } .say.closing { margin-top: 10px; }
 .said { color: var(--accent); font-weight: 600; }
+.edit { margin-left: 6px; padding: 0 5px; font-size: 12px; line-height: 1.4; border: 1px solid transparent; background: none; color: var(--soft); cursor: pointer; border-radius: 4px; }
+.edit:hover { border-color: var(--line); color: inherit; }
+.edit-input { font: inherit; font-size: 15px; padding: 2px 6px; max-width: 100%; width: 14em; }
+.tag.edited { border-color: var(--accent); color: var(--accent); border-style: dashed; }
+.err { color: var(--warn); }

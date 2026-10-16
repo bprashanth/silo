@@ -102,17 +102,22 @@ def operator_rules(text):
     return facts
 
 NUMBER_WORDS = 'zero one two three four five six seven eight nine ten'.split()
+YES_NO_Q = re.compile(r"^(and |so |okay,? |ok,? |um,? |uh,? )*(is|are|can|could|does|do|did|has|have|was|were|will|any)\b")
+BOOL_TOPIC = {'can_stand': r'stand|get(ting)? up|lying|fallen|\bdown\b', 'breathing_ok': r'breath'}
 
 def said_by_operator(facts, text):
     """Keep only facts the operator's own words carry. Muse sees the farmer's last line for context and once credited
     the farmer's "since yesterday" to the operator's "Which village?"; it also put "Ramanagara" in both village and district."""
     t = text.lower(); out = {}
+    # A yes/no question asks; it doesn't confirm. "is the breathing normal." (ASR dropped the "?") came back as
+    # breathing_ok=True and showed as confirmed. A check worded as a statement still counts ("Not able to stand, right?").
+    stated = ' '.join(x for x in re.split(r'(?<=[.?!])\s+', t) if x.strip() and not YES_NO_Q.match(x.strip()))
     for k, v in facts.items():
-        if isinstance(v, bool): ok = True  # yes/no read-backs ("not able to stand") are worded too many ways to match
+        if isinstance(v, bool): ok = bool(re.search(BOOL_TOPIC[k], stated)) if k in BOOL_TOPIC else True  # read-backs are worded too many ways to match the value
         elif k == 'contact_details': ok = len(re.sub(r'\D', '', t) or intake_mod.spoken_digits(t)) >= 4
         elif isinstance(v, int): ok = str(v) in t or (v <= 10 and re.search(r'\b' + NUMBER_WORDS[v] + r'\b', t))
         elif isinstance(v, list):
-            v = [x for x in v if fuzz.partial_ratio(str(x).lower(), t) >= 80]; ok = bool(v)
+            v = [x for x in v if fuzz.partial_ratio(str(x).lower(), t) >= 80 and not nlu.NOT_A_SYMPTOM.search(str(x))]; ok = bool(v)
         else: ok = fuzz.partial_ratio(str(v).lower(), t) >= 80 or nlu._code(str(v)) in nlu._code(text)
         if ok: out[k] = v
     if out.get('village') and same(out.get('village'), out.get('district')): out.pop('village')
@@ -157,14 +162,17 @@ def same(a, b):
 class Field:
     def __init__(self, name):
         self.name = name; self.farmer = None; self.operator = None; self.evidence = []
+        self.edited = None  # typed by the operator (the ✎ button): wins over both, and later turns don't overwrite it
     @property
     def value(self):
+        if self.edited is not None: return self.edited
         if self.name == 'symptoms' and self.operator and self.farmer:  # the operator's summary plus what else the farmer described
             # only short phrases: the farmer's whole sentences ("Only three months, poor thing, five others...") are in the call
             return self.operator + [x for x in self.farmer if len(str(x).split()) <= 7 and not any(same(x, o) for o in self.operator)]
         return self.operator if self.operator is not None else self.farmer
     @property
     def state(self):
+        if self.edited is not None: return 'edited'
         if self.operator is not None and self.farmer is not None:
             if same(self.operator, self.farmer): return 'confirmed'
             # Symptoms in other words ("fever" for "hot ears and body") aren't a disagreement.
@@ -173,7 +181,8 @@ class Field:
         if self.farmer is not None: return 'heard_only'
         return 'empty'
     def as_dict(self):
-        return {'value': self.value, 'state': self.state, 'farmer': self.farmer, 'operator': self.operator, 'evidence': self.evidence}
+        return {'value': self.value, 'state': self.state, 'farmer': self.farmer, 'operator': self.operator, 'edited': self.edited,
+                'evidence': self.evidence}
 
 def candidates(kind, value, n=3):
     """Gazetteer spellings that sound like what was heard, for the operator to choose from."""
@@ -232,6 +241,13 @@ class Assist:
         if op.get('asking'):
             self.asking = op['asking']; self.asked.append(op['asking'])
 
+    def edit(self, k, raw):
+        """The operator types the value where recognition failed. '' clears the edit (back to what was heard)."""
+        f = self.fields[k]; v = parse_edit(k, raw)
+        f.edited = v; f.evidence.append({'side': 'operator', 'heard': '(edited) ' + ('cleared' if v is None else fmt(v))})
+        if k == 'contact_details': self.phone_mismatch = None
+        return v
+
     def _urgent(self, s):
         if s not in self.urgent: self.urgent.append(s)
 
@@ -286,7 +302,7 @@ class Assist:
         return {**f, 'symptoms': f['symptoms'] or [], 'urgent_warning_signs': list(self.urgent),
                 'urgency': 'urgent' if self.urgent else 'routine', 'farmer_questions': self.farmer_questions,
                 'fields': {k: x.as_dict() for k, x in self.fields.items()},
-                'confirmed_fields': [k for k, x in self.fields.items() if x.state in ('confirmed', 'operator')],
+                'confirmed_fields': [k for k, x in self.fields.items() if x.state in ('confirmed', 'operator', 'edited')],
                 'unconfirmed_fields': [k for k, x in self.fields.items() if x.state in ('heard_only', 'operator_differs')],
                 'missing_fields': [k for k, x in self.fields.items() if x.state == 'empty']}
 
@@ -304,13 +320,32 @@ class Assist:
             ('Asked which animal', 'animal_type' in asked or self.fields['animal_type'].operator is not None),
             ('Asked if the animal can stand', 'can_stand' in asked),
             ('Asked about breathing', 'breathing_ok' in asked),
-            ('Repeated the key facts back', sum(x.state in ('confirmed', 'operator') for x in self.fields.values()) >= 6),
+            ('Repeated the key facts back', sum(x.state in ('confirmed', 'operator', 'edited') for x in self.fields.values()) >= 6),
             ('Read the phone number back', self._phone_read_back()),
             ('Read the case back before closing', 'summary' in asked),
             ('Did not prescribe medicine', not any(re.search(r'\b(give (her|him|it) |you (should|can) give|apply|inject)\b', o, re.I) for o in ops)),
         ]
         if urgent_ok is not None: checks.append(('Urgent: took village and phone first', bool(urgent_ok)))
         return [{'check': c, 'ok': bool(ok)} for c, ok in checks]
+
+def parse_edit(k, raw, kind=None):
+    """Typed text -> the field's type: yes/no for the booleans, a number for the count, digits for the phone."""
+    t = str(raw if raw is not None else '').strip()
+    if not t: return None
+    kind = kind or {'can_stand': 'boolean', 'breathing_ok': 'boolean', 'animals_affected': 'integer'}.get(k, 'string')
+    if kind == 'boolean':
+        if re.match(r'^(y|yes|true|haan|ha|normal|ok|fine)\b', t, re.I): return True
+        if re.match(r'^(n|no|false|not|illa|nahi)\b', t, re.I): return False
+        raise ValueError('yes or no')
+    if kind == 'integer':
+        m = re.search(r'\d+', t)
+        if m: return int(m.group())
+        w = t.lower().split()[0]
+        if w in NUMBER_WORDS: return NUMBER_WORDS.index(w)
+        raise ValueError('a number')
+    if k == 'contact_details': return re.sub(r'\D', '', t) or None
+    if k == 'symptoms': return [x.strip() for x in re.split(r'[,;\n]', t) if x.strip()]
+    return t
 
 def fmt(v):
     if isinstance(v, list): return ', '.join(map(str, v))

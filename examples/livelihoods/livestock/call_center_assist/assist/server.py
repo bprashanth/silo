@@ -304,6 +304,22 @@ async def state(ident: str):
     if ident not in SESSIONS: raise HTTPException(404)
     return public(SESSIONS[ident])
 
+@app.post('/api/sessions/{ident}/edit')
+async def edit(ident: str, req: Request):
+    """{field, value}: the operator types a value where recognition failed ('' clears the edit). Record or card fields."""
+    rec = SESSIONS.get(ident); s = rec and rec.get('_s')
+    if not s: raise HTTPException(404)
+    b = await req.json(); k = b.get('field')
+    try:
+        if k in s.assist.fields: s.assist.edit(k, b.get('value'))
+        elif s.protocol and k in s.protocol.fields:
+            f = s.protocol.fields[k]; f.edited = assist_mod.parse_edit(k, b.get('value'), s.protocol.meta[k]['type'])
+            f.evidence.append({'side': 'operator', 'heard': '(edited)'})
+        else: raise HTTPException(400, 'unknown field')
+    except ValueError as e: raise HTTPException(400, f'expects {e}')
+    if rec['status'] == 'ended': save(rec)
+    return public(rec)
+
 @app.get('/api/sessions/{ident}/audio/{name}')
 async def audio(ident: str, name: str):
     from fastapi.responses import FileResponse

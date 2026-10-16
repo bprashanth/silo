@@ -79,6 +79,10 @@ Two columns, on purpose: the operator works from the record, not from a script.
   *heard only* (not repeated yet), *differs* (check it), or *to ask*. A repeat confirms whenever it comes: "okay, I
   have noted the goat problem" ten turns later confirms the animal. Hints sit on the field they're about (a
   gazetteer spelling for a village, a phone number that isn't 10 digits). The urgent signs are at the top.
+- **✎ on every field**, record and protocol cards, during or after the call. Type the value where recognition
+  failed (yes/no for the booleans, a number for *Animals sick*, comma-separated problems). A typed value wins,
+  shows as *edited*, and later turns don't overwrite it. An empty value clears the edit, and the field goes back
+  to what was heard.
 - **After the call:** protocol checks, a second read of the whole call by local Muse and where it disagrees,
   the record against Lakshmamma's real answers, the case sheet (what she knew, and what she'd only say if
   asked), and timings.

@@ -3,7 +3,9 @@ const $ = id => document.getElementById(id);
 const LABELS = {animal_type: 'Animal', symptoms: 'Problem', can_stand: 'Can stand', breathing_ok: 'Breathing normal',
   animals_affected: 'Animals sick', symptoms_since: 'Since', previous_treatment: 'Treatment given',
   caller_name: 'Farmer name', village: 'Village', district: 'District', contact_details: 'Phone'};
-const STATE = {confirmed: 'confirmed', operator: 'you said', heard_only: 'heard only', operator_differs: 'differs'};
+const STATE = {confirmed: 'confirmed', operator: 'you said', heard_only: 'heard only', operator_differs: 'differs', edited: 'edited'};
+const BOOL = new Set(['can_stand', 'breathing_ok']);
+let editing = null;  // the field being typed in: polling leaves the record alone meanwhile
 let pc, ctx, sid, poll, clock, started, last = null, micStream, fixtureDest, CFG;
 const TEST = new URLSearchParams(location.search).has('test');  // automated runs: test audio and the recorded-only scenarios
 
@@ -108,20 +110,44 @@ function render(s) {
   $('urgency').hidden = !rec.urgent_warning_signs?.length;
   $('urgent').hidden = !rec.urgent_warning_signs?.length;
   $('urgent').textContent = 'Urgent: ' + (rec.urgent_warning_signs || []).join(', ');
+  if (editing) return;
   $('fields').innerHTML = Object.entries(LABELS).map(([k, label]) => {
     const f = rec.fields[k]; let v = esc(fmt(f.value));
     if (k === 'contact_details' && f.value) v = esc(String(f.value).replace(/(\d{5})(?=\d)/, '$1 ')) + ` <span class="small muted">${String(f.value).length}/10</span>`;
     const tag = STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '';
     const alt = f.state === 'operator_differs' ? `<span class="small muted"> line: ${esc(fmt(f.farmer))}</span>` : '';
     const hint = (hints[k] || []).map(t => `<span class="hint">${esc(t)}</span>`).join('');
-    return `<dt class="${f.state}">${label}</dt><dd class="${f.state}">${v || '<span class="todo">to ask</span>'}${tag}${alt}${hint}</dd>`;
+    return `<dt class="${f.state}">${label}</dt><dd class="${f.state}" data-k="${k}" data-bool="${BOOL.has(k)}">${v || '<span class="todo">to ask</span>'}${tag}${alt}${hint}${pencil(k)}</dd>`;
   }).join('') + (rec.farmer_questions?.length ? `<dt>She asked</dt><dd>${esc(rec.farmer_questions.join('; '))}</dd>` : '');
   renderProtocol(s.protocol);
   if (s.review) renderReview(s);
 }
 
+// ✎ on every field: the operator types the value where recognition failed. Typed values win and say "edited".
+function pencil(k) { return sid ? `<button class="edit" title="Edit" onclick="editField(this)">✎</button>` : ''; }
+window.editField = function (btn) {
+  const dd = btn.closest('dd'), k = dd.dataset.k, f = last?.record?.fields?.[k] ?? findCardField(k), cur = f?.value;
+  editing = k;
+  const input = dd.dataset.bool === 'true'
+    ? `<select class="edit-input"><option value="">(clear)</option><option value="yes" ${cur === true ? 'selected' : ''}>yes</option><option value="no" ${cur === false ? 'selected' : ''}>no</option></select>`
+    : `<input class="edit-input" value="${esc(cur == null ? '' : fmt(cur))}" placeholder="${k === 'symptoms' ? 'comma separated' : 'type it'}">`;
+  dd.innerHTML = input + ' <button class="save">Save</button> <button class="cancel">Cancel</button><span class="small err"></span>';
+  const el = dd.querySelector('.edit-input'); el.focus(); el.select?.();
+  const done = async save => {
+    if (save) {
+      try { last = await api(`/api/sessions/${sid}/edit`, {field: k, value: el.value}); }
+      catch (e) { dd.querySelector('.err').textContent = ' ' + e.message.replace(/^.*"detail":"?([^"}]*).*$/, '$1'); return; }
+    }
+    editing = null; render(last);
+  };
+  dd.querySelector('.save').onclick = () => done(true); dd.querySelector('.cancel').onclick = () => done(false);
+  el.onkeydown = e => { if (e.key === 'Enter') done(true); if (e.key === 'Escape') done(false); };
+};
+function findCardField(k) { for (const c of last?.protocol?.cards || []) for (const f of c.fields) if (f.id === k) return f; }
+
 // Protocol cards (prototype): opened by what was said; extra questions, a priority, and lines to read out.
 function renderProtocol(p) {
+  if (editing) return;
   $('priority').hidden = !p; $('cards').innerHTML = '';
   if (!p) return;
   $('priority').className = 'priority lvl' + p.level;
@@ -130,8 +156,8 @@ function renderProtocol(p) {
   const said = x => x.said ? '<span class="said">✓</span>' : '<span class="todo">say</span>';
   $('cards').innerHTML = p.cards.map(c => `<div class="card"><h3>${esc(c.title)} <span class="lvl lvl${c.level}">${c.level}</span>` +
       `${c.notifiable ? ' <span class="tag operator_differs">tell the vet: notifiable?</span>' : ''}</h3><dl>` +
-      c.fields.map(f => `<dt class="${f.state}">${esc(f.label)}</dt><dd class="${f.state}">${f.value != null ? esc(fmt(f.value)) +
-        (STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '') : `<span class="todo">ask: ${esc(f.ask)}</span>`}</dd>`).join('') +
+      c.fields.map(f => `<dt class="${f.state}">${esc(f.label)}</dt><dd class="${f.state}" data-k="${f.id}" data-bool="${f.type === 'boolean'}">${f.value != null ? esc(fmt(f.value)) +
+        (STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '') : `<span class="todo">ask: ${esc(f.ask)}</span>`}${pencil(f.id)}</dd>`).join('') +
       '</dl>' + c.say.map(x => `<div class="say">${said(x)} “${esc(x.text)}”</div>`).join('') + '</div>').join('') +
     `<div class="say closing">${said(p.closing)} Before closing: “${esc(p.closing.text)}”</div>` +
     `<p class="small muted">${esc(p.status)}</p>`;

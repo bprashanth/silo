@@ -53,6 +53,12 @@ def main():
         if get(api)['status'] != 'ended': page.click('#end')
         page.wait_for_selector('#review:not([hidden])', timeout=60000); time.sleep(.5)
         page.screenshot(path=str(out / 'review.png'), full_page=True)
+        # The operator fixes a field by hand (✎): typed values win and show as "edited".
+        page.click('dd[data-k="animals_affected"] button.edit'); page.fill('dd[data-k="animals_affected"] .edit-input', '4')
+        page.press('dd[data-k="animals_affected"] .edit-input', 'Enter'); time.sleep(.8)
+        edited = get(api)['record']['fields']['animals_affected']
+        edit_ok = edited['state'] == 'edited' and edited['value'] == 4 and 'edited' in page.inner_text('dd[data-k="animals_affected"]')
+        page.screenshot(path=str(out / 'edited.png'), full_page=True)
         s = get(api); b.close()
     r = s['review']
     result = {'session': s['id'], 'truth_check': r['truth_check'], 'passed': sum(r['truth_check'].values()), 'total': len(r['truth_check']),
@@ -61,7 +67,7 @@ def main():
               'asked': [(m.get('asked'), m.get('farmer_clip')) for m in s['metrics'] if m.get('heard')],
               'farmer_llm_ms': [m['farmer_llm_ms'] for m in s['metrics'] if m.get('farmer_llm_ms')],
               'conversation': [(t['role'], t.get('said') or t['text'], t['text']) for t in s['transcript']],
-              'states': {k: f['state'] for k, f in s['record']['fields'].items()}, 'console_errors': errors}
+              'states': {k: f['state'] for k, f in s['record']['fields'].items()}, 'edit_ok': edit_ok, 'console_errors': errors}
     (out / 'session.json').write_text(json.dumps(s, indent=1)); (out / 'result.json').write_text(json.dumps(result, indent=1))
     print(json.dumps(result, indent=1))
 

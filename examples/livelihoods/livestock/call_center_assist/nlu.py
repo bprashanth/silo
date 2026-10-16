@@ -59,7 +59,7 @@ CODED = {k: [(t, _code(t), _flat(t)) for t in v] for k, v in POOLS.items()}
 
 # Animals: English and common Kannada/Hindi words. Anything else is read back as a yes/no question first.
 ALIASES = {'hasu': 'cow', 'dana': 'cow', 'gai': 'cow', 'gaay': 'cow', 'emme': 'buffalo', 'bhains': 'buffalo', 'bhainsa': 'buffalo',
-           'kona': 'buffalo', 'etthu': 'bullock', 'ettu': 'bullock', 'bail': 'bullock', 'meke': 'goat', 'aadu': 'goat',
+           'kona': 'buffalo', 'etthu': 'bullock', 'ettu': 'bullock', 'bail': 'bullock', 'meke': 'goat', 'aadu': 'goat', 'adu': 'goat',
            'bakri': 'goat', 'kuri': 'sheep', 'bhed': 'sheep', 'karu': 'calf', 'bachda': 'calf', 'koli': 'hen', 'murgi': 'hen',
            'cattle': 'cow', 'oxen': 'ox', 'calves': 'calf', 'buffaloes': 'buffalo', 'sheeps': 'sheep'}
 OTHER_ANIMALS = {'cat', 'camel', 'rabbit', 'mule', 'pony', 'turkey', 'pigeon', 'yak', 'mithun', 'quail', 'goose'}
@@ -210,6 +210,40 @@ URGENT_EVIDENCE = {
     'sudden deaths': r'\bdie|\bdied|dead|death|dying',
 }
 
+NUM = r'(\d+|one|two|three|four|five|six|seven|eight|nine|ten|all)'
+_ANIMAL_WORD = '|'.join(sorted({re.escape(a) for a in ANIMALS} | set(ALIASES) | {'animals?', 'cattle', 'kids?', 'lambs?'}, key=len, reverse=True))
+# "my three Adu are sick", "two of them are coughing", "three are sick": Muse missed the count in every one of these.
+COUNT_SICK = re.compile(r'\b' + NUM + r'\s+(?:of them\s+)?(?:are|is|have|has|got)\s+(?:also\s+)?(?:sick|ill|unwell|not well|affected|down|coughing|loose)', re.I)
+COUNT_ANIMALS = re.compile(r'\b' + NUM + r'\s+(?:of (?:them|my \w+|the \w+)|(?:' + _ANIMAL_WORD + r')(?:s|es)?)\b', re.I)
+# "since" needs a time in it: Muse put "three" (from "three Adu") and "after grazing near the tank" there.
+TIME_WORDS = re.compile(r'\b(day|days|week|weeks|month|months|hour|hours|minutes?|yesterday|today|morning|evening|night|noon|ago|since|last|days?back|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b', re.I)
+NOT_A_SYMPTOM = re.compile(r'\b(my name|name is|calling from|i am from|this is \w+ from|village|district|taluk|phone|number is)\b'
+                           r'|breath\w* (is )?(normal|fine|ok|okay|good)|^(can|is|are) (stand|standing)$', re.I)  # a normal finding is its own field
+
+V_CODED = [(t, _code(t), _flat(t)) for t in TERMS['villages']]
+
+def village_in(heard):
+    """The gazetteer village named anywhere in the line ("Hassaheli Kanikapura Talak, Ramanagara District" -> Hosahalli)."""
+    w = re.findall(r'[a-z]+', heard.lower()); best = (0, None)
+    for sp in {' '.join(w[i:j]) for i in range(len(w)) for j in range(i + 1, min(len(w), i + 2) + 1)}:
+        if len(_flat(sp)) < 5: continue
+        best = max([best] + [(.5 * fuzz.ratio(_code(sp), c) + .5 * fuzz.ratio(_flat(sp), f), t) for t, c, f in V_CODED])
+    return best[1] if best[0] >= 75 else None
+
+def _count(w):
+    w = w.lower()
+    return int(w) if w.isdigit() else None if w == 'all' else 'one two three four five six seven eight nine ten'.split().index(w) + 1
+
+def count_sick(heard):
+    """How many animals are sick, from the farmer's own words; None if no count is said."""
+    for pat in (COUNT_SICK, COUNT_ANIMALS):
+        for m in pat.finditer(heard):
+            n = _count(m.group(1))
+            if n: return n
+    return None
+
+def same_place(a, b): return bool(a and b and _flat(str(a)) == _flat(str(b)))
+
 def urgent_with_evidence(signs, text):
     return [u for u in dict.fromkeys(signs or []) if re.search(URGENT_EVIDENCE.get(u, r'(?!)'), text or '', re.I)]
 
@@ -228,6 +262,27 @@ def _guard(out, heard, asking, prev_asking=None, backend='muse'):
         free = asking == k and not (out['intent'] == 'correction' and other)
         if k in out['facts'] and not free and not re.search(pat, heard, re.I): out['facts'].pop(k)
     out['urgent'] = urgent_with_evidence(out['urgent'], heard)
+    f = out['facts']
+    if 'animals_affected' not in f:  # a count in her own words, whatever else the turn is ("Sorry, line is bad. My three Adu...")
+        n = count_sick(heard)
+        if n: f['animals_affected'] = n
+    if f.get('symptoms_since') not in (None, 'UNKNOWN') and not TIME_WORDS.search(str(f['symptoms_since'])): f.pop('symptoms_since')
+    # "My name is Lakshmama from Hasa Hali." came back as a symptom, with no name: take the name and place from the words.
+    m = re.search(r'\b(?:my name is|name is)\s+([a-z]+(?: [a-z]+)?)', heard, re.I)
+    if m and 'caller_name' not in f:
+        f['caller_name'] = snap('caller_name', re.sub(r'\s+(from|of|in|and)$', '', m.group(1), flags=re.I).title())
+    m = re.search(r'\bfrom\s+([a-z]+(?: [a-z]+)?)', heard, re.I)
+    if m and 'village' not in f:
+        v = snap('village', m.group(1).title())
+        if v in POOLS['village']: f['village'] = v
+    # Muse took the taluk or the district for the village when she gave all three; prefer a real village she named.
+    if f.get('village') and (f['village'] in TERMS['taluks'] + TERMS['districts'] or same_place(f['village'], f.get('district'))):
+        v = village_in(heard)
+        if v: f['village'] = v
+    if f.get('symptoms'):
+        f['symptoms'] = [x for x in f['symptoms'] if not NOT_A_SYMPTOM.search(str(x))
+                         and not any(f.get(k) and fuzz.partial_ratio(str(f[k]).lower(), str(x).lower()) >= 85 for k in ('caller_name', 'village'))]
+        if not f['symptoms']: f.pop('symptoms')
     if re.search(r'\b(died|dead|dying)\b', heard, re.I) and not re.search(r'\b(not|no one|none|nothing|nobody) (has |have )?(died|dead)', heard, re.I):
         out['urgent'] = list(dict.fromkeys(out['urgent'] + ['sudden deaths']))  # Muse often lets a death pass as background
     # Asked about breathing, Muse sometimes returns nothing when the answer has more in it ("very fast and hard, frothing too").
