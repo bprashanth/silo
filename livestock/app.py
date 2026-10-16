@@ -51,7 +51,7 @@ def config():
     identity=ROOT/'buffalo/identity.json'
     try: name=json.loads(identity.read_text())['username']
     except (OSError,ValueError,KeyError): name='Buffalosoldiers_bot'
-    result={'bot_username':name,'voice':'hf_alpha','language':'hi'}
+    result={'bot_username':name,'voice':'af_heart','language':'en'}
     public=ROOT/'fizzy/public.json'
     if public.exists():
         try: result['fizzy_url']=json.loads(public.read_text()).get('public_url')

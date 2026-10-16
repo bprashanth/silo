@@ -1,6 +1,8 @@
 # Buffalo Soldiers livestock POC
 
-Send a Hindi voice note to [@Buffalosoldiers_bot](https://t.me/Buffalosoldiers_bot). The bot asks for missing details, reads back a summary, and submits a case after confirmation. Replies include Hindi text and Kokoro speech (`hf_alpha`). The [case desk](http://100.82.28.38:8766) handles assignment, evidence, feedback and closure. Telegram records voice notes; there is no browser microphone or live-call setup.
+Current trial: English input, English replies and Kokoro `af_heart` (`en-us`). The Hindi implementation and validation below describe the preceding trial; Hindi is not currently enabled in the Telegram adapter. Existing case records are retained.
+
+Send an English voice note to [@Buffalosoldiers_bot](https://t.me/Buffalosoldiers_bot). The bot asks for missing details, reads back a summary, and submits a case after confirmation. Replies include English text and Kokoro speech (`af_heart`). The [case desk](http://100.82.28.38:8766) handles assignment, evidence, feedback and closure. Telegram records voice notes; there is no browser microphone or live-call setup.
 
 ## Independent bot
 

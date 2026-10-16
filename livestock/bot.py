@@ -1,4 +1,4 @@
-"""Buffalo Soldiers: Hindi livestock voice notes. No imports from tg-bridge."""
+"""Buffalo Soldiers: English livestock voice notes. No imports from tg-bridge."""
 import json
 import logging
 import sqlite3
@@ -7,7 +7,6 @@ import time
 from contextlib import contextmanager
 from . import speech
 from .client import api,store,STATE
-from .hindi import localize_reply
 from .transport import Telegram,allowed_ids,transport_retry
 
 LOG=logging.getLogger('buffalo')
@@ -28,19 +27,19 @@ def init_db():
         c.executescript('CREATE TABLE IF NOT EXISTS state(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE IF NOT EXISTS inbox(id INTEGER PRIMARY KEY,message TEXT,status TEXT DEFAULT "pending");')
     DATABASE.chmod(0o600)
 
-def deliver(tg,actor_id,text,case_id=None,already_hindi=False):
+def deliver(tg,actor_id,text,case_id=None):
     if str(actor_id) not in allowed_ids():raise ValueError('Recipient is not permitted')
-    hindi=text if already_hindi else localize_reply(text)
-    sent=tg.send(actor_id,hindi)
+    reply=text
+    sent=tg.send(actor_id,reply)
     media=[]
     try:
-        audio=speech.synth(hindi,'hf_alpha','hi')
+        audio=speech.synth(reply,'af_heart','en-us')
         asset=store(audio,'audio/ogg');media.append(asset)
         voiced=tg.upload_voice(actor_id,audio)
         asset['telegram_voice_message_id']=str(voiced['message_id'])
     except Exception as exc:
         LOG.warning('voice_text_fallback error=%s',type(exc).__name__)
-    if case_id:api('reply',{'actor_id':str(actor_id),'case_id':case_id,'text':hindi,'message_id':'buffalo:'+str(sent['message_id']),'media':media})
+    if case_id:api('reply',{'actor_id':str(actor_id),'case_id':case_id,'text':reply,'message_id':'buffalo:'+str(sent['message_id']),'media':media})
 
 
 def handle(tg,msg):
@@ -53,25 +52,25 @@ def handle(tg,msg):
         role='vet' if command=='/vet' or command=='/livestock' and len(parts)>1 and parts[1]=='vet' else 'farmer'
         vet=next((part for part in parts if part.startswith('VET-')),'VET-01') if role=='vet' else None
         result=api('register',{'actor_id':actor,'role':role,'vet_id':vet})
-        greeting='नमस्ते। आपके पशु को क्या परेशानी है? आप हिंदी में आवाज़ का संदेश भेज सकते हैं।' if role=='farmer' else 'आप पशु चिकित्सक की भूमिका में हैं। केस मिलने पर यहाँ संदेश आएगा।'
-        deliver(tg,actor,result.get('reply') or greeting,already_hindi=not bool(result.get('reply')))
+        greeting='Hello. What is wrong with your animal? You can send a voice note in English.' if role=='farmer' else 'You are in the vet role. Assigned cases will arrive here.'
+        deliver(tg,actor,result.get('reply') or greeting)
         return
     if command=='/status':
         cases=api('actor/'+actor)
-        deliver(tg,actor,'अपना केस देखने के लिए डैशबोर्ड खोलें। नया पशु विवरण आवाज़ के संदेश में भेजें।',already_hindi=True)
+        deliver(tg,actor,'Open the case desk to view your case. Send a voice note to describe an animal problem.')
         return
     if command.startswith('/'):
-        deliver(tg,actor,'किसान की भूमिका के लिए /farmer और डॉक्टर की भूमिका के लिए /vet भेजें।',already_hindi=True)
+        deliver(tg,actor,'Send /farmer for the farmer role or /vet for the vet role.')
         return
     if not api('actor/'+actor):api('register',{'actor_id':actor,'role':'farmer'})
     LOG.info('message_received type=%s','voice' if msg.get('voice') else 'media' if msg.get('photo') or msg.get('location') else 'text')
-    media=[];metadata={**msg,'bot_username':tg.username,'language':'hi'}
+    media=[];metadata={**msg,'bot_username':tg.username,'language':'en'}
     voice=msg.get('voice') or msg.get('audio')
     try:tg.call('sendChatAction',chat_id=int(actor),action='typing')
     except Exception:pass
     if voice:
         raw=tg.download(voice['file_id']);media.append(store(raw,'audio/ogg'))
-        quality=speech.transcribe(raw,with_quality=True)
+        quality=speech.transcribe(raw,with_quality=True,language="en")
         metadata['transcription']=quality
         text=quality['text'] if not quality['needs_clarification'] else '[Voice note unclear; please ask me to repeat.]'
     if msg.get('photo'):media.append(store(tg.download(msg['photo'][-1]['file_id']),'image/jpeg'))
@@ -82,8 +81,8 @@ def handle(tg,msg):
         media.append(store(tg.download(document['file_id']),document.get('mime_type','application/octet-stream')))
     text=text or msg.get('caption') or ''
     result=api('message',{'actor_id':actor,'text':text,'message_id':'buffalo:'+str(msg['message_id']),
-        'language':'hi','metadata':metadata,'media':media})
-    if result.get('reply'):deliver(tg,actor,result['reply'],result.get('case_id'),already_hindi=True)
+        'language':'en','metadata':metadata,'media':media})
+    if result.get('reply'):deliver(tg,actor,result['reply'],result.get('case_id'))
     LOG.info('message_replied status=%s',result.get('status','unknown'))
 
 
@@ -98,7 +97,7 @@ def worker(tg):
             LOG.error('message_failed error=%s',type(exc).__name__)
             message=json.loads(row[1]);actor=str(message['from']['id'])
             if actor in allowed_ids():
-                try:tg.send(actor,'माफ़ कीजिए, यह संदेश पूरा नहीं हो पाया। कृपया फिर भेजें। आपका पिछला विवरण सुरक्षित है।')
+                try:tg.send(actor,'Sorry, I could not finish processing this message. Please send it again. Your previous details are saved.')
                 except Exception:pass
             with db() as c:c.execute('UPDATE inbox SET status="failed" WHERE id=?',(row[0],))
 
@@ -120,10 +119,10 @@ def main():
     allowed_ids();init_db();tg=Telegram();identity=tg.call('getMe');tg.username=identity['username']
     # Public identity only; no token is ever logged.
     (STATE_DIR/'identity.json').write_text(json.dumps({'username':tg.username,'id':identity['id']}))
-    tg.call('setMyCommands',commands=[{'command':'start','description':'पशु की समस्या बताइए'},{'command':'farmer','description':'किसान की भूमिका'},{'command':'vet','description':'डॉक्टर की भूमिका'}])
+    tg.call('setMyCommands',commands=[{'command':'start','description':'Report an animal problem'},{'command':'farmer','description':'Farmer role'},{'command':'vet','description':'Vet role'}])
     threading.Thread(target=worker,args=(tg,),daemon=True).start()
     threading.Thread(target=notifications,args=(tg,),daemon=True).start()
-    LOG.info('bot_ready username=%s language=hi allowed_count=%d',tg.username,len(allowed_ids()))
+    LOG.info('bot_ready username=%s language=en allowed_count=%d',tg.username,len(allowed_ids()))
     while True:
         with db() as c:
             row=c.execute('SELECT value FROM state WHERE key="offset"').fetchone();offset=int(row[0]) if row else 0
