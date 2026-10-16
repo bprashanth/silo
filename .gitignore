@@ -228,3 +228,17 @@ __pycache__/
 *.gguf
 .agents/
 .prompts/
+
+# Voice work: call audio, models and caches stay on /mnt/seagate/silo/voice-robust/ or ~/.local/share/silo-voice/
+benchmarks/voice-robust/**/*.wav
+benchmarks/voice-robust/**/*.mp3
+benchmarks/voice-robust/**/*.ogg
+benchmarks/voice-robust/**/*.opus
+benchmarks/voice-robust/**/*.flac
+benchmarks/voice-robust/**/sessions/
+examples/livelihoods/livestock/call_center_assist/**/*.wav
+examples/livelihoods/livestock/call_center_assist/**/*.mp3
+examples/livelihoods/livestock/call_center_assist/**/*.ogg
+examples/livelihoods/livestock/call_center_assist/**/*.opus
+examples/livelihoods/livestock/call_center_assist/**/*.flac
+examples/livelihoods/livestock/call_center_assist/**/sessions/
