@@ -14,5 +14,6 @@ systemctl --user reset-failed "$unit.service" 2>/dev/null || true
 systemd-run --user --unit="$unit" --collect --property=Restart=on-failure --property=RestartSec=5 \
   --property="WorkingDirectory=$PWD" --setenv="PYTHONPATH=/mnt/seagate/silo/livestock-v2/packages" \
   --setenv="LIVESTOCK_STATE=$state" \
+  --setenv="LIVESTOCK_DASHBOARD_URL=${LIVESTOCK_DASHBOARD_URL:-http://100.82.28.38:8766}" \
   "$state/venv/bin/python" -m examples.livelihoods.livestock.full_call_center.bot
 echo 'Buffalo Soldiers started. Logs: journalctl --user -u silo-buffalo'

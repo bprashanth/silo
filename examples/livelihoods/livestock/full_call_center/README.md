@@ -8,6 +8,19 @@ Current trial: English input, English replies and Kokoro `af_heart` (`en-us`). T
 
 Send an English voice note to [@Buffalosoldiers_bot](https://t.me/Buffalosoldiers_bot). The bot asks for missing details, reads back a summary, and submits a case after confirmation. Replies include English text and Kokoro speech (`af_heart`). The [case desk](http://100.82.28.38:8766) handles assignment, evidence, feedback and closure. Telegram records voice notes; there is no browser microphone or live-call setup.
 
+## Case links in Telegram
+
+After intake confirmation, the submission reply includes **View case**, opening the submitted case directly in the case-management dashboard. The spoken reply omits the URL.
+
+The case desk/API runs on **port 8766**, bound to `0.0.0.0`. Telegram links assume the browser can reach `http://100.82.28.38:8766` over the existing Tailscale connection. For example, `http://100.82.28.38:8766/?case=CASE-7B74AB6DB6` selects that case. The optional **Fizzy board runs on port 8767** and is accessible through the desk's Fizzy link; assignment and closure remain in the case desk.
+
+To use another host or port, restart the bot with `LIVESTOCK_DASHBOARD_URL` set to the externally reachable case-desk base URL. Changing API `PORT` does not automatically change Telegram links. `LIVESTOCK_URL` is the separate internal bot-to-API address, normally `http://127.0.0.1:8766`.
+
+```sh
+examples/livelihoods/livestock/full_call_center/bot.sh stop
+LIVESTOCK_DASHBOARD_URL=http://100.82.28.38:8766 examples/livelihoods/livestock/full_call_center/bot.sh start
+```
+
 ## Independent bot
 
 All Buffalo code lives in `examples/livelihoods/livestock/full_call_center/`: `bot.py`, `transport.py`, `client.py`, and `speech.py`. The original Silo bot stays in `tg-bridge/`, running its restored code without a livestock menu or routing. Buffalo has its own polling state and service; both share the existing local Muse endpoint at `127.0.0.1:8181` and local speech models.

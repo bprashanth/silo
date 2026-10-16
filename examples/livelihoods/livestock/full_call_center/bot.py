@@ -1,6 +1,8 @@
 """Buffalo Soldiers: English livestock voice notes. No imports from tg-bridge."""
 import json
 import logging
+import os
+from urllib.parse import urlencode
 import sqlite3
 import threading
 import time
@@ -10,6 +12,7 @@ from .client import api,store,STATE
 from .transport import Telegram,allowed_ids,transport_retry
 
 LOG=logging.getLogger('buffalo')
+DASHBOARD_URL=os.getenv('LIVESTOCK_DASHBOARD_URL','http://100.82.28.38:8766').rstrip('/')
 STATE_DIR=STATE/'buffalo'
 STATE_DIR.mkdir(parents=True,exist_ok=True,mode=0o700)
 DATABASE=STATE_DIR/'updates.db'
@@ -27,13 +30,15 @@ def init_db():
         c.executescript('CREATE TABLE IF NOT EXISTS state(key TEXT PRIMARY KEY,value TEXT); CREATE TABLE IF NOT EXISTS inbox(id INTEGER PRIMARY KEY,message TEXT,status TEXT DEFAULT "pending");')
     DATABASE.chmod(0o600)
 
-def deliver(tg,actor_id,text,case_id=None):
+def deliver(tg,actor_id,text,case_id=None,link_case=False):
     if str(actor_id) not in allowed_ids():raise ValueError('Recipient is not permitted')
     reply=text
+    if link_case and case_id:
+        reply += "\n\nView case: "+DASHBOARD_URL+"/?"+urlencode({"case":case_id})
     sent=tg.send(actor_id,reply)
     media=[]
     try:
-        audio=speech.synth(reply,'af_heart','en-us')
+        audio=speech.synth(text,'af_heart','en-us')
         asset=store(audio,'audio/ogg');media.append(asset)
         voiced=tg.upload_voice(actor_id,audio)
         asset['telegram_voice_message_id']=str(voiced['message_id'])
@@ -88,7 +93,11 @@ def handle(tg,msg):
         deliver(tg,actor,'You are in vet mode, but no case is assigned to you. To report your animal, send /farmer and then describe the problem. To test as a vet, assign a case to your vet in the case desk first.')
         LOG.info('message_needs_farmer_role_or_assignment')
         return
-    if result.get('reply'):deliver(tg,actor,result['reply'],result.get('case_id'))
+    if result.get('reply'):
+        if result.get('status')=='AWAITING_ASSIGNMENT':
+            deliver(tg,actor,result['reply'],result.get('case_id'),link_case=True)
+        else:
+            deliver(tg,actor,result['reply'],result.get('case_id'))
     LOG.info('message_replied status=%s',result.get('status','unknown'))
 
 

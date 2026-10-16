@@ -39,3 +39,22 @@ class Isolation(unittest.TestCase):
         reply=deliver.call_args.args[2]
         self.assertIn('/farmer',reply)
         self.assertIn('no case is assigned',reply)
+
+    def test_submitted_case_includes_dashboard_link(self):
+        tg=Mock();tg.username='test_buffalo'
+        def response(path,body=None,**kw):
+            if path.startswith('actor/'):return {'role':'farmer'}
+            if path=='message':return {'reply':'Thank you. Case CASE-DEMO has been submitted.','case_id':'CASE-DEMO','status':'AWAITING_ASSIGNMENT'}
+        with patch.object(bot,'allowed_ids',return_value={'7'}),patch.object(bot,'api',side_effect=response),patch.object(bot,'deliver') as deliver:
+            bot.handle(tg,self.message())
+        self.assertTrue(deliver.call_args.kwargs['link_case'])
+        self.assertEqual(deliver.call_args.args[3],'CASE-DEMO')
+
+    def test_dashboard_url_is_written_but_not_spoken(self):
+        tg=Mock();tg.send.return_value={'message_id':1};tg.upload_voice.return_value={'message_id':2}
+        text='Thank you. Your case has been submitted.'
+        with patch.object(bot,'allowed_ids',return_value={'7'}),patch.object(bot,'DASHBOARD_URL','http://demo:9000'),patch.object(bot,'api') as api,patch.object(bot,'store',return_value={'asset_id':'test'}),patch.object(bot.speech,'synth',return_value=b'audio') as synth:
+            bot.deliver(tg,'7',text,'CASE-DEMO',link_case=True)
+        self.assertEqual(tg.send.call_args.args[1],text+'\n\nView case: http://demo:9000/?case=CASE-DEMO')
+        synth.assert_called_once_with(text,'af_heart','en-us')
+        self.assertIn('http://demo:9000/?case=CASE-DEMO',api.call_args.args[1]['text'])
