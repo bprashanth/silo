@@ -8,7 +8,7 @@ Sources:
   farmer    farmer_lines.json synthesized with Kokoro Indian voices, plus a lowered "gruff" variant
 Each utterance x each condition in degrade.CONDITIONS.
 """
-import glob, io, json, os, sys
+import glob, io, json, os, re, sys
 from pathlib import Path
 import numpy as np, soundfile as sf, librosa
 sys.path.insert(0, str(Path(__file__).parent))
@@ -19,6 +19,7 @@ ART = Path(os.getenv('VR_ART', '/mnt/seagate/silo/voice-robust'))
 OUT = ART / 'corpus'; (OUT / 'wav').mkdir(parents=True, exist_ok=True)
 MODELS = Path.home() / '.local/share/idli-bridge/models'
 PER_SOURCE = int(os.getenv('PER_SOURCE', '60'))
+SVARAH_TARGET = int(os.getenv('SVARAH_TARGET', '200'))
 
 def load_bytes(b):
     x, sr = sf.read(io.BytesIO(b), dtype='float32', always_2d=True)
@@ -45,14 +46,89 @@ def edacc():
 
 def svarah():
     import pyarrow.parquet as pq
+
+    def speaker_id_from_path(path):
+        m = re.match(r'^(.*)_chunk_\d+\.wav$', path or '')
+        return m.group(1) if m else (path or '')
+
     files = sorted(glob.glob(str(ART / 'data/svarah/**/*.parquet'), recursive=True))
-    if not files: return
+    if not files:
+        return
     rows = [r for f in files for r in pq.read_table(f).to_pylist()]
-    rng = np.random.default_rng(7); rng.shuffle(rows)
-    text_key = next(k for k in ('text', 'transcript', 'sentence') if k in rows[0])
-    for i, r in enumerate(rows[:PER_SOURCE]):
-        meta = {k: r[k] for k in r if k not in ('audio', text_key) and isinstance(r[k], (str, int, float))}
-        yield f'svarah{i:03d}', load_bytes(r['audio']['bytes']), r[text_key], meta, []
+    if not rows:
+        return
+    text_key = next((k for k in ('text', 'transcript', 'sentence') if k in rows[0]), None)
+    if not text_key:
+        raise RuntimeError(f'Svarah schema lacks transcript field. Columns: {sorted(rows[0])}')
+
+    valid = []
+    for r in rows:
+        audio = r.get('audio_filepath') or {}
+        text = str(r.get(text_key, '')).strip()
+        if not text or not isinstance(audio, dict) or 'bytes' not in audio:
+            continue
+        speaker = speaker_id_from_path(str(audio.get('path') or ''))
+        if not speaker:
+            continue
+        words = text.split()
+        if len(words) < 5 or len(words) > 60:
+            continue
+        rr = dict(r)
+        rr['_speaker'] = speaker
+        rr['_group'] = (
+            str(r.get('primary_language') or 'UNKNOWN').strip() or 'UNKNOWN',
+            str(r.get('native_place_state') or 'UNKNOWN').strip() or 'UNKNOWN',
+        )
+        valid.append(rr)
+
+    rng = np.random.default_rng(0)
+    by_group = {}
+    for r in valid:
+        g = r['_group']
+        by_group.setdefault(g, {}).setdefault(r['_speaker'], []).append(r)
+    for spk_map in by_group.values():
+        for items in spk_map.values():
+            rng.shuffle(items)
+
+    group_speakers = {}
+    for g, spk_map in by_group.items():
+        speakers = list(spk_map)
+        rng.shuffle(speakers)
+        group_speakers[g] = speakers
+    groups = list(group_speakers)
+    rng.shuffle(groups)
+
+    picked = []
+    while len(picked) < SVARAH_TARGET and groups:
+        progressed = False
+        for g in list(groups):
+            speakers = group_speakers[g]
+            if not speakers:
+                continue
+            speaker = speakers.pop()
+            picked.append(by_group[g][speaker][0])  # one clip per speaker for speaker balance
+            progressed = True
+            if len(picked) >= SVARAH_TARGET:
+                break
+        groups = [g for g in groups if group_speakers[g]]
+        if not progressed:
+            break
+
+    picked = picked[:SVARAH_TARGET]
+    print(
+        f'svarah picked={len(picked)} seed=0 columns='
+        f"{sorted([k for k in rows[0] if k != 'audio_filepath'])}",
+        flush=True,
+    )
+    for i, r in enumerate(picked):
+        meta = {k: r[k] for k in r if k not in ('audio_filepath', text_key, '_speaker', '_group') and isinstance(r[k], (str, int, float))}
+        meta.update({
+            'speaker': r['_speaker'],
+            'sample_seed': 0,
+            'sample_group_language': r['_group'][0],
+            'sample_group_state': r['_group'][1],
+        })
+        yield f'svarah{i:03d}', load_bytes(r['audio_filepath']['bytes']), r[text_key], meta, []
 
 def farmer():
     from kokoro_onnx import Kokoro

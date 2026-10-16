@@ -141,18 +141,19 @@ def test_random_callers_always_finish():
     import random, itertools
     rnd = random.Random(0)
     intents = ['answer', 'correction', 'question', 'repeat', 'wait', 'yes', 'no', 'unclear']
-    values = {'animal_type': ['cow', 'goat', 'UNKNOWN'], 'animals_affected': [1, 3, 'UNKNOWN'], 'symptoms': [['fever'], ['not eating']],
+    values = {'animal_type': ['cow', 'goat', 'UNKNOWN'], 'animals_affected': [1, 3, 10, 'UNKNOWN'], 'symptoms': [['fever'], ['not eating']],
               'symptoms_since': ['yesterday', 'two days', 'UNKNOWN'], 'previous_treatment': ['none', 'injection'],
               'caller_name': ['Ravi', 'Geeta'], 'village': ['Kunigal', 'Hosahalli'], 'district': ['Tumakuru', 'Mandya'],
-              'contact_details': ['9845672310', '98456', '98445672310'], 'can_stand': [True, False], 'breathing_ok': [True, False]}
+              'contact_details': ['9845672310', '98456', '98445672310', 'calling number'], 'can_stand': [True, False], 'breathing_ok': [True, False]}
     for trial in range(2000):
         i = Intake(); asked = []; n = 0
         while i.phase != 'ended' and n < 150:
             intent = rnd.choice(intents); facts = {}
             for k in rnd.sample(list(values), rnd.choice([0, 0, 1, 1, 2])): facts[k] = rnd.choice(values[k])
             if i.asking in values and rnd.random() < .5: facts[i.asking] = rnd.choice(values[i.asking])
-            nlu = {'intent': intent, 'facts': facts, 'urgent': [], 'farmer_question': 'q?' if intent == 'question' else None}
-            r = i.next_turn(nlu, i.update(nlu, 'nine eight' if rnd.random() < .1 else 'x'))
+            unsure = {'animal_type': rnd.choice(['bull', 'goat'])} if rnd.random() < .15 else {}
+            nlu = {'intent': intent, 'facts': facts, 'unsure': unsure, 'urgent': [], 'farmer_question': 'q?' if intent == 'question' else None}
+            r = i.next_turn(nlu, i.update(nlu, rnd.choice(['nine eight', 'this phone number', 'no no nine', 'x', 'x', 'x', 'x'])))
             asked.append((r['asking'], r['text'])); n += 1
             if i.phase == 'summary' and rnd.random() < .3:
                 r = turn(i, 'yes', 'yes'); n += 1

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operator Assist Console</title>
+<link rel="stylesheet" href="/base/style.css">
+<link rel="stylesheet" href="assist.css">
+</head>
+<body>
+<header>
+  <div class="title"><strong>Livestock helpline · operator assist</strong> <span class="muted">you take the call, the agent listens and helps · local</span></div>
+  <div class="controls">
+    <label>Farmer <select id="scenario"></select></label>
+    <label class="check"><input type="checkbox" id="fixture"> Test audio instead of mic</label>
+    <button id="call" class="primary">Answer call</button>
+    <button id="end" disabled>End call</button>
+    <span id="timer" class="mono">00:00</span>
+    <span id="status" class="pill">idle</span>
+  </div>
+  <div id="fixtures" hidden></div>
+</header>
+<main class="three">
+  <section>
+    <h2>Call</h2>
+    <div id="transcript"><p class="muted">Pick a farmer and answer the call. Use headphones. Greet the farmer, ask your questions, and
+      <strong>repeat key facts back</strong> ("Buffalo, not getting up. Which village?"). What you repeat counts as confirmed.</p></div>
+  </section>
+  <section>
+    <h2>Assist</h2>
+    <div id="next" class="next muted">The next question to ask shows here.</div>
+    <div id="alerts"></div>
+    <div id="phone" class="phone" hidden></div>
+  </section>
+  <aside>
+    <h2>Case record <span id="urgency" class="badge" hidden>URGENT</span></h2>
+    <dl id="fields"></dl>
+    <p class="legend small muted"><span class="tag confirmed">confirmed</span> you repeated it and the line agrees ·
+      <span class="tag operator">you said</span> · <span class="tag heard_only">heard only</span> repeat it back ·
+      <span class="tag operator_differs">differs</span> check it</p>
+    <div class="row"><button id="export">Export JSON</button></div>
+  </aside>
+</main>
+<section id="review" hidden>
+  <h2>After the call</h2>
+  <div class="cols">
+    <div><h3>Protocol checks</h3><ul id="qa"></ul></div>
+    <div><h3>Second read of the whole call (local Muse)</h3><div id="diff"></div></div>
+    <div><h3>Role-play only: vs the farmer's real answers</h3><ul id="truth"></ul></div>
+  </div>
+  <h3>Timings</h3>
+  <table><thead><tr><th>#</th><th>You said (as heard)</th><th>ASR</th><th>Asked</th><th>Farmer answers after</th><th>LLM read</th></tr></thead><tbody id="metrics"></tbody></table>
+</section>
+<audio id="remote" autoplay></audio>
+<script src="app.js"></script>
+</body>
+</html>

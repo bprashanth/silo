@@ -8,7 +8,11 @@ import hashlib, os, re, threading, time
 from pathlib import Path
 import numpy as np
 
-ASR_ENGINE = os.getenv('ASR_ENGINE', 'parakeet-v3-boost')
+# Livestock words are always boosted. Place and name boosting only when the agent just asked for a
+# place or name: boosted all the time, it turned "Don't" into the village "Doddamaralavad" on a real call.
+ASR_ENGINE = os.getenv('ASR_ENGINE', 'parakeet-v3-boost-vocab')
+ASR_PLACE_ENGINE = os.getenv('ASR_PLACE_ENGINE', 'parakeet-v3-boost')
+PLACE_SLOTS = ('caller_name', 'village', 'district')
 VOICE = os.getenv('TTS_VOICE', 'hf_alpha')
 SPEED = float(os.getenv('TTS_SPEED', '0.95'))
 OUT_SR = 24000
@@ -25,16 +29,18 @@ class Speech:
         self.torch = torch
         self.asr = asr_engines.make(ASR_ENGINE)
         self.asr.transcribe([np.zeros(16000, np.float32)])
+        self.asr_place = asr_engines.make(ASR_PLACE_ENGINE) if ASR_PLACE_ENGINE and ASR_PLACE_ENGINE != ASR_ENGINE else self.asr
+        self.asr_place.transcribe([np.zeros(16000, np.float32)])
         self.tts = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M', device='cuda')
         self.cache, self.lock = {}, threading.Lock()
         for p in ACKS + FILLERS + Q_FILLERS + [SORRY]: self.say(p)
 
-    def transcribe(self, pcm16):
+    def transcribe(self, pcm16, asking=None):
         x = np.frombuffer(pcm16, np.int16).astype(np.float32) / 32768
         peak = np.max(np.abs(x)) if len(x) else 0
         if peak > 1e-3: x = x / peak * .9  # quiet cheap mics: normalize before recognition
         with self.lock:
-            text = self.asr.transcribe([x])[0].strip()
+            text = (self.asr_place if asking in PLACE_SLOTS else self.asr).transcribe([x])[0].strip()
         # Parakeet v3 is multilingual and can switch script on an unfamiliar name; keep Latin words only.
         if re.search(r'[^\x00-\x7F\u00C0-\u024F]', text):
             text = ' '.join(w for w in text.split() if not re.search(r'[^\x00-\x7F\u00C0-\u024F]', w))

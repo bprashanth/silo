@@ -177,9 +177,91 @@ asked three times in a row.
 | The echo filter threw away a farmer repeating the agent's read-back | Off by default (browser/phone echo cancellation handles echo). Opt-in for speakerphones |
 | Re-prompts stacked ("Hello, are you there? Hello, are you there? …") | Re-prompt from the question, not from the last thing said |
 
+## Live calls by a person (2026-10-16, 07:05–07:16)
+
+Six real browser calls on the user's own voice, some through the simulated 2G line. Most failed. What went wrong,
+checked by re-transcribing the saved audio with five engines:
+
+| what happened | cause | fix |
+|---|---|---|
+| "Bullock" heard as *Ballroo*, *Ball*, *The ball rolls*; the agent asked "What problem are you seeing in the ballroo?" and read back "Ten ballroos" | every engine mis-heard this speaker's "bullock"; the policy accepted any word as the animal | the animal must be a known word (English, Kannada, Hindi). Otherwise the nearest-sounding one is read back as a yes/no ("Did you say a bull?") and not stored until the farmer says yes. The re-ask now offers "bullock" |
+| "Don't" became the village *Doddamaralavad*; "Bye" became *Ballari* (a district) | **phrase boosting of place names, on all the time**, makes Parakeet emit gazetteer words on short unclear clips | boost livestock words always (`parakeet-v3-boost-vocab`) and place and name words only for the turn after the agent asks for one (`ASR_PLACE_ENGINE`). The audio model's names and places are only taken when they were asked for |
+| "One" heard as *Ten* | ASR | counts of 5 or more get "Ten animals, is that right?" |
+| "It's not lying down" was not recorded as a problem, so the agent asked again, then took "Something else" as the problem and skipped "Can it stand?" | the interpreter didn't treat it as a symptom; "lying" let it infer *can stand = yes* | the farmer's own words are kept as the problem; "something else" is never a symptom; *can stand = yes* is recorded only as an answer to that question |
+| "This phone number." went nowhere; "Eight nine seven six three" then "No, no. One eight nine seven six three five two" became 13 digits, so the phone was dropped silently | no "same number" path; "no, no" didn't restart the number | "this number / same number" uses caller ID. "No…" or a correction restarts the digits. The summary says when no phone was taken |
+| In the Gemini-audio calls, replies took 6.7–8 s | hosted audio model latency | none; that option stays experimental |
+| Two calls had **Test audio** on, so the mic wasn't sent and the agent said "Hello, are you there?" | UI | none (the checkbox is labelled) |
+
+All of these have tests (`tests/test_live_calls.py`, 10 tests). The fuzz test now also has doubtful animals,
+counts of 10, "this number" and "no, no" restarts. It ran clean over 8 seeds (16,000 callers), after it found one
+more loop: unclear replies to "What should I correct?". The 10-scenario simulation re-run with the new defaults
+(`runs/sim/v2-muse`): **120/130** checks (was 118). The noisy, gruff caller now completes without a loop (was
+10/13). Reply p50 is 2.1 s (Muse was shared with other GPU jobs). First sound is 0.40 s p50.
+
+A process with two boosted Parakeets and Kokoro crashed with *CUDA illegal memory access* in NeMo's CUDA-graph
+decoder. `VR_NEMO_CUDA_GRAPHS=0` (set in both start scripts) fixes it at the same ~50 ms.
+
+## Svarah, IndicConformer, Indic Parler-TTS (gated models)
+
+**Svarah**: real Indian-accented English, 200 utterances, one per speaker, from 19 first languages and 17 states.
+Run by the Cursor agent; report in `/mnt/seagate/silo/voice-robust/agents/indic-report.md`.
+
+| engine | clean | gsm | opus loss | farm_phone | p50 |
+|---|---|---|---|---|---|
+| parakeet-v2 | 8.6% | 9.8% | 13.7% | **16.3%** | 26 ms |
+| parakeet-v2 + livestock boost | 8.6% | | | 16.8% | 62 ms |
+| parakeet-v3 | 9.8% | 11.3% | 14.0% | 17.7% | 50 ms |
+| parakeet-v3 + livestock boost | 9.8% | | | 17.8% | 62 ms |
+| parakeet-v3 + full boost | 10.6% | 12.0% | 15.0% | 18.5% | 51 ms |
+| canary-1b-v2 | 9.6% | 11.0% | 15.4% | 17.7% | 192 ms |
+| whisper-large-v3-turbo (GPU) | 7.4% | 9.8% | 14.1% | 19.2% (2/6 noise hallucinations) | 147 ms |
+
+On general Indian English, v2 is about 1.4 points better than v3, and boosting costs 0.5–2 points. For Karnataka
+speakers on farm_phone, v2 scored 25.1% and v3 29.8% (n=18). But on the cases that matter here, v3 with livestock
+boosting won:
+
+| | v3 + livestock boost | v2 + livestock boost |
+|---|---|---|
+| the user's own call audio | heard "It's a bullock", "The bullock", "So it's not eating", "Raichu" | heard "Kings of Balrow", "The ball bomb", "So it's not taking fe", "Right sure" |
+| farmer key words | 83% | 88% |
+| EdACC | 24.6% | 28.3% |
+
+**Default: `parakeet-v3-boost-vocab`, with place boosting per turn.** Use v2 if the script-switching on names
+(Cyrillic or Portuguese for "Basavaraju") becomes the bigger problem. It's English-only and can't switch.
+
+**IndicConformer 600M** (VoicERA's recognizer; ONNX on the CPU here) on 6 synthetic Kannada farmer replies made by
+Indic Parler-TTS:
+
+| decoder | clean WER | farm_phone WER | p50 |
+|---|---|---|---|
+| RNNT | 0% | 31% | ~190–240 ms |
+| CTC | 11% | 33% | ~190 ms |
+
+Parakeet can't do Kannada at all. This is the path when the call moves to Kannada; test it on real Kannada speech
+before trusting it.
+
+**Indic Parler-TTS**:
+
+| | Indic Parler-TTS | Kokoro |
+|---|---|---|
+| time per sentence | 3.1 s (about real time) | 0.13 s (23× faster) |
+| GPU memory | 2.2 GB | 0.7 GB |
+
+That's too slow for live replies, but fine for **pre-rendering the fixed prompts and fillers**, which are most
+of what the agent says, in an Indian-English or Kannada voice. Listen side by side at
+`/mnt/seagate/silo/voice-robust/tts/index.html`; nobody has judged the quality by ear yet.
+
+## Operator assist (second entry point)
+
+`assist/` (port 8776): a person takes the call and the agent listens and helps. It uses the same ASR, interpreter
+and protocol, and the operator's repeats count as confirmation. In the automated role-play the farmer was on the
+`farm_phone` line: "Kunigal" was recognised as nothing and "Basavaraju" as Portuguese. The call still got 11/11
+fields right and passed 8/8 protocol checks, and the farmer answered 0.8 s after each question. See
+`assist/README.md`.
+
 ## Recommendation
 
-1. **Local is enough, and better, for recognition and the conversation.** Use Parakeet v3 + boosting, Muse, Kokoro
+1. **Local is enough, and better, for recognition and the conversation.** Use Parakeet v3 (livestock words boosted, places only when asked), Muse, Kokoro
    `hf_alpha`, and this policy. It is private, and the farmer hears a response 0.35 s after they stop. Hosted models
    gained nothing in the loop except on place names.
 2. **For names and places, use the hybrid.** Keep the call local. Send *only the saved audio clip* of an *unclear* name
@@ -188,7 +270,7 @@ asked three times in a row.
    and private and fixes the weakest field, though a name or village clip is still personal data leaving the box, so
    it needs an explicit decision.
 3. **Before trusting any number above,** test with real farmers on real 2G phones, starting with ~20 recorded calls.
-   Get Svarah access to settle v2 vs v3. Load the program's real LGD village list per district.
+   (Svarah is done: see above.) Load the program's real LGD village list per district.
 4. To isolate from other GPU users, a dedicated small interpreter model would help. When Muse was shared with a busy
    GPU, interpretation went from 1.1 s to 2.4–3.5 s; calls still finished, with more fillers.
 

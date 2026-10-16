@@ -50,15 +50,22 @@ def main():
     ap.add_argument('--sources', default='edacc,farmer,svarah'); ap.add_argument('--conditions', default='')
     ap.add_argument('--prompt', choices=['', 'domain'], default='')
     a = ap.parse_args()
+    srcs = [s.strip() for s in a.sources.split(',') if s.strip()]
+    src_tag = '-'.join(sorted(srcs))
     rows = [json.loads(l) for l in open(ART / 'corpus/manifest.jsonl')]
-    rows = [r for r in rows if r['source'] in a.sources.split(',') and (not a.conditions or r['condition'] in a.conditions.split(','))]
+    rows = [r for r in rows if r['source'] in srcs and (not a.conditions or r['condition'] in a.conditions.split(','))]
     if a.limit:
         utts = list(dict.fromkeys(r['utt'] for r in rows))
-        keep = {u for s in a.sources.split(',') for u in [u for u in utts if u.startswith(s)][:a.limit]}
+        keep = {u for s in srcs for u in [u for u in utts if u.startswith(s)][:a.limit]}
         rows = [r for r in rows if r['utt'] in keep]
     rows += noise_clips()
     tag = a.engine.replace('/', '_').replace(':', '-') + ('+' + a.prompt if a.prompt else '')
-    out = ART / 'runs/asr' / (tag + '.jsonl'); out.parent.mkdir(parents=True, exist_ok=True)
+    if src_tag and src_tag != 'edacc-farmer-svarah':
+        tag += '__src_' + src_tag
+    out_dir = ART / 'runs/asr'
+    if src_tag == 'svarah':
+        out_dir = out_dir / 'svarah'
+    out = out_dir / (tag + '.jsonl'); out.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.time(); eng = asr_engines.make(a.engine); load_s = time.time() - t0
     prompt = asr_engines.DOMAIN if a.prompt == 'domain' else None
     warm = sf.read(ART / 'corpus/wav' / (rows[0]['id'] + '.wav'), dtype='float32')[0]

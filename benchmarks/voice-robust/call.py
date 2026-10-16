@@ -142,7 +142,7 @@ class Call:
         self.metrics.append(m); self.pending_pcm = pcm
         try:
             t = time.monotonic()
-            heard = await asyncio.to_thread(self.sp.transcribe, pcm)
+            heard = await asyncio.to_thread(self.sp.transcribe, pcm, self.intake.topic)
             m['asr_ms'] = round((time.monotonic() - t) * 1000); m['heard'] = heard
             # Off by default: browser/phone echo cancellation handles echo, and this dropped a farmer repeating a read-back.
             echo = ECHO_FILTER and self.over_agent and self.speaking_text and fuzz.partial_ratio(heard.lower(), self.speaking_text.lower()) > 90 and len(heard) > 12
@@ -157,7 +157,7 @@ class Call:
                 entry['audio'] = path
             self.transcript.append(entry); self.log('farmer', text=heard)
             known = {k: s.value for k, s in self.intake.slots.items() if s.state == 'filled'}
-            task = asyncio.create_task(nlu.interpret(heard, self.intake.asking, known, self.intake.last_said, self.backend, pcm16=pcm, prev_asking=self.intake.prev_asking))
+            task = asyncio.create_task(nlu.interpret(heard, self.intake.topic, known, self.intake.last_said, self.backend, pcm16=pcm, prev_asking=self.intake.prev_asking))
             await self.speak(self.rng.choice(speech_mod.ACKS), 'ack', m)
             ack_ends = self.speaking_until
             while not task.done():

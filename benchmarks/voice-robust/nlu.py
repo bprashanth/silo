@@ -39,8 +39,8 @@ SYSTEM = """You interpret what a farmer said on a phone call to a livestock help
 The text comes from speech recognition on a bad line, so expect mis-heard words; read it in the context of the question asked.
 Output compact JSON on one line. Include a field ONLY if the farmer stated it in THIS reply; omit every other field. Never guess or repeat old facts.
 - intent: answer (gives information), correction (fixes something said earlier, e.g. "no, not three, two days"), question (asks you something, e.g. "what medicine should I give?"), repeat (asks you to say it again / did not understand), wait (asks you to hold on), yes / no (a bare yes or no), unclear (noise, cut off, or meaningless), goodbye.
-- animal_type: singular common word: cow, buffalo, goat, sheep, calf, bullock, pig, hen, ...
-- symptoms: short phrases in the farmer's words, e.g. "not eating", "loose motions", "blood in milk". Keep negations exact.
+- animal_type: singular common word: cow, buffalo, goat, sheep, calf, bullock, pig, hen, ... Use the word heard even if it is not a real animal; it is checked later.
+- symptoms: short phrases in the farmer's words, e.g. "not eating", "loose motions", "blood in milk", "not lying down", "not getting up". Keep negations exact. Never "something else".
 - symptoms_since: as said, e.g. "yesterday", "two days".
 - previous_treatment: "none" if they say no treatment was given, otherwise what was given.
 - contact_details: digits only.
@@ -56,6 +56,39 @@ def _flat(s): return re.sub(r'[^a-z]', '', s.lower())
 
 POOLS = {'village': TERMS['villages'] + TERMS['taluks'], 'district': TERMS['districts'], 'caller_name': TERMS['names']}
 CODED = {k: [(t, _code(t), _flat(t)) for t in v] for k, v in POOLS.items()}
+
+# Animals: English and common Kannada/Hindi words. Anything else is read back as a yes/no question first.
+ALIASES = {'hasu': 'cow', 'dana': 'cow', 'gai': 'cow', 'gaay': 'cow', 'emme': 'buffalo', 'bhains': 'buffalo', 'bhainsa': 'buffalo',
+           'kona': 'buffalo', 'etthu': 'bullock', 'ettu': 'bullock', 'bail': 'bullock', 'meke': 'goat', 'aadu': 'goat',
+           'bakri': 'goat', 'kuri': 'sheep', 'bhed': 'sheep', 'karu': 'calf', 'bachda': 'calf', 'koli': 'hen', 'murgi': 'hen',
+           'cattle': 'cow', 'oxen': 'ox', 'calves': 'calf', 'buffaloes': 'buffalo', 'sheeps': 'sheep'}
+OTHER_ANIMALS = {'cat', 'camel', 'rabbit', 'mule', 'pony', 'turkey', 'pigeon', 'yak', 'mithun', 'quail', 'goose'}
+ANIMALS = [a.lower() for a in TERMS['animals']]
+A_CODED = [(t, _code(t), _flat(t)) for t in ANIMALS]
+
+def snap_animal(value):
+    """-> (animal, sure). sure=False: the nearest-sounding animal, to be read back ("Did you say a bull?"); None: not an animal."""
+    v = re.sub(r"\b(the|a|an|my|our|it|is|its|it's|this|that|one|only|keep|sick|animal|madam|sir)\b", ' ', str(value).lower())
+    v = re.sub(r'[^a-z ]', ' ', v).split()
+    if not v: return None, False
+    for w in [' '.join(v)] + v:
+        if w in ANIMALS or w in OTHER_ANIMALS: return w, True
+        if w in ALIASES: return ALIASES[w], True
+        if w.endswith('s') and w[:-1] in ANIMALS: return w[:-1], True
+        if w.endswith('es') and w[:-2] in ANIMALS: return w[:-2], True
+    spans = {' '.join(v[i:j]) for i in range(len(v)) for j in range(i + 1, min(len(v), i + 2) + 1)}
+    best = max(((.5 * fuzz.ratio(_code(sp), c) + .5 * fuzz.ratio(_flat(sp), f), t) for sp in spans if len(_flat(sp)) >= 3
+                for t, c, f in A_CODED), default=(0, None))
+    return (best[1], False) if best[0] >= 60 else (None, False)
+
+GENERIC_SYMPTOM = re.compile(r'^(something|something else|other|others|another|problem|some problem|sick|not well|not good)$', re.I)
+
+def complaint(heard):
+    """The farmer's own words for the problem, minus fillers: 'Hi, uh it's not lying down.' -> 'not lying down'."""
+    t = re.sub(r'\b(uh|um|umm|hmm|hello|hi|madam|sir|ok|okay|so|well|actually)\b[ ,.]*', ' ', heard, flags=re.I)
+    t = re.sub(r"^\s*(the animal|my \w+|it|she|he|the \w+)\s*(is|'s)?\s+", '', t.strip(' ,.'), flags=re.I)
+    t = re.sub(r"^(it's|it is|she's|she is|he's|he is)\s+", '', t.strip(' ,.'), flags=re.I).strip(' ,.')
+    return t if len(re.findall(r'[a-z]{2,}', t.lower())) >= 2 and not re.match(r'^(yes|no|yeah|okay)\b', t, re.I) else ''
 
 def snap(kind, value):
     """Snap a heard name/place to the gazetteer by sound and spelling; the agent reads it back to confirm."""
@@ -100,7 +133,7 @@ def rules(heard, asking):
     return out
 
 def _from_llm(d, heard=''):
-    facts = {}
+    facts, unsure = {}, {}
     for k in SLOTS:
         v = d.get(k)
         if v in (None, '', []): continue
@@ -108,13 +141,21 @@ def _from_llm(d, heard=''):
             v = re.sub(r'\D', '', str(v))
             if len(v) < 6: continue
         if k in ('caller_name', 'village', 'district'): v = snap(k, str(v).strip().title())
-        if k == 'animal_type': v = str(v).lower().strip()
+        if k == 'animal_type':
+            a, sure = snap_animal(v)
+            if not a: continue
+            if not sure: unsure['animal_type'] = a; continue
+            v = a
+        if k == 'symptoms':
+            v = [x for x in (v if isinstance(v, list) else [v]) if x and not GENERIC_SYMPTOM.match(str(x).strip(' .'))]
+            if not v: continue
         if k == 'symptoms_since': v = re.sub(r'^(since|from)\s+', '', str(v).strip(' .'), flags=re.I)
         facts[k] = v
     # Only believe "doesn't know" when the farmer actually said so (the LLM over-uses it).
     if re.search(r"(don'?t|do not|dont|didn'?t|not) (know|sure|remember)|no idea|pata nahi|gottilla", heard, re.I):
         for k in d.get('dont_know') or []: facts.setdefault(k, 'UNKNOWN')
-    return {'intent': d.get('intent', 'answer'), 'facts': facts, 'urgent': d.get('urgent') or [], 'farmer_question': d.get('farmer_question')}
+    return {'intent': d.get('intent', 'answer'), 'facts': facts, 'unsure': unsure, 'urgent': d.get('urgent') or [],
+            'farmer_question': d.get('farmer_question')}
 
 def _prompt(heard, asking, known, last_said):
     return (f'Agent just said: "{last_said}"\n(The agent was asking about: {asking or "the problem"})\n'
@@ -156,9 +197,16 @@ async def _openrouter_audio(session, pcm16, heard, asking, last_said, model):
     c = d['choices'][0]['message']['content']
     return json.loads(c[c.index('{'):c.rindex('}') + 1])
 
-def _guard(out, heard, asking):
+def _guard(out, heard, asking, prev_asking=None, backend='muse'):
     """Drop facts the farmer never said: the LLM (and a bare "no") over-reach."""
     other = [k for k in out['facts'] if k not in ('can_stand', 'breathing_ok')]
+    # "It's not lying down" is not "it can stand": only a reply to the stand question records that it can.
+    if out['facts'].get('can_stand') is True and asking != 'can_stand' and not (prev_asking == 'can_stand' and out['intent'] == 'correction'):
+        out['facts'].pop('can_stand')
+    # The audio model invented a district ("Ballari") for "bye": take names/places from it only when asked for them.
+    if backend.startswith('audio:'):
+        for k in ('caller_name', 'village', 'district'):
+            if k in out['facts'] and k != asking and not (out['intent'] == 'correction' and k == prev_asking): out['facts'].pop(k)
     for k, pat in (('can_stand', r'stand|get(ting)? up|lying|lie down|fall|walk|sit'), ('breathing_ok', r'breath|pant|gasp')):
         # Only from the question actually asked, unless the farmer was correcting something else ("No, no, it is a cow").
         free = asking == k and not (out['intent'] == 'correction' and other)
@@ -198,7 +246,15 @@ async def interpret(heard, asking, known, last_said, backend='muse', session=Non
         out = rules(heard, asking); out['source'] = f'rules ({type(e).__name__})'
     finally:
         if own: await session.close()
-    out = _guard(out, heard, asking)
+    out.setdefault('unsure', {})
+    if asking == 'animal_type' and 'animal_type' not in out['facts'] and 'animal_type' not in out['unsure'] \
+            and out['intent'] in ('answer', 'correction', 'unclear'):
+        a, sure = snap_animal(heard)  # "Ballroo." -> "Did you say a bull?"
+        if a: (out['facts'] if sure else out['unsure'])['animal_type'] = a
+    if asking in (None, 'symptoms') and not out['facts'].get('symptoms') and out['intent'] in ('answer', 'correction'):
+        c = complaint(heard)
+        if c and not GENERIC_SYMPTOM.match(c) and not snap_animal(c)[1]: out['facts']['symptoms'] = [c]  # keep the farmer's words; a vet reads them
+    out = _guard(out, heard, asking, prev_asking, backend)
     out['ms'] = round((time.perf_counter() - t) * 1000)
     return out
 

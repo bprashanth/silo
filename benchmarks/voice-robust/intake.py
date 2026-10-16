@@ -11,7 +11,7 @@ MAX_ATTEMPTS = 2
 
 # slot -> (first question, simpler re-ask). {animal} is filled with the animal named so far.
 QUESTIONS = {
-    'animal_type': ('Which animal is sick?', 'Is it a cow, buffalo, goat, sheep, or some other animal?'),
+    'animal_type': ('Which animal is sick?', 'Is it a cow, buffalo, bullock, goat, sheep, or some other animal?'),
     'symptoms': ('What problem are you seeing in the {animal}?', 'Tell me what is wrong. Is it not eating, has fever, or something else?'),
     'can_stand': ('Is the {animal} able to stand up?', 'Can the {animal} stand? Please say yes or no.'),
     'breathing_ok': ('Is the {animal} breathing normally?', 'Is the breathing normal? Please say yes or no.'),
@@ -32,6 +32,9 @@ REQUIRED = NORMAL_ORDER
 SPOKEN_LABEL = {'animal_type': 'animal', 'symptoms': 'problem', 'animals_affected': 'number of animals',
                 'symptoms_since': 'since', 'previous_treatment': 'treatment given', 'caller_name': 'name',
                 'village': 'village', 'district': 'district', 'contact_details': 'phone number'}
+
+CALLER_ID = 'calling number'   # contact_details when the farmer says "this same number"
+SAME_NUMBER = re.compile(r'\b(this|same|that|my)\s+(same\s+)?(phone|mobile|number)|\bcalling number|\bcall (me )?(on|back on) this', re.I)
 
 GREETING = 'Namaste, this is the livestock helpline. Please tell me, what happened to your animal?'
 SAFE_ADVICE = ('I am not a doctor, so I cannot tell you a treatment. I will pass this to the vet team, '
@@ -87,6 +90,7 @@ class Intake:
         self.same_in_row = 0
         self.waits = 0
         self.last_said = GREETING
+        self.check = None                 # (slot, value) heard doubtfully: read back as a yes/no question first
 
     # ---------- applying one interpreted turn ----------
     def update(self, nlu, heard, audio=None):
@@ -98,8 +102,12 @@ class Intake:
         if self.asking == 'contact_details' and not self.slots['contact_details'].done():
             got = re.sub(r'\D', '', str(facts.get('contact_details', ''))) or spoken_digits(heard)
             got = re.sub(r'^(91|0)(?=\d{10}$)', '', got)
-            if got:
-                restart = bool(self.partial_phone) and got[:3] == self.partial_phone[:3]  # farmer started the number again
+            if not got and SAME_NUMBER.search(heard):
+                # "This number only": a phone line has caller ID, so the vet team calls back the calling number.
+                facts['contact_details'] = CALLER_ID; self.partial_phone = ''
+            elif got:
+                restart = bool(self.partial_phone) and (got[:3] == self.partial_phone[:3]  # farmer started the number again
+                                                        or intent == 'correction' or bool(re.match(r'^\W*(no|sorry|wrong|wait)\b', heard, re.I)))
                 whole = got if (len(got) >= 10 or restart) else self.partial_phone + got
                 if len(whole) > 10:
                     # Not a 10-digit mobile number: don't store a wrong number, ask again (this costs an attempt).
@@ -109,7 +117,30 @@ class Intake:
                 else:
                     self.partial_phone = whole; facts.pop('contact_details', None)
                     events.append(('partial', 'contact_details', whole))
+        # Doubtful readings are not stored until the farmer says yes to a read-back.
+        for k, v in (nlu.get('unsure') or {}).items():
+            if k in self.slots and not self.slots[k].done() and k not in facts: self.check = (k, v)
+        if facts.get('animals_affected') not in (None, 'UNKNOWN') and not self.slots['animals_affected'].done():
+            try:
+                if int(facts['animals_affected']) >= 5: self.check = ('animals_affected', int(facts.pop('animals_affected')))
+            except (TypeError, ValueError): pass
         nlu = {**nlu, 'facts': facts}
+        if self.asking == 'check' and self.check:
+            k, v = self.check; s = self.slots[k]
+            yes = intent == 'yes' or re.match(r'^\W*(yes|yeah|yep|haan|ha|correct|right|ok|okay)\b', heard, re.I)
+            no = intent in ('no', 'correction') or re.match(r'^\W*(no|nahi|illa|wrong|not)\b', heard, re.I)
+            if k in facts or (no and not yes):  # rejected, or they gave the value again: take it as a fresh answer
+                self.check = None
+                s.evidence.append({'asked': self.last_said, 'heard': heard, 'rejected': v})
+                if k not in facts:
+                    if s.attempts >= MAX_ATTEMPTS: s.state = 'unclear'; return [('unclear', k, None)]
+                    self.asking = k; return [('rejected_check', k, None)]
+            elif yes:
+                self.check = None; s.value, s.state = v, 'filled'
+                s.evidence.append({'asked': self.last_said, 'heard': heard, **({'audio': audio} if audio else {})})
+                return [('new', k, v)]
+            else:
+                return []  # unclear reply: the read-back is asked again (bounded by the repeat backstop)
         if self.asking == 'confirm_phone':
             s = self.slots['contact_details']
             said = re.sub(r'\D', '', str(facts.get('contact_details', ''))) or spoken_digits(heard)
@@ -162,11 +193,17 @@ class Intake:
         if intent == 'question' and self.asking:
             self.side_questions[self.asking] = self.side_questions.get(self.asking, 0) + 1
         free = intent in ('wait', 'repeat') or (intent == 'question' and self.side_questions.get(self.asking, 0) <= 1)
-        if target and not target.done() and not free:
+        doubtful = bool(self.check) and self.check[0] == self.asking  # a read-back comes next, not a give-up
+        if target and not target.done() and not free and not doubtful:
             if not any(e[1] == self.asking and e[0] != 'bad_number' for e in events if len(e) > 1):  # a partial number is progress
                 if target.attempts >= MAX_ATTEMPTS:
                     target.state = 'unclear'; target.evidence.append({'asked': self.last_said, 'heard': heard})
         return events
+
+    @property
+    def topic(self):
+        """The slot the farmer is answering about (a read-back is about the slot it checks), for ASR and NLU."""
+        return self.check[0] if self.asking == 'check' and self.check else self.asking
 
     # ---------- deciding what to say ----------
     def animal(self):
@@ -182,13 +219,18 @@ class Intake:
                 pass  # still ask: two different warning signs
             out.append(k)
         c = self.slots['contact_details']
-        if c.state == 'filled' and not self.phone_confirmed:
+        if c.state == 'filled' and not self.phone_confirmed and c.value != CALLER_ID:
             out.insert(0, 'confirm_phone')
+        if self.check and not self.slots[self.check[0]].done(): out.insert(0, 'check')
         return out
 
     def question(self, slot):
         if slot == 'confirm_phone':
             return digits_spoken(self.slots['contact_details'].value) + '. Is that number right?'
+        if slot == 'check':
+            k, v = self.check
+            if k == 'animals_affected': return f'{number(v).capitalize()} animals, is that right?'
+            return f'Did you say {"an" if str(v)[:1] in "aeiou" else "a"} {v}?'
         s = self.slots[slot]
         first, again = QUESTIONS[slot]
         q = first if s.attempts == 0 else again
@@ -206,6 +248,7 @@ class Intake:
             elif k in ('caller_name', 'village', 'district'): parts.append(str(v))
             elif k == 'animals_affected': parts.append(f'{number(v)} animal' + ('s' if v != 1 else ''))
             elif k == 'symptoms_since': parts.append(f'since {v}' if not re.match(r'(since|from)\b', str(v)) else str(v))
+            elif k == 'contact_details' and v == CALLER_ID: parts.append('okay, the vet team will call you back on this same number')
             elif k == 'contact_details': pass  # read back by the explicit confirmation question
         if not parts: return ''
         changed = any(e[0] == 'changed' for e in events)
@@ -226,7 +269,9 @@ class Intake:
         place = [str(f[k].value) for k in ('village', 'district') if f[k].state == 'filled']
         if place: who.append('from ' + ', '.join(place))
         if who: out += ' ' + ' '.join(who) + '.'
-        if f['contact_details'].state == 'filled': out += ' Phone ' + digits_spoken(f['contact_details'].value) + '.'
+        if f['contact_details'].value == CALLER_ID: out += ' The vet team will call this same number.'
+        elif f['contact_details'].state == 'filled': out += ' Phone ' + digits_spoken(f['contact_details'].value) + '.'
+        elif f['contact_details'].state in ('unclear', 'unknown'): out += ' I could not get your phone number, so the vet team will call the number you are calling from.'
         return out + ' Is that correct?'
 
     def next_turn(self, nlu=None, events=()):
@@ -274,6 +319,8 @@ class Intake:
             return self._say(' '.join(pre + [digits_spoken(self.partial_phone) + '. Go on.']), 'contact_details')
         ack = self.echo(events)
         todo = self.pending()
+        redo = [e[1] for e in events if e[0] == 'rejected_check']
+        if redo and redo[0] in todo: todo.insert(0, redo[0])  # "No" to "Ten animals?": ask that again now
         if not todo:
             self.phase = 'summary'
             return self._say(' '.join(pre + [self.summary()]).strip(), 'summary')
@@ -302,8 +349,10 @@ class Intake:
             if self.same_in_row >= 2:
                 self.same_in_row = 0
                 if asking == 'confirm_phone': self.phone_confirmed = True; self.notes.append('phone number not confirmed by caller')
+                elif asking == 'check' and self.check:
+                    k, v = self.check; self.check = None; s = self.slots[k]; s.value, s.state = v, 'unclear'
                 elif asking in self.slots: self.slots[asking].state = 'unclear'
-                elif asking == 'summary': self.phase = 'closing'; return self._say('Okay. I have noted everything, and the vet team will check the details with you. Goodbye.', None, end=True)
+                elif asking in ('summary', 'correction'): self.phase = 'closing'; return self._say('Okay. I have noted everything, and the vet team will check the details with you. Goodbye.', None, end=True)
                 return self.next_turn({'intent': 'unclear'}, [])
         else:
             self.same_in_row = 0

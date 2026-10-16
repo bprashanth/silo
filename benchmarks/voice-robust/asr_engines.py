@@ -3,7 +3,7 @@
 `prompt` is optional context (the question the agent just asked, domain words); engines that
 can't use it ignore it. Each engine is created lazily by name with make(name).
 """
-import os, json, base64, io
+import os, json, base64, io, importlib.util
 from pathlib import Path
 import numpy as np
 
@@ -133,7 +133,15 @@ class NemoASR(Engine):
     ):
         import torch, nemo.collections.asr as nemo_asr
         self.torch = torch
-        self.m = nemo_asr.models.ASRModel.restore_from(str(path), map_location='cuda').eval()
+        try:
+            self.m = nemo_asr.models.ASRModel.restore_from(str(path), map_location='cuda').eval()
+        except Exception as e:
+            # Shared GPUs can fail on fp32 restore; retry in fp16 to reduce VRAM pressure.
+            if 'out of memory' not in str(e).lower():
+                raise
+            torch.cuda.empty_cache()
+            self.m = nemo_asr.models.ASRModel.restore_from(str(path), map_location='cpu').eval()
+            self.m = self.m.half().to('cuda')
         self.canary = canary
         if not canary:
             try:
@@ -141,6 +149,8 @@ class NemoASR(Engine):
                 cfg = self.m.cfg.decoding
                 with open_dict(cfg):
                     cfg.strategy = 'greedy_batch'
+                    # Two boosted Parakeets plus Kokoro in one process hit "illegal memory access" with CUDA-graph decoding.
+                    if os.getenv('VR_NEMO_CUDA_GRAPHS', '1') == '0': cfg.greedy.use_cuda_graph_decoder = False
                     if boost_phrases:
                         cfg.greedy.boosting_tree = {
                             'key_phrases_list': boost_phrases,
@@ -260,6 +270,51 @@ class OpenRouterAudio(Engine):
             out.append((d['choices'][0]['message'].get('content') or '').strip())
         return out
 
+class IndicConformer(Engine):
+    """AI4Bharat IndicConformer ONNX wrapper loaded from a local snapshot."""
+    def __init__(self, path, lang='kn', decoding='ctc'):
+        import torch
+
+        self.torch = torch
+        self.lang = lang
+        self.decoding = decoding
+        path = Path(path)
+        mod_file = path / 'model_onnx.py'
+        cfg_file = path / 'config.json'
+        if not mod_file.exists():
+            raise RuntimeError(f'IndicConformer local code not found: {mod_file}')
+        if not cfg_file.exists():
+            raise RuntimeError(f'IndicConformer config not found: {cfg_file}')
+
+        spec = importlib.util.spec_from_file_location('indic_conformer_local', str(mod_file))
+        if not spec or not spec.loader:
+            raise RuntimeError(f'Failed to load local module spec for {mod_file}')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        cfg_data = json.loads(cfg_file.read_text())
+        cfg = module.IndicASRConfig(
+            ts_folder=str(path),
+            BLANK_ID=int(cfg_data.get('BLANK_ID', 256)),
+            RNNT_MAX_SYMBOLS=int(cfg_data.get('RNNT_MAX_SYMBOLS', 10)),
+            PRED_RNN_LAYERS=int(cfg_data.get('PRED_RNN_LAYERS', 2)),
+            PRED_RNN_HIDDEN_DIM=int(cfg_data.get('PRED_RNN_HIDDEN_DIM', 640)),
+            SOS=int(cfg_data.get('SOS', 256)),
+        )
+        self.m = module.IndicASRModel(cfg)
+
+    def transcribe(self, audios, prompt=None):
+        del prompt
+        out = []
+        with self.torch.inference_mode():
+            for a in audios:
+                wav = self.torch.tensor(a, dtype=self.torch.float32).unsqueeze(0)
+                hyp = self.m(wav, self.lang, self.decoding)
+                if isinstance(hyp, tuple):
+                    hyp = hyp[0]
+                out.append(str(hyp).strip())
+        return out
+
 def make(name):
     hf = Path.home() / '.local/share/idli-bridge/models/whisper/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots'
     domain_terms = Path(__file__).with_name('domain_terms.json')
@@ -305,6 +360,20 @@ def make(name):
             required_any=(('consolidated.safetensors', 'model.safetensors', 'model-*.safetensors'),),
         )
 
+    def ensure_indic_conformer_dir():
+        return _ensure_snapshot(
+            M / 'indic-conformer-600m',
+            'ai4bharat/indic-conformer-600m-multilingual',
+            required_files=(
+                'config.json',
+                'model_onnx.py',
+                'assets/preprocessor.ts',
+                'assets/encoder.onnx',
+                'assets/ctc_decoder.onnx',
+                'assets/rnnt_decoder.onnx',
+            ),
+        )
+
     def parakeet_v3_boost():
         return NemoASR(
             M / 'parakeet-tdt-0.6b-v3/parakeet-tdt-0.6b-v3.nemo',
@@ -332,6 +401,15 @@ def make(name):
             boost_alpha=float(os.getenv('VR_PARAKEET_BOOST_ALPHA', '0.9')),
         )
 
+    def parakeet_v2_boost_vocab():
+        return NemoASR(
+            ensure_parakeet_v2_nemo(),
+            boost_phrases=vocab_boost,
+            boost_context_score=float(os.getenv('VR_PARAKEET_BOOST_CONTEXT_SCORE', '1.6')),
+            boost_depth_scaling=float(os.getenv('VR_PARAKEET_BOOST_DEPTH_SCALING', '2.5')),
+            boost_alpha=float(os.getenv('VR_PARAKEET_BOOST_ALPHA', '0.9')),
+        )
+
     table = {
         'fw-base.en-cpu': lambda: FasterWhisper('/mnt/seagate/silo/livestock-voice/models/whisper-base.en'),
         'fw-turbo-cpu': lambda: FasterWhisper(str(next(hf.iterdir()))),
@@ -341,12 +419,17 @@ def make(name):
         'hf-oriserve-apex-gpu': lambda: HFWhisper(ensure_oriserve_dir()),
         'parakeet-v2': lambda: NemoASR(ensure_parakeet_v2_nemo()),
         'parakeet-v2-boost': parakeet_v2_boost,
+        'parakeet-v2-boost-vocab': parakeet_v2_boost_vocab,
         'parakeet-v3': lambda: NemoASR(M / 'parakeet-tdt-0.6b-v3/parakeet-tdt-0.6b-v3.nemo'),
         'parakeet-v3-boost': parakeet_v3_boost,
         'parakeet-v3-boost-vocab': parakeet_v3_boost_vocab,
         'canary-1b-v2': lambda: NemoASR(M / 'canary-1b-v2/canary-1b-v2.nemo', canary=True),
         'canary-qwen-2.5b': lambda: CanaryQwen(ensure_canary_qwen_dir()),
         'voxtral-mini-3b': lambda: VoxtralMini(ensure_voxtral_dir()),
+        'indic-conformer-kn': lambda: IndicConformer(ensure_indic_conformer_dir(), lang='kn', decoding='ctc'),
+        'indic-conformer-kn-rnnt': lambda: IndicConformer(ensure_indic_conformer_dir(), lang='kn', decoding='rnnt'),
+        'indic-conformer-hi': lambda: IndicConformer(ensure_indic_conformer_dir(), lang='hi', decoding='ctc'),
+        'indic-conformer-hi-rnnt': lambda: IndicConformer(ensure_indic_conformer_dir(), lang='hi', decoding='rnnt'),
     }
     if name.startswith('or:'): return OpenRouterAudio(name[3:])
     e = table[name](); e.name = name; return e
