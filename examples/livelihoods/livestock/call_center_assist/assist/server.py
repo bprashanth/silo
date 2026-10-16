@@ -320,6 +320,17 @@ async def edit(ident: str, req: Request):
     if rec['status'] == 'ended': save(rec)
     return public(rec)
 
+@app.post('/api/sessions/{ident}/advisories/{group_id}')
+async def clear_advisory(ident: str, group_id: str, req: Request):
+    rec = SESSIONS.get(ident); session = rec and rec.get('_s')
+    if not session or not session.protocol: raise HTTPException(404)
+    body = await req.json()
+    if not isinstance(body.get('cleared'), bool): raise HTTPException(400, 'cleared must be boolean')
+    try: session.protocol.set_cleared(group_id, body['cleared'], session.assist.record())
+    except ValueError as exc: raise HTTPException(400, str(exc))
+    save(rec)
+    return public(rec)
+
 @app.get('/api/sessions/{ident}/audio/{name}')
 async def audio(ident: str, name: str):
     from fastapi.responses import FileResponse

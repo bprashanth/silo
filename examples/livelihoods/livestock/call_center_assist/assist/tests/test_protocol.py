@@ -67,3 +67,39 @@ def test_values_need_evidence_in_the_words():
     assert protocol.evidence(m, 'young jowar sprouts', 'They ate young jowar sprouts from the neighbour field', None)
     assert not protocol.evidence({'type': 'string'}, 'Four goats', 'How old are they?', None) and not protocol.evidence({'type': 'integer'}, 4, 'Only three standing', None)
     assert protocol.evidence({'type': 'boolean'}, False, 'No blood', 'Any blood?') and not protocol.evidence({'type': 'boolean'}, False, 'No', None)
+
+
+def test_five_classes_with_source_metadata_and_trigger_evidence():
+    p = protocol.Protocol()
+    assert len(p.spec['classes']) == 5
+    line = 'One goat died. Other animals have sores. She ate young jowar.'
+    p.see(line, 'farmer')
+    view = p.view(rec(), [])
+    groups = {g['id']: g for g in view['advisories']}
+    assert set(groups) == {'herd', 'exposure'}
+    assert groups['herd']['triggers'] == [{'text': line, 'side': 'farmer'}]
+    assert all(g['sources'] and all(x['url'].startswith('https://') for x in g['sources']) for g in groups.values())
+    assert all(c.get('class_id') in p.spec['classes'] and c.get('sources') for c in p.spec['cards'])
+
+
+def test_clear_restore_and_rising_priority_reopen_without_resolving_case():
+    p = protocol.Protocol(); p.see('They ate young jowar.', 'farmer')
+    p.set_cleared('exposure', True, rec())
+    assert p.advisories(rec())[0]['cleared']
+    assert p.level(rec()) == 'D' and 'poisoning' in p.open
+    assert not p.advisories(rec(breathing_ok=False))[0]['cleared']
+    p.set_cleared('exposure', False, rec())
+    assert not p.advisories(rec())[0]['cleared']
+
+
+def test_new_concern_reopens_cleared_class():
+    p = protocol.Protocol(); p.see('One goat died.', 'farmer')
+    p.set_cleared('herd', True, rec())
+    assert p.advisories(rec())[0]['cleared']
+    p.see('Others have sores.', 'farmer')
+    assert not p.advisories(rec())[0]['cleared']
+
+
+def test_ordinary_eating_is_not_exposure_trigger():
+    p = protocol.Protocol()
+    assert p.see('She ate grass. She is eating the usual feed.', 'farmer') == []
