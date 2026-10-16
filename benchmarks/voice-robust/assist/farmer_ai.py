@@ -76,7 +76,9 @@ class AIFarmer:
             c = d['choices'][0]['message']['content']
             out = json.loads(c[c.index('{'):c.rindex('}') + 1])
             say = re.sub(r'[*_"#]|\(.*?\)', '', str(out.get('say') or '')).strip()
-            out = {'say': say, 'hangup': bool(out.get('hangup')), 'source': self.model}
+            # She hangs up only after a goodbye; the LLM once hung up on "I am sending the van" mid-call.
+            bye = re.search(r'\b(good ?bye|bye|thank you for calling)\b', operator_text or '', re.I)
+            out = {'say': say, 'hangup': bool(out.get('hangup')) and bool(bye), 'source': self.model}
         except Exception as e:  # a farmer who didn't hear: the call goes on
             out = {'say': 'Hello? Sorry, I could not hear.', 'hangup': False, 'source': f'fallback ({type(e).__name__})'}
         out['ms'] = round((time.perf_counter() - t0) * 1000)
