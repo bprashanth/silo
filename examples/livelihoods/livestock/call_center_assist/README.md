@@ -1,16 +1,49 @@
-# Operator assist: a person takes the call, the agent listens and helps
+# Call center assist: a person takes the call, the agent fills the care record
 
-The second entry point. In the first (`../`, port 8775) the agent takes the farmer's call. Here a helpline operator
-takes it, and the agent listens to both sides and helps in real time. The operator is trained to **repeat key facts
-back** ("Buffalo, not getting up since morning. Which village?"). Their headset audio is clean, so what they repeat is
-far easier to recognise than the farmer's 2G audio, and it counts as confirmed. The agent never speaks to the farmer.
-It never overrides the operator either.
+A paravet at a livestock helpline (an ERC, like the 1962 centres) takes the farmer's call. The assist listens to
+both sides and fills a **care record** as facts are said. The operator is trained to **repeat key facts back**
+("Buffalo, not getting up since morning. Which village?"). Their headset audio is clean, so what they repeat is far
+easier to recognise than the farmer's 2G audio, and it counts as confirmed. The agent never speaks to the farmer.
+It never overrides the operator either. For important complaints it adds **protocol cards**: the extra questions,
+a priority, and approved lines to read out. Diagnosis and medicines stay with the vet.
+
+Its sibling, [`../full_call_center/`](../full_call_center/) (Codex), automates the whole workflow over Telegram.
+The longer story, with what the evidence does and doesn't cover, is in
+[`narrative/call_center_assist.md`](../../../../narrative/call_center_assist.md).
+
+## Run
+
+From the repository root, the livestock hub starts both examples and a landing page with one card each:
 
 ```sh
-benchmarks/voice-robust/assist/start.sh        # :8776; models load in ~40 s; doesn't touch :8775, the bot or :8765
-open http://127.0.0.1:8776                     # tailnet: http://100.82.28.38:8776 (same insecure-origin flag as :8775)
-benchmarks/voice-robust/assist/start.sh stop
+examples/livelihoods/livestock/run.sh            # hub :8770, assist :8776, case desk :8766, restarts the Buffalo bot
+examples/livelihoods/livestock/run.sh --dry-run  # say what it would do, start nothing
+examples/livelihoods/livestock/run.sh stop       # stop the hub, the assist and the bot
 ```
+
+Only the assist:
+
+```sh
+examples/livelihoods/livestock/call_center_assist/assist/start.sh       # :8776; models load in ~40 s
+open http://127.0.0.1:8776                     # tailnet: http://100.82.28.38:8776 (needs the insecure-origin flag, below)
+examples/livelihoods/livestock/call_center_assist/assist/start.sh stop
+```
+
+Chrome only allows the microphone on `http://` from another machine if you list the address in
+`chrome://flags/#unsafely-treat-insecure-origin-as-secure` (for example `http://100.82.28.38:8776`), then relaunch.
+
+**What it needs** (`run.sh` checks these and stops with a list of what is missing):
+
+| | where |
+|---|---|
+| Python venv (torch, NeMo, pipecat 1.12) | `~/.local/share/silo-voice/venv` |
+| Models: Parakeet, Kokoro, smart-turn, Silero | `/mnt/seagate/silo/voice-robust/hf` (`HF_HOME`, offline) |
+| Recorded farmer and operator clips | `/mnt/seagate/silo/voice-robust/assist/` (`make_scenarios.py`) |
+| Local Muse (interpretation, card filling) | `http://127.0.0.1:8181`, used, never started here |
+| OpenRouter key (the live AI farmer only) | `~/.config/idlisseus/openrouter.json`, never in the repo |
+| State and logs | `~/.local/share/silo-voice/` (`assist.log`, `assist.pid`) |
+
+Call audio and sessions never enter the repo (`.gitignore`).
 
 Pick a case, pick how Lakshmamma answers, click **Answer call** and play the operator (use headphones).
 
@@ -93,8 +126,8 @@ operator mic -> SmallWebRTC -> Silero VAD + smart-turn v3 -> Parakeet (captions 
 hang-up -> QA checks + Muse re-reads the whole transcript -> differences
 ```
 
-Same ASR, gazetteer and interpreter as the agent call (`../speech.py`, `../nlu.py`, `../domain_terms.json`). The
-protocol order and the question wording come from `../intake.py`.
+Same ASR, gazetteer and interpreter as the agent call (`speech.py`, `nlu.py`, `domain_terms.json`). The protocol
+order and the question wording come from `intake.py`.
 
 ## Results (automated role-play, `tests/browser_assist.py`)
 
@@ -166,4 +199,29 @@ Two problems from the first runs, now fixed:
 - An operator who doesn't repeat things gets no better than the agent-call ASR on the farmer's side. The
   repeating habit is the whole idea.
 - Hosted re-listening of an unclear clip (for example Gemini on the saved farmer audio of a name) isn't wired up
-  here. It's a privacy decision; see `../README.md`.
+  here. It's a privacy decision; see [`agent_call.md`](agent_call.md).
+
+## Layout
+
+| path | what |
+|---|---|
+| `assist/` | **This entry point**: `server.py` (:8776), `assist.py` (the record), `protocol.py` + `protocol_cards.json`, `farmer_ai.py` + `lakshmamma.json` (the live caller), `farmer.py` + `scenarios.json` (recorded clips), `static/`, `tests/` |
+| `speech.py`, `nlu.py`, `intake.py`, `degrade.py`, `domain_terms.json` | Shared with the agent call: Parakeet and Kokoro on the GPU, the Muse interpreter and gazetteer, the checklist, the 2G line simulator |
+| `server.py`, `call.py`, `static/`, `start.sh` | The other entry point, kept: **the agent takes the call** (:8775) |
+| `sim.py`, `asr_bench.py`, `asr_engines.py`, `build_corpus.py`, `correct*.py`, `indic_*_trial.py`, `runs/` | The measurement record (below) |
+
+## How it was measured
+
+The agent-call work this grew out of, with the ASR bake-off (Whisper base.en vs Parakeet v3 and hosted models on
+real Indian-accented speech over a simulated 2G line), ten simulated callers, browser calls and the Indic trials,
+is in [`agent_call.md`](agent_call.md), with raw results in `runs/`. It was `benchmarks/voice-robust/` until
+16 October 2026; the chronology entries before then use that path.
+
+Tests (54, no models needed):
+
+```sh
+cd examples/livelihoods/livestock/call_center_assist
+~/.local/share/silo-voice/venv/bin/python -m pytest -q -p no:cacheprovider tests/test_intake.py tests/test_live_calls.py assist/tests/test_assist.py assist/tests/test_protocol.py
+# live, needs the servers: a real Chromium WebRTC call with a scripted operator
+python3 assist/tests/browser_assist.py --script operator_script_lk_jowar.json
+```

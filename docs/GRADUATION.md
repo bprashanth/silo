@@ -90,14 +90,22 @@ If another agent owns code going into the same stack (Codex's `livestock/` for e
 your own entry point and leave a card that points at theirs. Their code moves when they or the user
 decide to move it.
 
-## Livestock, concretely
+## Livestock, as it was done (16 October 2026)
 
-| entry point | today | moves from | port |
-|---|---|---|---|
-| Agent takes the call | benchmarked | `benchmarks/voice-robust/` (`server.py`, `call.py`, `intake.py`, `nlu.py`, `speech.py`, `static/`) | 8775 |
-| Operator assist | benchmarked | `benchmarks/voice-robust/assist/` | 8776 |
-| Case desk (Telegram + Idli Ops) | Codex's | `livestock/` on `poc/livestock-voice` | Codex's |
+The user picked a flatter layout than the one above: `examples/<domain>/<program>/<example>/`, next to Codex's
+`full_call_center/`, with a `run.sh` (not `run.py`) and a static hub.
 
-The agent-call and operator-assist entry points both use the same ASR (Parakeet v3 with boosting), the
-same gazetteer and the same intake record, so these go in `shared/`. Then one call record format
-reaches the case desk, whether the agent or a person took the call.
+```text
+examples/livelihoods/livestock/
+  README.md
+  run.sh                 # hub :8770; assist :8776; case desk :8766 if down; restarts the Buffalo bot
+  web/index.html         # two cards: call center assist, full call center (Telegram)
+  call_center_assist/    # was benchmarks/voice-robust/, moved whole (git mv): assist/, the agent call, runs/
+  full_call_center/      # Codex's
+```
+
+The benchmark moved whole, results included, instead of being split into `shared/` and a measurement record.
+The assist imports the agent call's speech, NLU and intake modules from the directory above it. Splitting them
+would have meant import surgery for no gain while there is one consumer. `call_center_assist/agent_call.md` is
+the measurement record. `run.sh` deliberately restarts the Buffalo bot (the user asked for that), but never
+another process on its ports.

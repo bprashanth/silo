@@ -11,3 +11,4 @@ must point to a run here. Model weights and caches are never checked in.
 | [decode-speed](decode-speed/) | How fast does local Muse decode under each quant and drafter setting? |
 | [harness-compare](harness-compare/) | On messy NGO spreadsheets, is the bridge's harness or io's Codex more correct and auditable, and which receipt catches wrong answers? |
 | [livestock-voice](livestock-voice/) | Can a browser voice intake collect a fictional livestock report with low response latency across Pipecat, native Dograh and hosted audio? |
+| voice-robust → [examples/livelihoods/livestock/call_center_assist](../examples/livelihoods/livestock/call_center_assist/agent_call.md) | Can a voice agent hear a tired farmer on a bad 2G line and hold a sound conversation, locally? (Moved with the code on 16 Oct 2026; results in its `runs/`.) |

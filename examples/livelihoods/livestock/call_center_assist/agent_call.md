@@ -1,6 +1,8 @@
+> The agent takes the call: the measurement record. The main entry point here is the operator assist, see [README.md](README.md).
+
 # Robust voice intake for tired farmers on bad lines
 
-**Question.** The first livestock voice POC (`../livestock-voice`, Codex) kept mis-hearing callers. What does it take for a voice
+**Question.** The first livestock voice POC (`benchmarks/livestock-voice`, Codex) kept mis-hearing callers. What does it take for a voice
 agent to hear a farmer reliably (gruff or tired voice, cheap mic, noisy yard, 2G call or weak data link) and still hold a
 good conversation: one that never hangs, never forgets to ask the species, never loops, and handles interruptions? How far
 can a fully local stack go, and what do hosted OpenRouter models add?
@@ -22,9 +24,9 @@ but took 4–10 s per utterance. The conversation is made robust by structure, n
 ## Try it
 
 ```sh
-benchmarks/voice-robust/start.sh          # :8775, isolated from the bot and from :8765; models load in ~40 s
-open http://127.0.0.1:8775                # or http://100.82.28.38:8775 over the tailnet (needs the insecure-origin flag, see ../livestock-voice)
-benchmarks/voice-robust/start.sh stop
+examples/livelihoods/livestock/call_center_assist/start.sh          # :8775, isolated from the bot and from :8765; models load in ~40 s
+open http://127.0.0.1:8775                # or http://100.82.28.38:8775 over the tailnet (needs the insecure-origin flag, see README.md)
+examples/livelihoods/livestock/call_center_assist/start.sh stop
 ```
 
 Click **Call** and talk as a farmer. Tick **Simulate bad 2G line** to hear your own voice through a 300–3400 Hz, 8 kHz
