@@ -95,3 +95,9 @@ def test_a_death_is_urgent():
     out = nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'Madam my goats are not well. One small one died this morning.', None)
     assert 'sudden deaths' in out['urgent']
     assert 'sudden deaths' not in nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'No, none have died.', None)['urgent']
+
+def test_breathing_answer_backstop():
+    out = nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'Very fast and hard madam, they are frothing at the mouth too.', 'breathing_ok')
+    assert out['facts']['breathing_ok'] is False and 'breathing difficulty' in out['urgent']
+    assert nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'Yes, breathing is okay.', 'breathing_ok')['facts']['breathing_ok'] is True
+    assert 'breathing_ok' not in nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'They are eating fast.', 'animal_type')['facts']

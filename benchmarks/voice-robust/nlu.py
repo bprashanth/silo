@@ -230,6 +230,11 @@ def _guard(out, heard, asking, prev_asking=None, backend='muse'):
     out['urgent'] = urgent_with_evidence(out['urgent'], heard)
     if re.search(r'\b(died|dead|dying)\b', heard, re.I) and not re.search(r'\b(not|no one|none|nothing|nobody) (has |have )?(died|dead)', heard, re.I):
         out['urgent'] = list(dict.fromkeys(out['urgent'] + ['sudden deaths']))  # Muse often lets a death pass as background
+    # Asked about breathing, Muse sometimes returns nothing when the answer has more in it ("very fast and hard, frothing too").
+    if asking == 'breathing_ok' and 'breathing_ok' not in out['facts']:
+        if re.search(r'\b(fast|hard|heavy|difficult\w*|pant\w*|gasp\w*|struggl\w*|noisy)\b', heard, re.I): out['facts']['breathing_ok'] = False
+        elif re.search(r'\b(normal|fine|okay|ok|good)\b', heard, re.I) and not re.search(r'\bnot\b', heard, re.I): out['facts']['breathing_ok'] = True
+    if out['facts'].get('breathing_ok') is False and 'breathing difficulty' not in out['urgent']: out['urgent'].append('breathing difficulty')
     for k in ('caller_name', 'village', 'district'):
         v = str(out['facts'].get(k, ''))
         if v and (re.search(r'\d', v) or len(re.findall(r'\b(zero|one|two|three|four|five|six|seven|eight|nine)\b', v, re.I)) >= 2):
