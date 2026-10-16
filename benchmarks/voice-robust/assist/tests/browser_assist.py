@@ -1,9 +1,11 @@
 """Automated role-play of the operator: Chromium -> WebRTC -> assist server, operator clips injected as the mic.
 
-  python assist/tests/browser_assist.py [--url http://127.0.0.1:8776] [--scenario buffalo-down] [--out DIR]
+  python assist/tests/browser_assist.py                                   # recorded farmer, buffalo-down, operator_script.json
+  python assist/tests/browser_assist.py --script operator_script_lk.json  # live AI Lakshmamma, that script's case
+  [--url http://127.0.0.1:8776] [--out DIR]
 
-Plays assist/operator_script.json line by line (waiting for the farmer to finish answering each time),
-ends the call, waits for the review, and checks the record against the scripted farmer's real answers.
+Plays the operator script line by line (waiting for the farmer to finish answering each time), ends the call,
+waits for the review, and checks the record against the farmer's real answers.
 """
 import argparse, json, time, urllib.request
 from pathlib import Path
@@ -15,15 +17,19 @@ def get(url): return json.loads(urllib.request.urlopen(url, timeout=5).read())
 
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('--url', default='http://127.0.0.1:8776'); ap.add_argument('--scenario', default='buffalo-down')
+    ap.add_argument('--script', default='operator_script.json')
     ap.add_argument('--out', default='/mnt/seagate/silo/voice-robust/runs/assist/' + time.strftime('%Y%m%d-%H%M%S'))
     a = ap.parse_args(); out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
-    lines = json.loads((HERE / 'operator_script.json').read_text())['lines']
+    op = json.loads((HERE / a.script).read_text()); lines = op['lines']; clip_dir = '/clips/' + op.get('dir', 'operator') + '/'
+    ai = 'case' in op
     with sync_playwright() as p:
         b = p.chromium.launch(args=['--use-fake-ui-for-media-stream', '--autoplay-policy=no-user-gesture-required'])
         page = b.new_page(viewport={'width': 1400, 'height': 950}); errors = []
         page.on('console', lambda m: m.type == 'error' and errors.append(m.text))
-        page.goto(a.url); page.wait_for_function('document.querySelectorAll("#scenario option").length > 0')
-        page.select_option('#scenario', a.scenario); page.check('#fixture')
+        page.goto(a.url + '/?test=1'); page.wait_for_function('document.querySelectorAll("#case option").length > 0')
+        if ai: page.select_option('#case', op['case']); page.select_option('#mode', 'ai')
+        else: page.select_option('#case', 'rec:' + a.scenario)
+        page.check('#fixture')
         page.click('#call'); page.wait_for_function('window.currentSessionId', timeout=20000)
         api = f'{a.url}/api/sessions/' + page.evaluate('window.currentSessionId')
         t0 = time.time()
@@ -31,12 +37,14 @@ def main():
         time.sleep(1)
         for i, (key, text) in enumerate(lines):
             n_farmer = sum(t['role'] == 'farmer' for t in get(api).get('transcript', []))
-            page.evaluate(f'speakFixture("{key}.wav")')
+            n_turns = len(get(api).get('metrics', []))
+            page.evaluate(f'speakFixture("{clip_dir}{key}.wav")')
             # wait for the farmer's answer to finish (or ~6 s if no answer is expected)
             t = time.time()
             while time.time() - t < 25:
                 s = get(api)
                 if s['status'] == 'ended' or (sum(x['role'] == 'farmer' for x in s.get('transcript', [])) > n_farmer and not s.get('farmer_speaking')): break
+                if any(m.get('farmer_clip') == '(quiet)' for m in s.get('metrics', [])[n_turns:]): break  # the live farmer chose to stay quiet
                 time.sleep(.25)
             time.sleep(.5); page.screenshot(path=str(out / f'turn{i + 1:02d}-{key}.png'))
             if s['status'] == 'ended': break
@@ -51,6 +59,8 @@ def main():
               'qa': {q['check']: q['ok'] for q in r['qa']}, 'review_differences': r['differences'], 'review_ms': r['offline'].get('ms'),
               'farmer_starts_after_s': [m.get('farmer_starts_after_s') for m in s['metrics'] if m.get('farmer_starts_after_s') is not None],
               'asked': [(m.get('asked'), m.get('farmer_clip')) for m in s['metrics'] if m.get('heard')],
+              'farmer_llm_ms': [m['farmer_llm_ms'] for m in s['metrics'] if m.get('farmer_llm_ms')],
+              'conversation': [(t['role'], t.get('said') or t['text'], t['text']) for t in s['transcript']],
               'states': {k: f['state'] for k, f in s['record']['fields'].items()}, 'console_errors': errors}
     (out / 'session.json').write_text(json.dumps(s, indent=1)); (out / 'result.json').write_text(json.dumps(result, indent=1))
     print(json.dumps(result, indent=1))

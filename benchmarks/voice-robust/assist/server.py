@@ -1,10 +1,11 @@
-"""Operator-assist console: you play the helpline operator, a scripted farmer answers, the agent helps live.
+"""Operator-assist console: you play the helpline operator, Lakshmamma calls, the agent fills the care record live.
 
   ./assist/start.sh            # or: python assist/server.py
   open http://127.0.0.1:8776
 
 Operator mic -> SmallWebRTC -> VAD + smart-turn -> Parakeet (live captions while you talk, then the turn)
-  -> which question you asked (rules, instant) -> the scripted farmer's clip plays back over the call
+  -> the farmer answers over the call: a recorded clip for the question you asked (rules, instant), or, live,
+     an LLM on OpenRouter playing Lakshmamma from a case sheet (Kokoro voice, put through the bad-line condition)
   -> the farmer clip's ASR (as the bad line delivered it) and your words both go to the local LLM
   -> one case record: what you repeated counts as confirmed, what only the line heard is flagged.
 After the call: QA checks, a full-transcript re-read by Muse, and the differences from the live record.
@@ -12,7 +13,7 @@ After the call: QA checks, a full-transcript re-read by Muse, and the difference
 import asyncio, json, os, re, sys, time, uuid, wave
 from pathlib import Path
 from contextlib import asynccontextmanager
-import numpy as np
+import numpy as np, aiohttp
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from pipecat.frames.frames import InputAudioRawFrame, TTSAudioRawFrame, InterruptionFrame, StartFrame
@@ -32,7 +33,7 @@ from pipecat.audio.turn.base_turn_analyzer import EndOfTurnState
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent)); sys.path.insert(0, str(HERE))
 import speech as speech_mod, nlu
-import assist as assist_mod, farmer as farmer_mod
+import assist as assist_mod, farmer as farmer_mod, farmer_ai, degrade
 
 ART = Path(os.getenv('VR_ART', '/mnt/seagate/silo/voice-robust')) / 'assist'
 STATE = Path(os.getenv('VR_ASSIST_STATE', Path.home() / '.local/share/silo-voice/assist'))
@@ -40,7 +41,8 @@ PORT = int(os.getenv('PORT', '8776'))
 SR = 16000
 GAP_S = float(os.getenv('FARMER_GAP_S', '0.8'))
 NUDGE_S = float(os.getenv('FARMER_NUDGE_S', '6'))  # operator silent after a statement: the farmer says "Hello?"  # pause before the farmer answers, like a real person
-SCENARIOS = {s['id']: s for s in json.loads((HERE / 'scenarios.json').read_text())}
+SCENARIOS = {s['id']: s for s in json.loads((HERE / 'scenarios.json').read_text())}  # recorded clips
+PERSONA, CASES = farmer_ai.load()  # Lakshmamma's cases, for the live farmer (and the recorded one where it has clips)
 SP = None; SESSIONS = {}; CLIP_ASR = {}
 
 def clip_topic(key):
@@ -60,8 +62,12 @@ def load_clips(sid):
 class Session(FrameProcessor):
     def __init__(self, rec):
         super().__init__()
-        self.rec = rec; self.sc = SCENARIOS[rec['scenario']]; self.clips = load_clips(rec['scenario'])
-        self.assist = assist_mod.Assist(); self.farmer = farmer_mod.ScriptedFarmer(self.sc)
+        self.rec = rec; self.ai = rec['mode'] == 'ai'; self.assist = assist_mod.Assist(); self.http = aiohttp.ClientSession()
+        if self.ai:
+            self.case = CASES[rec['case']]; self.truth = self.case['truth']; self.farmer = farmer_ai.AIFarmer(PERSONA, self.case); self.n_said = 0
+        else:
+            self.sc = SCENARIOS[rec['scenario']]; self.truth = self.sc['truth']; self.clips = load_clips(rec['scenario'])
+            self.farmer = farmer_mod.ScriptedFarmer(self.sc)
         self.vad = SileroVADAnalyzer(sample_rate=SR, params=VADParams(confidence=.5, start_secs=.15, stop_secs=.3, min_volume=.1))
         self.turn = LocalSmartTurnAnalyzerV3(sample_rate=SR, params=SmartTurnParams(stop_secs=1.2))
         self.vad.set_sample_rate(SR); self.turn.set_sample_rate(SR)
@@ -134,7 +140,12 @@ class Session(FrameProcessor):
             asking = assist_mod.asked_slot(last) or ('summary' if assist_mod.asked_slot(whole) == 'summary' else None)
             reply = assist_mod.is_question(last) or asking in ('greeting', 'summary') or re.search(r'\b(good ?bye|bye)\b', text, re.I)
             if not assist_mod.is_question(last) and asking not in ('greeting', 'summary'): asking = None
-            if reply:
+            if self.ai:  # the live farmer hears every turn and decides herself whether to answer
+                self.carry = ''; m['asked'] = asking
+                if self.nudge: self.nudge.cancel()
+                self.farmer_scheduled_until = self.farmer_until
+                self.farmer_job = asyncio.create_task(self.ai_says(whole, speech_end, m, asking))
+            elif reply:
                 key = self.farmer.reply(asking, assist_mod.operator_rules(whole), whole); self.carry = ''
                 m['asked'] = asking; m['farmer_clip'] = key
                 if key: self.farmer_scheduled_until = self.farmer_until; self.farmer_job = asyncio.create_task(self.farmer_says(key, speech_end, m))
@@ -156,11 +167,36 @@ class Session(FrameProcessor):
         """The operator said something, then went quiet: after a while the farmer checks the line is alive."""
         await asyncio.sleep(NUDGE_S)
         if self.in_speech or self.farmer_speaking() or self.ended or (self.farmer_job and not self.farmer_job.done()): return
+        if self.ai: self.farmer_job = asyncio.create_task(self.ai_says(None, time.monotonic() - GAP_S, {})); return
         key = self.farmer.reply(None, assist_mod.operator_rules(self.carry), self.carry); self.carry = ''
         if key: self.farmer_job = asyncio.create_task(self.farmer_says(key, time.monotonic() - GAP_S, {}))
 
-    async def farmer_says(self, key, speech_end, m):
-        c = self.clips[key]
+    def render(self, text, n, asking=None):
+        """Lakshmamma's words -> her voice (Kokoro), down the same bad line as the recorded clips -> int16 PCM, and what the line lets ASR hear."""
+        import torch, librosa
+        with SP.lock: a = torch.cat([r.audio for r in SP.tts(text, voice=PERSONA['voice'], speed=PERSONA['speed'])]).numpy()
+        x = librosa.resample(a.astype(np.float32), orig_sr=24000, target_sr=SR)
+        x = np.concatenate([np.zeros(1600, np.float32), x, np.zeros(1600, np.float32)])
+        x = degrade.CONDITIONS[PERSONA['condition']](x, f'{self.rec["id"]}{n}')
+        pcm = (np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes()
+        self.audio_dir.mkdir(parents=True, exist_ok=True); name = f'farmer{n:02d}.wav'
+        with wave.open(str(self.audio_dir / name), 'wb') as w: w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm)
+        return {'pcm': pcm, 'seconds': len(pcm) / 2 / SR, 'text': text, 'heard': SP.transcribe(pcm, asking or self.assist.asking),
+                'file': f'/api/sessions/{self.rec["id"]}/audio/{name}'}
+
+    async def ai_says(self, text, speech_end, m, asking=None):
+        r = await self.farmer.reply(text, self.http)
+        m['farmer_llm_ms'] = r['ms']; m['farmer_clip'] = r['say'] or '(quiet)'
+        if not r['say']:
+            if r['hangup']: await self.finish()
+            elif text is not None: self.nudge = asyncio.create_task(self._nudge())
+            return
+        self.n_said += 1
+        c = await asyncio.to_thread(self.render, r['say'], self.n_said, asking)
+        await self.farmer_says(None, speech_end, m, c, hangup=r['hangup'], topic=asking)
+
+    async def farmer_says(self, key, speech_end, m, c=None, hangup=False, topic=None):
+        c = c or self.clips[key]
         await asyncio.sleep(max(0, speech_end + GAP_S - time.monotonic()))
         if self.in_speech: await asyncio.sleep(.1)
         start = max(time.monotonic(), self.farmer_until)
@@ -168,11 +204,11 @@ class Session(FrameProcessor):
         self.farmer_until = start + c['seconds']; m['farmer_starts_after_s'] = round(start - speech_end, 3)
         await asyncio.sleep(c['seconds'])
         if self.farmer_until == 0: return  # the operator talked over the farmer
-        topic = clip_topic(key) or self.assist.asking
+        topic = (key and clip_topic(key)) or topic or self.assist.asking
         r = await nlu.interpret(c['heard'], topic if topic in assist_mod.REQUIRED else None, {}, '', 'muse')
         self.assist.on_farmer(c['heard'], r, c['file'])
         self.assist.transcript[-1].update(t=round(start - self.t0, 3), clip=key, said=c['text'])
-        if key == 'bye': await self.finish()
+        if key == 'bye' or hangup: await self.finish()
 
     async def finish(self):
         if self.ended: return
@@ -180,8 +216,10 @@ class Session(FrameProcessor):
         rv = await assist_mod.review(self.assist.transcript)
         live = self.assist.record()
         self.rec['review'] = {'qa': self.assist.qa(), 'offline': rv, 'differences': assist_mod.differences(live, rv['record']),
-                              'truth_check': truth_check(live, self.sc['truth'])}
+                              'truth_check': truth_check(live, self.truth), 'truth': self.truth}
+        if self.ai: self.rec['review']['case'] = {k: self.case[k] for k in ('title', 'story', 'reveal_only_if_asked', 'source')}
         self.rec['status'] = 'ended'; save(self.rec)
+        await self.http.close()
 
 def truth_check(live, truth):
     """Only possible in role-play: the scripted farmer's real answers vs what the call recorded."""
@@ -210,15 +248,23 @@ app = FastAPI(lifespan=lifespan)
 
 @app.get('/api/config')
 async def config():
-    return {'scenarios': {k: v['title'] for k, v in SCENARIOS.items() if (ART / k / 'index.json').exists()},
+    recorded = {k for k in SCENARIOS if (ART / k / 'index.json').exists()}
+    return {'farmer': PERSONA['name'], 'llm': farmer_ai.MODEL, 'ai': farmer_ai.KEY_FILE.exists(),
+            'cases': [{'id': c['id'], 'opening': c['opening'], 'recorded': c.get('recorded') in recorded} for c in CASES.values()],  # not the title: it gives the case away
+            'recorded_only': {k: SCENARIOS[k]['title'] for k in recorded if k not in {c.get('recorded') for c in CASES.values()}},
             'asr': speech_mod.ASR_ENGINE, 'ready': SP is not None}
 
 @app.post('/api/sessions')
 async def create(req: Request):
-    b = await req.json(); sid = b.get('scenario')
-    if sid not in SCENARIOS: raise HTTPException(400, 'unknown scenario')
+    """{case, mode: 'ai' | 'recorded'}; or {scenario} for a recorded scenario directly (the automated test)."""
+    b = await req.json(); mode = b.get('mode', 'recorded'); case = b.get('case'); sid = b.get('scenario')
+    if mode == 'ai' and case not in CASES: raise HTTPException(400, 'unknown case')
+    if mode == 'recorded':
+        sid = sid or CASES.get(case, {}).get('recorded')
+        if sid not in SCENARIOS: raise HTTPException(400, 'no recording for this case')
     ident = time.strftime('%Y%m%d-%H%M%S-') + uuid.uuid4().hex[:6]
-    SESSIONS[ident] = {'id': ident, 'scenario': sid, 'fixture': bool(b.get('fixture')), 'status': 'connecting', 'created': time.time()}
+    SESSIONS[ident] = {'id': ident, 'mode': mode, 'case': case, 'scenario': sid, 'fixture': bool(b.get('fixture')),
+                       'status': 'connecting', 'created': time.time()}
     return public(SESSIONS[ident])
 
 @app.post('/api/offer')
@@ -242,6 +288,13 @@ async def offer(req: Request, session_id: str):
 async def state(ident: str):
     if ident not in SESSIONS: raise HTTPException(404)
     return public(SESSIONS[ident])
+
+@app.get('/api/sessions/{ident}/audio/{name}')
+async def audio(ident: str, name: str):
+    from fastapi.responses import FileResponse
+    p = STATE / ident / name
+    if ident not in SESSIONS or not re.fullmatch(r'farmer\d+\.wav', name) or not p.exists(): raise HTTPException(404)
+    return FileResponse(p, media_type='audio/wav')
 
 @app.post('/api/sessions/{ident}/end')
 async def end(ident: str):

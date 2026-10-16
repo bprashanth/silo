@@ -83,3 +83,15 @@ def test_missing_phone_is_said_in_summary():
     i.slots['animals_affected'].value = 1; i.slots['symptoms'].value = ['fever']
     i.slots['contact_details'].state, i.slots['contact_details'].value = 'unclear', None
     assert 'could not get your phone number' in i.summary()
+
+def test_urgent_signs_need_words_for_them():
+    """Muse tagged "very dull" and a fever as unconscious / difficult delivery / convulsions in a live role-play."""
+    assert nlu.urgent_with_evidence(['unconscious', 'difficult delivery', 'convulsions'], 'They can stand but they are very dull, madam.') == []
+    assert nlu.urgent_with_evidence(['sudden deaths'], 'One small one died this morning.') == ['sudden deaths']
+    assert nlu.urgent_with_evidence(['convulsions'], 'All four are trembling and frothing.') == ['convulsions']
+    assert nlu.urgent_with_evidence(['difficult delivery'], 'Only one leg of the kid is showing.') == ['difficult delivery']
+
+def test_a_death_is_urgent():
+    out = nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'Madam my goats are not well. One small one died this morning.', None)
+    assert 'sudden deaths' in out['urgent']
+    assert 'sudden deaths' not in nlu._guard({'intent': 'answer', 'facts': {}, 'urgent': []}, 'No, none have died.', None)['urgent']

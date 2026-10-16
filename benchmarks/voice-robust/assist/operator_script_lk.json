@@ -1,0 +1,21 @@
+{"voice": "af_heart", "case": "new-goats-sick", "dir": "operator-lk",
+ "note": "Off the checklist order on purpose; never repeats 'goat' until turn 11 ('I have noted the goat problem').",
+ "lines": [
+  ["01-greet", "Namaskara, animal helpline. Tell me, what happened?"],
+  ["02-age", "Oh, I am sorry. How old was the small one?"],
+  ["03-count", "And how many are sick now?"],
+  ["04-seeing", "What are you seeing in them?"],
+  ["05-mouth", "Anything else? What about the mouth?"],
+  ["06-new", "Did you buy any new animals recently?"],
+  ["07-stand", "Are they able to stand?"],
+  ["08-breath", "And the breathing, is it normal?"],
+  ["09-since", "Since when are they sick?"],
+  ["10-medicine", "Have you given any medicine?"],
+  ["11-noted", "Okay, I have noted the goat problem. Five goats, fever and loose motions, since four days. What is your name?"],
+  ["12-village", "Which village?"],
+  ["13-district", "Which district?"],
+  ["14-phone", "Tell me your phone number, please."],
+  ["15-readback", "Nine nine zero zero one, two three four five six. Correct?"],
+  ["16-summary", "Let me read it back. Lakshmamma from Hosahalli, Ramanagara district. Five goats with fever and loose motions, one kid died, two breathing fast. I am marking this urgent. Is that correct?"],
+  ["17-bye", "The vet team will call you very soon. Please do not give any medicine till then. Goodbye."]
+ ]}

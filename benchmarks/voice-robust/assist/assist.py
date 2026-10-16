@@ -101,6 +101,23 @@ def operator_rules(text):
     elif re.search(r'\bbreath\w* (is )?(normal|fine|okay|ok)\b', t): facts['breathing_ok'] = True
     return facts
 
+NUMBER_WORDS = 'zero one two three four five six seven eight nine ten'.split()
+
+def said_by_operator(facts, text):
+    """Keep only facts the operator's own words carry. Muse sees the farmer's last line for context and once credited
+    the farmer's "since yesterday" to the operator's "Which village?"; it also put "Ramanagara" in both village and district."""
+    t = text.lower(); out = {}
+    for k, v in facts.items():
+        if isinstance(v, bool): ok = True  # yes/no read-backs ("not able to stand") are worded too many ways to match
+        elif k == 'contact_details': ok = len(re.sub(r'\D', '', t) or intake_mod.spoken_digits(t)) >= 4
+        elif isinstance(v, int): ok = str(v) in t or (v <= 10 and re.search(r'\b' + NUMBER_WORDS[v] + r'\b', t))
+        elif isinstance(v, list):
+            v = [x for x in v if fuzz.partial_ratio(str(x).lower(), t) >= 80]; ok = bool(v)
+        else: ok = fuzz.partial_ratio(str(v).lower(), t) >= 80 or nlu._code(str(v)) in nlu._code(text)
+        if ok: out[k] = v
+    if out.get('village') and same(out.get('village'), out.get('district')): out.pop('village')
+    return out
+
 async def interpret_operator(text, last_farmer, backend='muse', session=None, deadline=3.0):
     t0 = time.perf_counter(); own = session is None
     session = session or aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10))
@@ -122,6 +139,8 @@ async def interpret_operator(text, last_farmer, backend='muse', session=None, de
     finally:
         if own: await session.close()
     if (out['facts'].get('can_stand') is True) and not re.search(r'\bstand', text, re.I): out['facts'].pop('can_stand')
+    out['urgent'] = nlu.urgent_with_evidence(out['urgent'], text)  # "I am marking this urgent" names no sign
+    out['facts'] = said_by_operator(out['facts'], text)
     out['ms'] = round((time.perf_counter() - t0) * 1000)
     return out
 
@@ -139,11 +158,17 @@ class Field:
     def __init__(self, name):
         self.name = name; self.farmer = None; self.operator = None; self.evidence = []
     @property
-    def value(self): return self.operator if self.operator is not None else self.farmer
+    def value(self):
+        if self.name == 'symptoms' and self.operator and self.farmer:  # the operator's summary plus what else the farmer described
+            # only short phrases: the farmer's whole sentences ("Only three months, poor thing, five others...") are in the call
+            return self.operator + [x for x in self.farmer if len(str(x).split()) <= 7 and not any(same(x, o) for o in self.operator)]
+        return self.operator if self.operator is not None else self.farmer
     @property
     def state(self):
         if self.operator is not None and self.farmer is not None:
-            return 'confirmed' if same(self.operator, self.farmer) else 'operator_differs'
+            if same(self.operator, self.farmer): return 'confirmed'
+            # Symptoms in other words ("fever" for "hot ears and body") aren't a disagreement.
+            return 'operator' if self.name == 'symptoms' else 'operator_differs'
         if self.operator is not None: return 'operator'
         if self.farmer is not None: return 'heard_only'
         return 'empty'

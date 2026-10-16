@@ -1,18 +1,18 @@
-main.three { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr); }
-@media (max-width: 980px) { main.three { grid-template-columns: 1fr; } }
-main.three section { min-width: 0; }
+main.two { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+@media (max-width: 860px) { main.two { grid-template-columns: 1fr; } }
+main.two section { min-width: 0; }
+#transcript { height: 66vh; }
+aside dl { gap: 8px 12px; } aside dd { font-size: 16px; }
+.todo { color: var(--soft); font-style: italic; font-size: 14px; }
+dt.empty { color: var(--soft); }
+.hint { display: block; font-size: 12px; color: #c58a00; }
+.urgent-line { color: var(--warn); font-weight: 600; margin-bottom: 8px; }
+#modenote { margin-top: 6px; }
+#sheet ul { margin: 0 0 6px; }
 .msg.operator { background: var(--agent); }
 .msg.partial { background: transparent; color: var(--soft); font-style: italic; }
 .msg .play { font-size: 12px; padding: 0 6px; margin-left: 6px; }
 .msg .truth { display: block; font-size: 12px; color: var(--soft); }
-.next { background: var(--panel); border: 2px solid var(--accent); border-radius: 8px; padding: 12px; font-size: 17px; margin-bottom: 10px; }
-.next.summary { border-color: var(--soft); }
-.next .slot { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
-.alert { border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid var(--line); background: var(--panel); }
-.alert.urgent { border-color: var(--warn); color: var(--warn); font-weight: 600; }
-.alert.check { border-left: 4px solid #c58a00; }
-.alert.info { border-left: 4px solid var(--soft); }
-.phone { font-family: ui-monospace, monospace; font-size: 20px; letter-spacing: .08em; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
 .tag { font-size: 11px; border-radius: 4px; padding: 0 5px; margin-left: 4px; border: 1px solid var(--line); white-space: nowrap; }
 .tag.confirmed, .tag.operator { border-color: var(--accent); color: var(--accent); }
 .tag.heard_only { border-color: #c58a00; color: #c58a00; }

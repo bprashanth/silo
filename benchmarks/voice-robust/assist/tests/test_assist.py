@@ -53,3 +53,39 @@ def test_scripted_farmer_corrects_a_wrong_read_back_and_undo():
     assert f.reply('village', {}) == 'village'
     f.undo(); assert f.reply('village', {}) == 'village'  # undone: still the first answer
     assert f.reply('village', {}) == 'village_again'
+
+def test_late_repeat_still_confirms():
+    """The operator asks other things first and only later says "I have noted the goat problem": that confirms the animal."""
+    a = assist.Assist()
+    a.on_farmer('My goats are not well', {'facts': {'animal_type': 'goat'}})
+    a.on_operator('How old was the small one?', {'facts': {}, 'asking': 'other'})
+    a.on_farmer('Two months', {'facts': {}})
+    a.on_operator('How many are sick now?', {'facts': {}, 'asking': 'animals_affected'})
+    assert a.fields['animal_type'].state == 'heard_only'
+    a.on_operator('Okay, I have noted the goat problem. What is your name?', {'facts': {'animal_type': 'goat'}, 'asking': 'caller_name'})
+    assert a.fields['animal_type'].state == 'confirmed'
+    assert assist.operator_rules('Okay, I have noted the goat problem.')['animal_type'] == 'goat'
+
+def test_cases_have_what_the_live_farmer_needs():
+    import farmer_ai
+    persona, cases = farmer_ai.load()
+    assert persona['name'] == 'Lakshmamma' and len(cases) >= 5
+    for c in cases.values():
+        assert c['opening'] and c['story'] and c['reveal_only_if_asked'] and c['source']
+        assert set(c['truth']) == set(assist.REQUIRED), c['id']
+
+def test_operator_facts_come_from_operator_words():
+    """Live role-play: Muse credited the farmer's "since yesterday" to the operator's "Which village?"."""
+    assert assist.said_by_operator({'symptoms_since': 'yesterday', 'caller_name': 'Lakshmamma'}, 'Which village?') == {}
+    kept = assist.said_by_operator({'animal_type': 'goat', 'animals_affected': 5, 'symptoms': ['fever', 'cough'], 'symptoms_since': 'four days'},
+                                   'Five goats, fever, and loose motions since four days?')
+    assert kept == {'animal_type': 'goat', 'animals_affected': 5, 'symptoms': ['fever'], 'symptoms_since': 'four days'}
+    assert assist.said_by_operator({'village': 'Ramanagara', 'district': 'Ramanagara'}, 'Lakshmema from Hasahali, Ramanagara District.') == {'district': 'Ramanagara'}
+    assert assist.said_by_operator({'contact_details': '9900123456'}, '99001-23456') == {'contact_details': '9900123456'}
+
+def test_symptoms_in_other_words_merge_not_differ():
+    a = assist.Assist()
+    a.on_farmer('very hot ears and body', {'facts': {'symptoms': ['hot ears and body']}})
+    a.on_operator('Fever and loose motions, okay.', {'facts': {'symptoms': ['fever', 'loose motions']}})
+    f = a.fields['symptoms']
+    assert f.state == 'operator' and f.value == ['fever', 'loose motions', 'hot ears and body']

@@ -12,48 +12,53 @@ open http://127.0.0.1:8776                     # tailnet: http://100.82.28.38:87
 benchmarks/voice-robust/assist/start.sh stop
 ```
 
-Pick a farmer, click **Answer call** and play the operator (use headphones). The farmer is scripted: recorded clips
-(`scenarios.json`, rendered by `make_scenarios.py` through the scenario's bad-line condition) that answer the
-question you just asked. The farmer waits through statements, as a person does, and answers when you ask
-something. A wrong read-back gets corrected ("No madam, Kunigal"). Asked twice, the farmer gives a slower
-answer ("Hosa... halli"). Mumbling gets "Hello? I could not hear". One scripted farmer can be replayed to
-many operators, which makes this a training tool too.
+Pick a case, pick how Lakshmamma answers, click **Answer call** and play the operator (use headphones).
+
+- **Live (AI)**, the default. An LLM on OpenRouter (`FARMER_LLM`, default `google/gemini-3.1-flash-lite`) plays
+  Lakshmamma from a case sheet (`lakshmamma.json`), her voice is local Kokoro `hf_beta` put through the 2G `gsm`
+  condition, and the line's ASR hears that. Take the case in any order. She answers what you ask, one sign at a
+  time, and keeps the rest until you ask about it ("did you buy any new goats?"). She corrects a wrong read-back,
+  asks whether she should give medicine, and hangs up after goodbye. What leaves the machine: the case sheet and
+  your words as recognised. It's synthetic role-play, nothing from real calls.
+- **Recorded clips** (case 1 only; `buffalo-down` too, with `?test=1`). Fixed clips (`scenarios.json`, rendered by
+  `make_scenarios.py`) answer the question you just asked, in the checklist's terms. Same farmer every time.
+
+The cases are labelled by her opening line, so the menu doesn't give the case away. Each one is built from an
+Indian field report, named in the case sheet:
+
+| # | she opens with | behind it |
+|---|---|---|
+| 1 | "my goats are having loose motions" | diarrhoea, the top cause of goat deaths in village studies (MP 2013, TN 2022) |
+| 2 | "my goats are not well. One small one died" | PPR-like spread after buying goats at the santhe (Karnataka outbreaks traced to bought-in animals) |
+| 3 | "my goats are shaking, one has fallen" | young jowar sprouts: cyanide, goats the most susceptible (urgent, minutes) |
+| 4 | "one of my good goats died in the night" | enterotoxaemia after a feed change; a second goat kicking at its belly |
+| 5 | "my small ones have a cold, I think" | kid pneumonia in winter, the top kid killer with diarrhoea; she wants a tablet name |
+| 6 | "my cow is giving very less milk" | lumpy skin disease (2022): she talks about the milk first, the lumps only when asked |
+| 7 | "my goat is trying to give birth" | dystocia, a standing 1962 call type; she keeps asking "should I pull?" |
 
 ## What the screen shows
 
-- **Call.** Your words as recognised, live while you speak. Below them, the farmer's words as the line delivered
-  them, with ▶ to replay the clip. The farmer side is meant to look bad; it is why you repeat things.
-- **Assist.**
-  - One big **next step**: either the next question, in the protocol's order (urgent cases move the village and
-    phone up), or "Repeat back to confirm: 'Kunigal, right?'" when only the line heard a value.
-  - **Alerts:**
-    - Urgent signs, and what to take next.
-    - A farmer's question about medicine ("don't prescribe, the vet team will advise").
-    - Gazetteer spellings for a name or place that isn't in the list ("Hosali: did they mean Hosahalli?").
-    - The line and you disagreeing.
-    - A phone number that isn't 10 digits, or a read-back that sounded wrong. A mis-heard read-back never
-      replaces a good number.
-  - The phone digits as you take them (`98456 72310 (10/10)`).
-- **Case record.** Each field with where it came from:
-  - *confirmed*: you repeated it and the line agrees.
-  - *you said*: only you said it.
-  - *heard only*: repeat it back.
-  - *differs*: check it.
-- **After the call** (on hang-up):
-  - Protocol checks: asked the species, standing and breathing; repeated facts back; read the phone back; read
-    the case back; didn't prescribe; urgent case took the village and phone first.
-  - A **second read of the whole call** by local Muse, and where it disagrees with the live record.
-  - In role-play, the record against the farmer's real answers.
-  - Timings per turn.
+Two columns, on purpose: the operator works from the record, not from a script.
+
+- **Call.** Your words as recognised, live while you speak, and Lakshmamma's words as the line delivered them,
+  with ▶ to replay. After the call each of her lines also shows what she really said.
+- **Care record.** Each field with where it came from: *confirmed* (you repeated it and the line agrees), *you said*,
+  *heard only* (not repeated yet), *differs* (check it), or *to ask*. A repeat confirms whenever it comes: "okay, I
+  have noted the goat problem" ten turns later confirms the animal. Hints sit on the field they're about (a
+  gazetteer spelling for a village, a phone number that isn't 10 digits). The urgent signs are at the top.
+- **After the call:** protocol checks, a second read of the whole call by local Muse and where it disagrees,
+  the record against Lakshmamma's real answers, the case sheet (what she knew, and what she'd only say if
+  asked), and timings.
 
 ## How it works
 
 ```text
 operator mic -> SmallWebRTC -> Silero VAD + smart-turn v3 -> Parakeet (captions every 0.8 s while talking; the turn at the end)
-   -> last sentence a question? (rules, instant) -> scripted farmer clip plays 0.8 s later, over the same call
+   -> recorded: last sentence a question? (rules, instant) -> the clip for it plays 0.8 s later, over the same call
+   -> live: every turn -> OpenRouter LLM as Lakshmamma (may stay quiet) -> Kokoro -> 2G line -> plays over the call
    -> operator words -> Muse (operator prompt: facts repeated back + what is being asked; 3 s deadline, rule fallback)
    -> farmer clip  -> the agent's ASR (as the line delivered it) -> the agent's farmer interpreter (nlu.py)
-   -> Assist: one record, two sources per field -> next step + alerts (polled by the page every 300 ms)
+   -> Assist: one record, two sources per field, hints on the fields (polled by the page every 300 ms)
 hang-up -> QA checks + Muse re-reads the whole transcript -> differences
 ```
 
@@ -61,6 +66,31 @@ Same ASR, gazetteer and interpreter as the agent call (`../speech.py`, `../nlu.p
 protocol order and the question wording come from `../intake.py`.
 
 ## Results (automated role-play, `tests/browser_assist.py`)
+
+**Live Lakshmamma** (`--script operator_script_lk.json`, case 2). The operator takes an off-checklist route (the
+dead kid's age, the mouth, new animals) and never says "goat" until turn 11 ("I have noted the goat problem").
+
+| | result |
+|---|---|
+| record vs her real answers | **11/11** fields in 4 of 5 runs (`lk-ai-1`…`-5`; run 3 was 10/11, below) |
+| protocol checks | 8/8 |
+| her reply starts after you stop | ~1.9 s p50 (LLM ~1.05 s p50, worst 4.7 s once; Kokoro + 2G ~0.2 s) |
+| the late "goat problem" | confirmed the animal |
+
+What the live farmer found that the recorded one couldn't:
+
+- **Urgent signs nobody said.** Muse tagged "very dull" and a fever as *unconscious*, *difficult delivery* and
+  *convulsions*. Now each urgent sign needs words for it in what was said (`nlu.urgent_with_evidence`), and a
+  death ("one small one died") always counts.
+- **The farmer's words credited to the operator.** She corrected a read-back ("the loose motions started only
+  since yesterday") and Muse put "since yesterday" on the operator's next line, "Which village?". Operator facts
+  are now kept only when the operator's own words carry them (`assist.said_by_operator`).
+- **The answer read for the wrong question.** Her reply came before Muse had read the operator's question, so
+  "two of them are breathing very fast" didn't fill *Breathing*. The farmer turn now uses the question the rules
+  saw at once.
+- **Symptoms in other words** ("fever" for "hot ears and body") showed as *differs*. They now merge.
+
+**Recorded farmer**, *Basavaraju, buffalo down*, on `farm_phone`:
 
 A real Chromium WebRTC call. The operator's 15 lines (`operator_script.json`, Kokoro `af_heart`, clean) are fed in
 as the mic. The farmer is *Basavaraju, buffalo down* on the `farm_phone` condition (noisy yard, cheap mic, 2G codec,
@@ -95,7 +125,10 @@ Two problems from the first runs, now fixed:
 
 ## Limits
 
-- The farmer is scripted, and the farmer's voice is synthetic Kokoro. Real farmers say things the script doesn't
+- The live farmer hears your words as our ASR recognised them, not your audio, so a mis-recognised read-back gets
+  corrected even when you said it right ("No madam, Lakshmamma" after ASR heard "Lakshmema"). Real farmers mishear
+  differently.
+- The farmer's voice is synthetic Kokoro, and the scripted farmer only covers its clips. Real farmers say things the script doesn't
   cover. For a real pilot, the same screen would sit on a real call: the farmer leg of a SIP or Exotel stream,
   with the operator on a headset.
 - The protocol checks are simple patterns, not a judgement of the call.

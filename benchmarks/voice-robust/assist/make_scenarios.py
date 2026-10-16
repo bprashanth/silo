@@ -1,6 +1,7 @@
 """Render the scripted farmers (and the test operator) to audio -> $VR_ART/assist/.
 
-  python assist/make_scenarios.py
+  python assist/make_scenarios.py                 # farmers + test operator
+  python assist/make_scenarios.py --operator-only # just the test operator lines (operator_script*.json)
 
 Farmer lines are synthetic (Kokoro), with a tired pause at each "...", then put through the scenario's
 bad-line condition from degrade.py, so the operator hears what a 2G call sounds like and the farmer-side
@@ -24,7 +25,7 @@ def main():
             a = np.concatenate([r.audio.numpy() for r in tts(p.strip(), voice=voice, speed=speed)])
             out += [librosa.resample(a.astype(np.float32), orig_sr=24000, target_sr=16000), np.zeros(int(16000 * .9), np.float32)]
         return np.concatenate(out[:-1])
-    for sc in json.loads((HERE / 'scenarios.json').read_text()):
+    for sc in ([] if '--operator-only' in sys.argv else json.loads((HERE / 'scenarios.json').read_text())):
         d = ART / sc['id']; d.mkdir(parents=True, exist_ok=True); index = {}
         for key, text in sc['lines'].items():
             x = speak(text, sc['voice'], sc['speed'])
@@ -32,12 +33,13 @@ def main():
             sf.write(d / f'{key}.wav', np.clip(x, -1, 1).astype(np.float32), 16000, subtype='PCM_16')
             index[key] = {'file': f'{key}.wav', 'text': text, 'seconds': round(len(x) / 16000, 2)}
         (d / 'index.json').write_text(json.dumps(index, indent=1)); print(sc['id'], len(index), 'clips')
-    op = json.loads((HERE / 'operator_script.json').read_text()); d = ART / 'operator'; d.mkdir(parents=True, exist_ok=True)
-    for key, text in op['lines']:
-        x = speak(text, op['voice'], 1.0)
-        sf.write(d / f'{key}.wav', np.clip(x * .8, -1, 1).astype(np.float32), 16000, subtype='PCM_16')
-    (d / 'index.json').write_text(json.dumps([{'label': k, 'file': f'{k}.wav', 'text': t} for k, t in op['lines']], indent=1))
-    print('operator', len(op['lines']), 'clips')
+    for script in sorted(HERE.glob('operator_script*.json')):
+        op = json.loads(script.read_text()); d = ART / op.get('dir', 'operator'); d.mkdir(parents=True, exist_ok=True)
+        for key, text in op['lines']:
+            x = speak(text, op['voice'], 1.0)
+            sf.write(d / f'{key}.wav', np.clip(x * .8, -1, 1).astype(np.float32), 16000, subtype='PCM_16')
+        (d / 'index.json').write_text(json.dumps([{'label': k, 'file': f'{k}.wav', 'text': t} for k, t in op['lines']], indent=1))
+        print(d.name, len(op['lines']), 'clips')
 
 if __name__ == '__main__':
     main()

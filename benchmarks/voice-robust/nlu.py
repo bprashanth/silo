@@ -197,6 +197,22 @@ async def _openrouter_audio(session, pcm16, heard, asking, last_said, model):
     c = d['choices'][0]['message']['content']
     return json.loads(c[c.index('{'):c.rindex('}') + 1])
 
+# An urgent sign needs words for it in what was said: Muse tagged "very dull" as unconscious, and a goat with
+# fever as "difficult delivery" and "convulsions", which put a routine-looking call at the top of the queue.
+URGENT_EVIDENCE = {
+    'unable to stand': r'stand|get(ting)? up|lying|lie down|fall|fell|collapse',
+    'breathing difficulty': r'breath|pant|gasp',
+    'unconscious': r'unconscious|not (moving|responding|waking)|no movement|collapse|faint',
+    'heavy bleeding': r'bleed|blood',
+    'convulsions': r'convuls|fits?\b|seizure|jerk|shak|trembl|paddl|kicking',
+    'bloated and distressed': r'bloat|swell|swollen|belly|stomach|tight|gas\b',
+    'difficult delivery': r'deliver|birth|calving|kidding|labou?r|strain|stuck|not coming|\bleg\b.*\b(out|showing)',
+    'sudden deaths': r'\bdie|\bdied|dead|death|dying',
+}
+
+def urgent_with_evidence(signs, text):
+    return [u for u in dict.fromkeys(signs or []) if re.search(URGENT_EVIDENCE.get(u, r'(?!)'), text or '', re.I)]
+
 def _guard(out, heard, asking, prev_asking=None, backend='muse'):
     """Drop facts the farmer never said: the LLM (and a bare "no") over-reach."""
     other = [k for k in out['facts'] if k not in ('can_stand', 'breathing_ok')]
@@ -211,8 +227,9 @@ def _guard(out, heard, asking, prev_asking=None, backend='muse'):
         # Only from the question actually asked, unless the farmer was correcting something else ("No, no, it is a cow").
         free = asking == k and not (out['intent'] == 'correction' and other)
         if k in out['facts'] and not free and not re.search(pat, heard, re.I): out['facts'].pop(k)
-    out['urgent'] = [u for u in out['urgent'] if u != 'unable to stand' or re.search(r'stand|get(ting)? up|lying|lie down|fall', heard, re.I)]
-    out['urgent'] = [u for u in out['urgent'] if u != 'breathing difficulty' or re.search(r'breath|pant|gasp', heard, re.I)]
+    out['urgent'] = urgent_with_evidence(out['urgent'], heard)
+    if re.search(r'\b(died|dead|dying)\b', heard, re.I) and not re.search(r'\b(not|no one|none|nothing|nobody) (has |have )?(died|dead)', heard, re.I):
+        out['urgent'] = list(dict.fromkeys(out['urgent'] + ['sudden deaths']))  # Muse often lets a death pass as background
     for k in ('caller_name', 'village', 'district'):
         v = str(out['facts'].get(k, ''))
         if v and (re.search(r'\d', v) or len(re.findall(r'\b(zero|one|two|three|four|five|six|seven|eight|nine)\b', v, re.I)) >= 2):

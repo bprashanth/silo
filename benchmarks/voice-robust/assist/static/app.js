@@ -1,10 +1,11 @@
-// Operator console: WebRTC mic to the server, the scripted farmer's audio back, live assist by polling.
+// Operator console: WebRTC mic to the server, Lakshmamma's audio back, the care record filled live by polling.
 const $ = id => document.getElementById(id);
 const LABELS = {animal_type: 'Animal', symptoms: 'Problem', can_stand: 'Can stand', breathing_ok: 'Breathing normal',
   animals_affected: 'Animals sick', symptoms_since: 'Since', previous_treatment: 'Treatment given',
   caller_name: 'Farmer name', village: 'Village', district: 'District', contact_details: 'Phone'};
 const STATE = {confirmed: 'confirmed', operator: 'you said', heard_only: 'heard only', operator_differs: 'differs'};
-let pc, ctx, sid, poll, clock, started, last = null, micStream, fixtureDest;
+let pc, ctx, sid, poll, clock, started, last = null, micStream, fixtureDest, CFG;
+const TEST = new URLSearchParams(location.search).has('test');  // automated runs: test audio and the recorded-only scenarios
 
 async function api(path, body) {
   const r = await fetch(path, body === undefined ? {} : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
@@ -15,10 +16,23 @@ function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&': '&amp;',
 function fmt(v) { if (Array.isArray(v)) return v.join(', '); if (v === true) return 'yes'; if (v === false) return 'no'; return v ?? ''; }
 
 async function init() {
-  const cfg = await api('/api/config');
-  for (const [k, v] of Object.entries(cfg.scenarios)) $('scenario').add(new Option(v, k));
-  if (!Object.keys(cfg.scenarios).length) $('status').textContent = 'no scenarios: run assist/make_scenarios.py';
-  $('fixture').onchange = loadFixtures;
+  CFG = await api('/api/config');
+  CFG.cases.forEach((c, i) => $('case').add(new Option(`${i + 1}. "${c.opening}"${c.recorded ? '  (recorded too)' : ''}`, c.id)));
+  if (TEST) for (const [k, v] of Object.entries(CFG.recorded_only)) $('case').add(new Option('(recorded only) ' + v, 'rec:' + k));
+  $('fixture-box').hidden = !TEST;
+  if (!CFG.ai) $('mode').value = 'recorded';
+  $('fixture').onchange = loadFixtures; $('case').onchange = $('mode').onchange = modeNote; modeNote();
+}
+
+function modeNote() {
+  const id = $('case').value, c = CFG.cases.find(x => x.id === id), recOnly = id.startsWith('rec:');
+  const canRec = recOnly || c?.recorded, canAi = CFG.ai && !recOnly;
+  $('mode').options[0].disabled = !canAi; $('mode').options[1].disabled = !canRec;
+  if ($('mode').value === 'ai' && !canAi) $('mode').value = 'recorded';
+  if ($('mode').value === 'recorded' && !canRec) $('mode').value = 'ai';
+  $('modenote').textContent = $('mode').value === 'ai'
+    ? `Live: ${CFG.llm} on OpenRouter plays Lakshmamma from the case sheet. It hears your words as recognised (synthetic role-play only); her voice is local Kokoro over a 2G line.`
+    : 'Recorded: fixed clips answer the question you ask, in the checklist order. Same farmer every time.';
 }
 
 async function loadFixtures() {
@@ -41,7 +55,7 @@ async function micOrFixture() {
 }
 
 window.speakFixture = async function (file) {
-  const buf = await ctx.decodeAudioData(await (await fetch('/clips/operator/' + file)).arrayBuffer());
+  const buf = await ctx.decodeAudioData(await (await fetch(file.startsWith('/') ? file : '/clips/operator/' + file)).arrayBuffer());
   const src = ctx.createBufferSource(); src.buffer = buf; src.connect(fixtureDest);
   return new Promise(res => { src.onended = () => res(buf.duration); src.start(); });
 };
@@ -50,7 +64,9 @@ window.playClip = url => new Audio(url).play();
 async function startCall() {
   $('call').disabled = true; $('status').textContent = 'connecting'; $('review').hidden = true;
   ctx = new AudioContext({sampleRate: 48000});
-  const s = await api('/api/sessions', {scenario: $('scenario').value, fixture: $('fixture').checked});
+  const id = $('case').value;
+  const s = await api('/api/sessions', id.startsWith('rec:') ? {scenario: id.slice(4), mode: 'recorded', fixture: $('fixture').checked}
+    : {case: id, mode: $('mode').value, fixture: $('fixture').checked});
   sid = s.id; window.currentSessionId = sid;
   micStream = await micOrFixture();
   pc = new RTCPeerConnection({iceServers: []});
@@ -81,27 +97,25 @@ function render(s) {
   $('status').textContent = s.farmer_speaking ? 'farmer speaking' : s.status; $('status').className = 'pill ' + (s.farmer_speaking ? 'speaking' : '');
   const t = $('transcript'), atBottom = t.scrollHeight - t.scrollTop - t.clientHeight < 40;
   const msgs = (s.transcript || []).map(m => m.role === 'farmer'
-    ? `<div class="msg farmer ${m.interrupted ? 'interrupted' : ''}"><span class="who">Farmer, as the line heard it${m.audio ? ` <button class="play" onclick="playClip('${esc(m.audio)}')">▶</button>` : ''}</span>${esc(m.text) || '<span class="muted">(nothing recognised)</span>'}</div>`
+    ? `<div class="msg farmer ${m.interrupted ? 'interrupted' : ''}"><span class="who">Lakshmamma, as the line heard it${m.audio ? ` <button class="play" onclick="playClip('${esc(m.audio)}')">▶</button>` : ''}</span>${esc(m.text) || '<span class="muted">(nothing recognised)</span>'}` +
+      (s.status === 'ended' && m.said ? `<span class="truth">she said: ${esc(m.said)}</span>` : '') + '</div>'
     : `<div class="msg operator"><span class="who">You</span>${esc(m.text)}</div>`);
   if (s.partial) msgs.push(`<div class="msg partial">${esc(s.partial)} …</div>`);
   if (msgs.length) { t.innerHTML = msgs.join(''); if (atBottom) t.scrollTop = t.scrollHeight; }
-  const h = s.help;
-  if (h) {
-    $('next').className = 'next ' + h.next.kind;
-    $('next').innerHTML = `<span class="slot">${esc(h.next.kind === 'summary' ? 'wrap up' : (LABELS[h.next.slot] || h.next.slot) + (h.next.kind === 'repeat' ? ' · confirm' : ' · next'))}</span>${esc(h.next.text)}`;
-    $('alerts').innerHTML = h.alerts.map(a => `<div class="alert ${a.level}">${esc(a.text)}</div>`).join('');
-  }
   const rec = s.record; if (!rec) return;
+  // Only the record: hints about a field (a gazetteer spelling, a short phone number) sit on that field.
+  const hints = {}; for (const a of (s.help?.alerts || [])) if (a.slot && a.level === 'check') (hints[a.slot] ||= []).push(a.text);
   $('urgency').hidden = !rec.urgent_warning_signs?.length;
-  const ph = rec.fields.contact_details.value;
-  $('phone').hidden = !ph;
-  if (ph) $('phone').textContent = String(ph).replace(/(\d{5})(?=\d)/, '$1 ') + `  (${String(ph).length}/10)`;
+  $('urgent').hidden = !rec.urgent_warning_signs?.length;
+  $('urgent').textContent = 'Urgent: ' + (rec.urgent_warning_signs || []).join(', ');
   $('fields').innerHTML = Object.entries(LABELS).map(([k, label]) => {
-    const f = rec.fields[k];
+    const f = rec.fields[k]; let v = esc(fmt(f.value));
+    if (k === 'contact_details' && f.value) v = esc(String(f.value).replace(/(\d{5})(?=\d)/, '$1 ')) + ` <span class="small muted">${String(f.value).length}/10</span>`;
     const tag = STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '';
     const alt = f.state === 'operator_differs' ? `<span class="small muted"> line: ${esc(fmt(f.farmer))}</span>` : '';
-    return `<dt>${label}</dt><dd>${esc(fmt(f.value)) || '—'}${tag}${alt}</dd>`;
-  }).join('') + `<dt>Urgent signs</dt><dd>${esc(rec.urgent_warning_signs.join(', ') || 'none reported')}</dd>`;
+    const hint = (hints[k] || []).map(t => `<span class="hint">${esc(t)}</span>`).join('');
+    return `<dt class="${f.state}">${label}</dt><dd class="${f.state}">${v || '<span class="todo">to ask</span>'}${tag}${alt}${hint}</dd>`;
+  }).join('') + (rec.farmer_questions?.length ? `<dt>She asked</dt><dd>${esc(rec.farmer_questions.join('; '))}</dd>` : '');
   if (s.review) renderReview(s);
 }
 
@@ -111,10 +125,12 @@ function renderReview(s) {
   $('diff').innerHTML = r.offline.error ? `<p class="muted">Not available: ${esc(r.offline.error)}</p>`
     : (r.differences.length ? '<ul>' + r.differences.map(d => `<li><strong>${esc(LABELS[d.field])}</strong>: live "${esc(d.live ?? '—')}", re-read "${esc(d.review ?? '—')}"</li>`).join('') + '</ul>'
       : `<p class="ok">Agrees with the live record (${r.offline.ms} ms).</p>`);
-  $('truth').innerHTML = Object.entries(r.truth_check).map(([k, ok]) => `<li class="${ok ? 'ok' : 'bad'}">${ok ? '✔' : '✘'} ${esc(LABELS[k])}</li>`).join('');
+  $('truth').innerHTML = Object.entries(r.truth_check).map(([k, ok]) => `<li class="${ok ? 'ok' : 'bad'}">${ok ? '✔' : '✘'} ${esc(LABELS[k])}${ok ? '' : ` <span class="small muted">(was: ${esc(fmt(r.truth?.[k]))})</span>`}</li>`).join('');
+  $('casesheet').hidden = !r.case;
+  if (r.case) $('sheet').innerHTML = `<p>${esc(r.case.story)}</p><p class="small muted">Only if asked:</p><ul>${r.case.reveal_only_if_asked.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="small muted">Based on: ${esc(r.case.source)}</p>`;
   $('metrics').innerHTML = (s.metrics || []).filter(m => m.heard).map(m => `<tr><td>${m.turn}</td><td class="heard">${esc(m.heard)}</td><td>${m.asr_ms} ms</td>` +
     `<td>${esc(m.asked ?? '')}${m.farmer_clip ? ' → ' + esc(m.farmer_clip) : ''}</td><td>${m.farmer_starts_after_s != null ? m.farmer_starts_after_s.toFixed(2) + ' s' : ''}</td>` +
-    `<td>${m.op_ms ?? ''} ms ${esc(m.op_source ?? '')}</td></tr>`).join('');
+    `<td>${m.farmer_llm_ms != null ? m.farmer_llm_ms + ' ms' : ''}</td><td>${m.op_ms ?? ''} ms ${esc(m.op_source ?? '')}</td></tr>`).join('');
 }
 
 $('call').onclick = () => startCall().catch(e => { $('status').textContent = 'error: ' + e.message; $('call').disabled = false; });
