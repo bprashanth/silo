@@ -1,0 +1,19 @@
+{"_comment": "Operator lines for the automated role-play test (tests/browser_assist.py), scenario buffalo-down. A person plays this part in the demo.",
+ "voice": "af_heart",
+ "lines": [
+  ["greet", "Namaste, livestock helpline. Tell me, what happened?"],
+  ["animal", "Which animal is it?"],
+  ["animal_rb", "Buffalo, okay. What problem are you seeing?"],
+  ["stand", "Not getting up and not eating. Can she stand at all?"],
+  ["breath", "She cannot stand, okay, that is serious. Is she breathing normally?"],
+  ["village", "Breathing fast, I am marking this urgent. Which village are you calling from?"],
+  ["village_rb", "Kunigal, right? And which district?"],
+  ["phone", "Tumakuru. What number can the vet team call you on?"],
+  ["phone_rb", "Nine eight four five six, seven two three one zero. Is that right?"],
+  ["name", "And your name please?"],
+  ["count", "Basavaraju, thank you. How many animals are sick?"],
+  ["since", "Only one buffalo. Since when is this?"],
+  ["treat", "Since this morning. Have you given any medicine?"],
+  ["summary", "No medicine given. The vet team will advise you on medicine. Let me read it back. One buffalo, not getting up, not eating, breathing fast, since this morning, no treatment. Basavaraju from Kunigal, Tumakuru, phone nine eight four five six seven two three one zero. Is that correct?"],
+  ["bye", "Thank you, the vet team will call you soon. Goodbye."]
+ ]}

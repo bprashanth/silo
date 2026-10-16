@@ -1,0 +1,474 @@
+{
+ "status": "ILLUSTRATIVE. Written for this prototype from public sources and common first-aid practice. Not an approved ERC SOP: a veterinarian must review every card, level and line before real use.",
+ "levels": {
+  "E": {
+   "label": "Emergency",
+   "response": "Dispatch now. Bring the ERC vet onto the call.",
+   "escalate": true
+  },
+  "D": {
+   "label": "Urgent",
+   "response": "Vet calls back within 30 minutes; dispatch today.",
+   "escalate": false
+  },
+  "C": {
+   "label": "Same day",
+   "response": "Vet calls back today; visit if the vet decides.",
+   "escalate": false
+  },
+  "A": {
+   "label": "Advice",
+   "response": "Vet tele-advice; visit only if it gets worse.",
+   "escalate": false
+  }
+ },
+ "escalated_if": "\\b(vet|veterinar|doctor|connect|conference|transfer|ambulance|van|team is coming|sending)\\w*",
+ "closing": {
+  "text": "If it gets worse, or another animal falls sick, call again.",
+  "heard_if": "(worse|another animal|other animals?).*(call|phone)|call (again|back|us)"
+ },
+ "never_say": "\\b(ppr|anthrax|foot and mouth|fmd|lumpy skin|enterotox|h\\.?s\\.?|haemorrhagic|cyanide|pneumonia)\\b",
+ "cards": [
+  {
+   "id": "sudden_death",
+   "title": "Sudden death",
+   "triggers": "\\b(died|dead|death|dying)\\b",
+   "fields": [
+    {
+     "id": "deaths",
+     "label": "How many died",
+     "ask": "How many have died?",
+     "type": "integer",
+     "asked_if": "how many .*(died|dead)|died"
+    },
+    {
+     "id": "sick_before",
+     "label": "Sick before dying",
+     "ask": "Was it sick before, or found dead?",
+     "type": "string",
+     "asked_if": "sick before|found (it )?dead|before (it|she|he) died"
+    },
+    {
+     "id": "blood_from_openings",
+     "label": "Blood from nose/mouth/anus",
+     "ask": "Any blood from the nose, mouth or back passage?",
+     "type": "boolean",
+     "asked_if": "blood"
+    }
+   ],
+   "level": "D",
+   "rules": [
+    {
+     "when": {
+      "blood_from_openings": true
+     },
+     "level": "E"
+    },
+    {
+     "when": {
+      "deaths": ">=2"
+     },
+     "level": "E"
+    },
+    {
+     "when": {
+      "can_stand": false
+     },
+     "level": "E"
+    }
+   ],
+   "say": [
+    {
+     "text": "Please do not cut open or skin the dead animal. Keep it covered, away from dogs and the other animals, until the vet sees it.",
+     "heard_if": "(not|don.t|do not) (cut|open|skin)|keep it covered"
+    },
+    {
+     "text": "Keep the other animals away from the place where it died.",
+     "heard_if": "away from (the )?(place|spot|where)"
+    }
+   ],
+   "notifiable": true,
+   "for_vet": "Sudden death: carcass precautions before opening (anthrax, HS). DAHD Standard Veterinary Treatment Guidelines (2024)."
+  },
+  {
+   "id": "poisoning",
+   "title": "Possible poisoning",
+   "triggers": "\\b(ate|eaten|eating (the|some|new)|grazed|got into|jowar|jola|sorghum|pesticide|spray(ed)?|poison|froth\\w*|foam\\w*)\\b",
+   "fields": [
+    {
+     "id": "ate_what",
+     "label": "Ate what, where",
+     "ask": "What did they eat, and where?",
+     "type": "string",
+     "asked_if": "\\b(eat|ate|eaten|graz|feed|fed|food)"
+    },
+    {
+     "id": "ate_when",
+     "label": "How long ago",
+     "ask": "How long ago did they eat it?",
+     "type": "string",
+     "asked_if": "how long ago|when did (they|it|she) eat|what time"
+    }
+   ],
+   "level": "D",
+   "rules": [
+    {
+     "when": {
+      "breathing_ok": false
+     },
+     "level": "E"
+    },
+    {
+     "when": {
+      "can_stand": false
+     },
+     "level": "E"
+    }
+   ],
+   "say": [
+    {
+     "text": "Move all the animals away from that field or feed now.",
+     "heard_if": "(move|take|keep|bring) .*(away|out)|away from (that|the) (field|feed)"
+    },
+    {
+     "text": "Do not pour anything into their mouths.",
+     "heard_if": "(not|don.t|do not) (pour|give|put) .*(mouth|drink)|nothing (in|into) (the|their) mouth"
+    }
+   ],
+   "notifiable": false,
+   "for_vet": "Plant or chemical poisoning; young sorghum is the commonest cyanogenic source in India. DAHD Standard Veterinary Treatment Guidelines (2024), toxicology."
+  },
+  {
+   "id": "spreading",
+   "title": "Spreading disease",
+   "triggers": "\\b(sores?|ulcers?|drool\\w*|saliva|discharge|nose (is )?running|eyes? (watering|water)|hoof|hooves|limp\\w*|bought|santhe|shandy|market|new (goats?|animals?|cows?|sheep)|others? .*(also|same)|neighbou?rs?'?s? .*(also|same))\\b",
+   "fields": [
+    {
+     "id": "new_animals",
+     "label": "New animals brought in",
+     "ask": "Did any new animals come in recently? From where, when?",
+     "type": "string",
+     "asked_if": "\\b(new|bought|buy|brought|santhe|market)"
+    },
+    {
+     "id": "others_in_village",
+     "label": "Others in the village",
+     "ask": "Are animals in other houses also sick?",
+     "type": "boolean",
+     "asked_if": "other (houses|animals|people|farmers)|neighbou?r|village .*sick"
+    },
+    {
+     "id": "mouth_feet",
+     "label": "Sores in mouth or feet",
+     "ask": "Any sores in the mouth or on the feet?",
+     "type": "boolean",
+     "asked_if": "\\b(mouth|feet|foot|hoof|sores?)"
+    },
+    {
+     "id": "vaccinated",
+     "label": "Vaccinated",
+     "ask": "Were they vaccinated? For what, when?",
+     "type": "string",
+     "asked_if": "vaccin|injection .*(year|before)"
+    }
+   ],
+   "level": "D",
+   "rules": [
+    {
+     "when": {
+      "deaths": ">=1"
+     },
+     "level": "E"
+    },
+    {
+     "when": {
+      "animals_affected": ">=5"
+     },
+     "level": "E"
+    }
+   ],
+   "say": [
+    {
+     "text": "Keep the sick animals apart from the healthy ones, with separate water and feed.",
+     "heard_if": "(apart|separate|isolat|away from the healthy)"
+    },
+    {
+     "text": "Don't sell, buy or take animals to the santhe or common grazing until the vet sees them.",
+     "heard_if": "(not|don.t|do not) (sell|buy|take)|santhe|shandy|common grazing"
+    }
+   ],
+   "notifiable": true,
+   "for_vet": "Contagious picture (PPR, FMD, HS, goat pox): consider sampling and reporting to the district. DAHD Standard Veterinary Treatment Guidelines (2024)."
+  },
+  {
+   "id": "skin_lumps",
+   "title": "Lumps on the skin",
+   "triggers": "\\b(lumps?|nodules?|gantu|boils?|swellings? on (the )?(skin|body))\\b",
+   "fields": [
+    {
+     "id": "milk_drop",
+     "label": "Milk now vs before",
+     "ask": "How much milk now, and before?",
+     "type": "string",
+     "asked_if": "\\bmilk"
+    },
+    {
+     "id": "others_in_village",
+     "label": "Others in the village",
+     "ask": "Are animals in other houses also sick?",
+     "type": "boolean",
+     "asked_if": "other (houses|animals|people|farmers)|neighbou?r|village .*sick"
+    },
+    {
+     "id": "vaccinated",
+     "label": "Vaccinated",
+     "ask": "Were they vaccinated? For what, when?",
+     "type": "string",
+     "asked_if": "vaccin|injection .*(year|before)"
+    }
+   ],
+   "level": "C",
+   "rules": [
+    {
+     "when": {
+      "breathing_ok": false
+     },
+     "level": "D"
+    },
+    {
+     "when": {
+      "can_stand": false
+     },
+     "level": "D"
+    }
+   ],
+   "say": [
+    {
+     "text": "Keep her apart from the other cattle.",
+     "heard_if": "(apart|separate|isolat)"
+    },
+    {
+     "text": "Keep flies and mosquitoes off with smoke or a net.",
+     "heard_if": "(flies|fly|mosquito|smoke|net)"
+    }
+   ],
+   "notifiable": true,
+   "for_vet": "Skin nodules with fever and milk drop (lumpy skin disease): report; ring vaccination. DAHD Standard Veterinary Treatment Guidelines (2024)."
+  },
+  {
+   "id": "belly",
+   "title": "Belly pain or bloat",
+   "triggers": "\\b(belly|stomach|bloat\\w*|swollen (on the )?left|kick\\w* at|grind\\w*)\\b",
+   "fields": [
+    {
+     "id": "belly_swollen",
+     "label": "Belly swollen",
+     "ask": "Is the belly swollen, on the left side?",
+     "type": "boolean",
+     "asked_if": "belly|stomach|swollen|left side"
+    },
+    {
+     "id": "ate_what",
+     "label": "Ate what, where",
+     "ask": "What did they eat, and where?",
+     "type": "string",
+     "asked_if": "\\b(eat|ate|eaten|graz|feed|fed|food)"
+    }
+   ],
+   "level": "D",
+   "rules": [
+    {
+     "when": {
+      "can_stand": false
+     },
+     "level": "E"
+    },
+    {
+     "when": {
+      "breathing_ok": false
+     },
+     "level": "E"
+    }
+   ],
+   "say": [
+    {
+     "text": "Don't give any more feed until the vet advises.",
+     "heard_if": "(not|don.t|do not) give (any )?(more )?(feed|food|grain)|no (more )?(feed|food|grain)"
+    },
+    {
+     "text": "If she can, keep her standing and walking slowly; don't let her lie flat on her side.",
+     "heard_if": "(walk|standing|flat on)"
+    }
+   ],
+   "notifiable": false,
+   "for_vet": "Colic/bloat; with a sudden death after a feed change, consider enterotoxaemia. DAHD Standard Veterinary Treatment Guidelines (2024)."
+  },
+  {
+   "id": "birth",
+   "title": "Difficult birth",
+   "triggers": "\\b(birth|deliver\\w*|kidding|calving|labou?r|straining|leg (is )?(out|showing|coming))\\b",
+   "fields": [
+    {
+     "id": "straining_hours",
+     "label": "Straining for",
+     "ask": "How long has she been straining?",
+     "type": "string",
+     "asked_if": "how long|since when|straining"
+    },
+    {
+     "id": "what_showing",
+     "label": "What is showing",
+     "ask": "What can you see: head, legs, nothing?",
+     "type": "string",
+     "asked_if": "what (can you|do you) see|showing|head|legs?"
+    },
+    {
+     "id": "tried_pulling",
+     "label": "Anyone pulled",
+     "ask": "Has anyone tried pulling?",
+     "type": "string",
+     "asked_if": "pull"
+    }
+   ],
+   "level": "E",
+   "rules": [],
+   "say": [
+    {
+     "text": "Please don't pull. Keep her in a clean, quiet place until the vet team comes.",
+     "heard_if": "(not|don.t|do not|stop) pull"
+    }
+   ],
+   "notifiable": false,
+   "for_vet": "Dystocia. DAHD Standard Veterinary Treatment Guidelines (2024), obstetrics."
+  },
+  {
+   "id": "breathing_young",
+   "title": "Cough or fast breathing",
+   "triggers": "\\b(cough\\w*|cold|sneez\\w*|nose (is )?running|running nose)\\b",
+   "fields": [
+    {
+     "id": "age",
+     "label": "Age",
+     "ask": "How old are they?",
+     "type": "string",
+     "asked_if": "how old|\\bage\\b"
+    },
+    {
+     "id": "suckling",
+     "label": "Suckling or eating",
+     "ask": "Are they suckling or eating?",
+     "type": "boolean",
+     "asked_if": "suckl|drink(ing)? milk|eating"
+    },
+    {
+     "id": "housing",
+     "label": "Shed",
+     "ask": "Where do they sleep? Is the shed closed at night?",
+     "type": "string",
+     "asked_if": "shed|sleep|night|where do they"
+    }
+   ],
+   "level": "C",
+   "rules": [
+    {
+     "when": {
+      "breathing_ok": false
+     },
+     "level": "D"
+    },
+    {
+     "when": {
+      "suckling": false
+     },
+     "level": "D"
+    }
+   ],
+   "say": [
+    {
+     "text": "Keep them warm and out of the wind, and let them keep suckling.",
+     "heard_if": "(warm|wind|cover)"
+    }
+   ],
+   "notifiable": false,
+   "for_vet": "Respiratory disease; in kids under 3 months in winter, a top cause of death. DAHD Standard Veterinary Treatment Guidelines (2024)."
+  },
+  {
+   "id": "diarrhoea",
+   "title": "Loose motions",
+   "triggers": "\\b(loose motions?|bedi|diarrho?ea|watery (dung|motion))\\b",
+   "fields": [
+    {
+     "id": "blood_in_dung",
+     "label": "Blood in dung",
+     "ask": "Any blood in the dung?",
+     "type": "boolean",
+     "asked_if": "blood|dung"
+    },
+    {
+     "id": "drinking",
+     "label": "Drinking water",
+     "ask": "Are they drinking water?",
+     "type": "boolean",
+     "asked_if": "drink"
+    }
+   ],
+   "level": "C",
+   "rules": [
+    {
+     "when": {
+      "blood_in_dung": true
+     },
+     "level": "D"
+    },
+    {
+     "when": {
+      "deaths": ">=1"
+     },
+     "level": "D"
+    },
+    {
+     "when": {
+      "drinking": false
+     },
+     "level": "D"
+    }
+   ],
+   "say": [
+    {
+     "text": "Keep clean drinking water in front of them all the time.",
+     "heard_if": "(clean )?(drinking )?water"
+    }
+   ],
+   "notifiable": false,
+   "for_vet": "Diarrhoea; check age, worms, coccidia, contagious causes. DAHD Standard Veterinary Treatment Guidelines (2024)."
+  },
+  {
+   "id": "down",
+   "title": "Animal down",
+   "triggers": "\\b(cannot stand|can.t stand|not (getting|able to get) up|fallen|fell down|lying (down|flat))\\b",
+   "fields": [
+    {
+     "id": "recently_gave_birth",
+     "label": "Gave birth recently",
+     "ask": "Did she give birth recently? When?",
+     "type": "string",
+     "asked_if": "birth|calv|deliver|kidd"
+    }
+   ],
+   "level": "E",
+   "rules": [],
+   "say": [
+    {
+     "text": "Prop her up on her chest with sacks or straw; don't leave her flat on her side.",
+     "heard_if": "(prop|on (her|its) chest|sacks?|straw|flat on)"
+    },
+    {
+     "text": "Do not pour water or medicine into her mouth.",
+     "heard_if": "(not|don.t|do not) (pour|give|put) .*(mouth|water)"
+    }
+   ],
+   "notifiable": false,
+   "for_vet": "Downer: milk fever if recently calved; check for poisoning and injury. DAHD Standard Veterinary Treatment Guidelines (2024)."
+  }
+ ]
+}

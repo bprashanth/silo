@@ -8,3 +8,4 @@ should say how big its evidence is and what failed, not just what worked.
 - [v1 features: voice, Drive, todos and reminders](2026-10-12-v1-features.md)
 
 - [Call center automation: a livestock workflow with a conversational gap](call_center_automation.md)
+- [Call center assist: a human takes the call, the agent fills the care record](call_center_assist.md)

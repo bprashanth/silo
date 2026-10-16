@@ -1,0 +1,10 @@
+== hf-whisper-turbo-gpu  load=41s  clips=422
+edacc   clean        n= 60 WER=  9.9%              p50=  162ms p95=  581ms
+edacc   farm_phone   n= 60 WER= 41.9%              p50=  153ms p95=  558ms
+edacc   gsm          n= 60 WER= 16.8%              p50=  157ms p95=  461ms
+edacc   opus6k_loss  n= 60 WER= 26.6%              p50=  156ms p95=  486ms
+farmer  clean        n= 44 WER=  4.5% keys= 90.5%  p50=  139ms p95=  166ms
+farmer  farm_phone   n= 44 WER=  8.9% keys= 81.1%  p50=  138ms p95=  163ms
+farmer  gsm          n= 44 WER=  4.7% keys= 90.5%  p50=  138ms p95=  163ms
+farmer  opus6k_loss  n= 44 WER=  5.6% keys= 85.3%  p50=  137ms p95=  160ms
+noise   farm_phone   n=  6 hallucinated=2

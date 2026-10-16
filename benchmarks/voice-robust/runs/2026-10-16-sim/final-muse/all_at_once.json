@@ -1,0 +1,1188 @@
+{
+ "scenario": "all_at_once",
+ "passed": 12,
+ "total": 13,
+ "checks": {
+  "animal_type": true,
+  "animals_affected": true,
+  "previous_treatment": true,
+  "contact_details": true,
+  "caller_name": true,
+  "village": false,
+  "district": true,
+  "symptoms_since": true,
+  "symptoms": true,
+  "urgent": true,
+  "confirmed": true,
+  "no_loops": true,
+  "never_stuck": true
+ },
+ "turns": 12,
+ "response_s": [
+  1.912,
+  1.966,
+  1.944,
+  2.242,
+  1.677,
+  1.716,
+  4.0,
+  1.786,
+  5.083,
+  2.17,
+  1.686,
+  1.788
+ ],
+ "first_audio_s": [
+  0.425,
+  0.335,
+  0.333,
+  0.544,
+  0.315,
+  0.355,
+  0.5,
+  0.347,
+  0.354,
+  0.973,
+  0.324,
+  0.343
+ ],
+ "fillers": 2,
+ "barge_ins": 0,
+ "reprompts": 0,
+ "record": {
+  "caller_name": "Basavaraju",
+  "village": "Hassanali",
+  "district": "Ramanagara",
+  "animal_type": "cow",
+  "animals_affected": 1,
+  "symptoms": [
+   "not eating",
+   "very weak"
+  ],
+  "symptoms_since": "yesterday",
+  "previous_treatment": "none",
+  "contact_details": "9845672310",
+  "urgent_warning_signs": [],
+  "needs_human_review": true,
+  "urgency": "routine",
+  "confirmed_by_caller": true,
+  "unknown_fields": [],
+  "unclear_fields": [],
+  "missing_fields": [],
+  "farmer_questions": [
+   "What is your name?"
+  ],
+  "call_status": "completed",
+  "slots": {
+   "animal_type": {
+    "value": "cow",
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak, only one cow.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn06.wav"
+     }
+    ]
+   },
+   "symptoms": {
+    "value": [
+     "not eating",
+     "very weak"
+    ],
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak, only one cow.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn06.wav"
+     }
+    ]
+   },
+   "can_stand": {
+    "value": true,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "A cow, since yesterday. Is the cow able to stand up?",
+      "heard": "Yes, she is standing.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn07.wav"
+     }
+    ]
+   },
+   "breathing_ok": {
+    "value": true,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Is the cow breathing normally?",
+      "heard": "Yes, breathing is normal.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn08.wav"
+     }
+    ]
+   },
+   "animals_affected": {
+    "value": 1,
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "How many animals are sick?",
+      "heard": "Only One Cow",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn09.wav"
+     }
+    ]
+   },
+   "symptoms_since": {
+    "value": "yesterday",
+    "state": "filled",
+    "attempts": 0,
+    "evidence": [
+     {
+      "asked": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+      "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak, only one cow.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn06.wav"
+     }
+    ]
+   },
+   "previous_treatment": {
+    "value": "none",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "One animal. Have you given any medicine or treatment already?",
+      "heard": "No, no treatment given.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn10.wav"
+     }
+    ]
+   },
+   "caller_name": {
+    "value": "Basavaraju",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "What is your name?",
+      "heard": "My name is Basavaraju.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn11.wav"
+     }
+    ]
+   },
+   "village": {
+    "value": "Hassanali",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Basavaraju. Which village are you calling from?",
+      "heard": "Hassan Village",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn12.wav"
+     },
+     {
+      "asked": "Hassan. Which district is that in?",
+      "heard": "No no Hassanali Village.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn13.wav"
+     }
+    ]
+   },
+   "district": {
+    "value": "Ramanagara",
+    "state": "filled",
+    "attempts": 2,
+    "evidence": [
+     {
+      "asked": "Sorry, corrected: Hassanali. Which district? For example Tumakuru, Mandya, or Ramanagara.",
+      "heard": "Ramanagara District",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn14.wav"
+     }
+    ]
+   },
+   "contact_details": {
+    "value": "9845672310",
+    "state": "filled",
+    "attempts": 1,
+    "evidence": [
+     {
+      "asked": "Ramanagara. What phone number can the vet team call you on?",
+      "heard": "Nine eight four five six seven two three one zero.",
+      "audio": "/mnt/seagate/silo/voice-robust/runs/sim/final-muse/all_at_once/turn15.wav"
+     }
+    ]
+   }
+  }
+ },
+ "condition": "gsm",
+ "nlu": "muse",
+ "transcript": [
+  {
+   "role": "agent",
+   "text": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+   "kind": "content",
+   "t": 1.966,
+   "seconds": 5.96
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack",
+   "t": 19.078,
+   "seconds": 1.63
+  },
+  {
+   "role": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack",
+   "t": 20.646,
+   "seconds": 1.7
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 21.874,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 23.813,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 25.269,
+   "seconds": 1.36
+  },
+  {
+   "role": "farmer",
+   "text": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak, only one cow.",
+   "t": 25.998
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 26.423,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "A cow, since yesterday. Is the cow able to stand up?",
+   "kind": "content",
+   "t": 27.91,
+   "seconds": 4.17
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, she is standing.",
+   "t": 34.993
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack",
+   "t": 35.328,
+   "seconds": 1.63
+  },
+  {
+   "role": "agent",
+   "text": "Is the cow breathing normally?",
+   "kind": "content",
+   "t": 36.959,
+   "seconds": 2.62
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, breathing is normal.",
+   "t": 42.891
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 43.224,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "How many animals are sick?",
+   "kind": "content",
+   "t": 44.835,
+   "seconds": 2.47
+  },
+  {
+   "role": "farmer",
+   "text": "Only One Cow",
+   "t": 49.971
+  },
+  {
+   "role": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack",
+   "t": 50.515,
+   "seconds": 1.7
+  },
+  {
+   "role": "agent",
+   "text": "One animal. Have you given any medicine or treatment already?",
+   "kind": "content",
+   "t": 52.213,
+   "seconds": 4.72
+  },
+  {
+   "role": "farmer",
+   "text": "No, no treatment given.",
+   "t": 60.104
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 60.419,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "What is your name?",
+   "kind": "content",
+   "t": 61.781,
+   "seconds": 1.8
+  },
+  {
+   "role": "farmer",
+   "text": "My name is Basavaraju.",
+   "t": 67.035
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 67.39,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Basavaraju. Which village are you calling from?",
+   "kind": "content",
+   "t": 68.751,
+   "seconds": 3.38
+  },
+  {
+   "role": "farmer",
+   "text": "Hassan Village",
+   "t": 75.037
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 75.537,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "Hmm, one moment.",
+   "kind": "filler",
+   "t": 77.114,
+   "seconds": 1.92
+  },
+  {
+   "role": "agent",
+   "text": "Hassan. Which district is that in?",
+   "kind": "content",
+   "t": 79.037,
+   "seconds": 2.87
+  },
+  {
+   "role": "farmer",
+   "text": "No no Hassanali Village.",
+   "t": 85.259
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 85.606,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Sorry, corrected: Hassanali. Which district? For example Tumakuru, Mandya, or Ramanagara.",
+   "kind": "content",
+   "t": 87.045,
+   "seconds": 7.08
+  },
+  {
+   "role": "farmer",
+   "text": "Ramanagara District",
+   "t": 96.932
+  },
+  {
+   "role": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack",
+   "t": 97.286,
+   "seconds": 1.7
+  },
+  {
+   "role": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler",
+   "t": 99.376,
+   "seconds": 2.64
+  },
+  {
+   "role": "agent",
+   "text": "Ramanagara. What phone number can the vet team call you on?",
+   "kind": "content",
+   "t": 102.015,
+   "seconds": 4.34
+  },
+  {
+   "role": "farmer",
+   "text": "Nine eight four five six seven two three one zero.",
+   "t": 111.436
+  },
+  {
+   "role": "agent",
+   "text": "Right.",
+   "kind": "ack",
+   "t": 112.409,
+   "seconds": 1.2
+  },
+  {
+   "role": "agent",
+   "text": "nine eight four five six, seven two three one zero. Is that number right?",
+   "kind": "content",
+   "t": 113.606,
+   "seconds": 5.55
+  },
+  {
+   "role": "farmer",
+   "text": "Yes, correct.",
+   "t": 121.612
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 121.936,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Let me read it back. One cow, not eating, very weak, since yesterday. No treatment given. Your name is Basavaraju from Hassanali, Ramanagara. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "kind": "content",
+   "t": 123.298,
+   "seconds": 14.78
+  },
+  {
+   "role": "farmer",
+   "text": "Yes that is correct.",
+   "t": 140.852
+  },
+  {
+   "role": "agent",
+   "text": "Okay.",
+   "kind": "ack",
+   "t": 141.195,
+   "seconds": 1.36
+  },
+  {
+   "role": "agent",
+   "text": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "kind": "content",
+   "t": 142.64,
+   "seconds": 7.9
+  }
+ ],
+ "metrics": [
+  {
+   "turn": 1,
+   "speech_end_s": 18.657,
+   "eot_s": 18.994,
+   "asking": null,
+   "asr_ms": 84,
+   "heard": "My name is Basavaraju from Hassanali Village.",
+   "first_audio_s": 19.078,
+   "cancelled": true
+  },
+  {
+   "turn": 2,
+   "speech_end_s": 20.298,
+   "eot_s": 20.571,
+   "asking": null,
+   "asr_ms": 75,
+   "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District.",
+   "first_audio_s": 20.646,
+   "cancelled": true
+  },
+  {
+   "turn": 3,
+   "speech_end_s": 21.518,
+   "eot_s": 21.785,
+   "asking": null,
+   "asr_ms": 88,
+   "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow",
+   "first_audio_s": 21.874,
+   "cancelled": true
+  },
+  {
+   "turn": 4,
+   "speech_end_s": 23.397,
+   "eot_s": 23.685,
+   "asking": null,
+   "asr_ms": 126,
+   "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday.",
+   "first_audio_s": 23.813,
+   "cancelled": true
+  },
+  {
+   "turn": 5,
+   "speech_end_s": 24.818,
+   "eot_s": 25.144,
+   "asking": null,
+   "asr_ms": 124,
+   "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak.",
+   "first_audio_s": 25.269,
+   "cancelled": true
+  },
+  {
+   "turn": 6,
+   "speech_end_s": 25.998,
+   "eot_s": 26.288,
+   "asking": null,
+   "asr_ms": 132,
+   "heard": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak, only one cow.",
+   "first_audio_s": 26.423,
+   "nlu_ms": 1488,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "cow",
+    "symptoms": [
+     "not eating",
+     "very weak"
+    ],
+    "symptoms_since": "yesterday"
+   },
+   "reply": "A cow, since yesterday. Is the cow able to stand up?",
+   "now_asking": "can_stand",
+   "first_content_audio_s": 27.91,
+   "response_s": 1.912,
+   "first_audio_after_s": 0.425
+  },
+  {
+   "turn": 7,
+   "speech_end_s": 34.993,
+   "eot_s": 35.261,
+   "asking": "can_stand",
+   "asr_ms": 67,
+   "heard": "Yes, she is standing.",
+   "first_audio_s": 35.328,
+   "nlu_ms": 1074,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "cow",
+    "symptoms_since": "yesterday",
+    "can_stand": true
+   },
+   "reply": "Is the cow breathing normally?",
+   "now_asking": "breathing_ok",
+   "first_content_audio_s": 36.959,
+   "response_s": 1.966,
+   "first_audio_after_s": 0.335
+  },
+  {
+   "turn": 8,
+   "speech_end_s": 42.891,
+   "eot_s": 43.179,
+   "asking": "breathing_ok",
+   "asr_ms": 45,
+   "heard": "Yes, breathing is normal.",
+   "first_audio_s": 43.224,
+   "nlu_ms": 1611,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "cow",
+    "breathing_ok": true
+   },
+   "reply": "How many animals are sick?",
+   "now_asking": "animals_affected",
+   "first_content_audio_s": 44.835,
+   "response_s": 1.944,
+   "first_audio_after_s": 0.333
+  },
+  {
+   "turn": 9,
+   "speech_end_s": 49.971,
+   "eot_s": 50.43,
+   "asking": "animals_affected",
+   "asr_ms": 84,
+   "heard": "Only One Cow",
+   "first_audio_s": 50.515,
+   "nlu_ms": 1115,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "animal_type": "cow",
+    "animals_affected": 1
+   },
+   "reply": "One animal. Have you given any medicine or treatment already?",
+   "now_asking": "previous_treatment",
+   "first_content_audio_s": 52.213,
+   "response_s": 2.242,
+   "first_audio_after_s": 0.544
+  },
+  {
+   "turn": 10,
+   "speech_end_s": 60.104,
+   "eot_s": 60.372,
+   "asking": "previous_treatment",
+   "asr_ms": 47,
+   "heard": "No, no treatment given.",
+   "first_audio_s": 60.419,
+   "nlu_ms": 970,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "previous_treatment": "none"
+   },
+   "reply": "What is your name?",
+   "now_asking": "caller_name",
+   "first_content_audio_s": 61.781,
+   "response_s": 1.677,
+   "first_audio_after_s": 0.315
+  },
+  {
+   "turn": 11,
+   "speech_end_s": 67.035,
+   "eot_s": 67.304,
+   "asking": "caller_name",
+   "asr_ms": 85,
+   "heard": "My name is Basavaraju.",
+   "first_audio_s": 67.39,
+   "nlu_ms": 1203,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "caller_name": "Basavaraju"
+   },
+   "reply": "Basavaraju. Which village are you calling from?",
+   "now_asking": "village",
+   "first_content_audio_s": 68.751,
+   "response_s": 1.716,
+   "first_audio_after_s": 0.355
+  },
+  {
+   "turn": 12,
+   "speech_end_s": 75.037,
+   "eot_s": 75.402,
+   "asking": "village",
+   "asr_ms": 134,
+   "heard": "Hassan Village",
+   "first_audio_s": 75.537,
+   "filler": true,
+   "nlu_ms": 2556,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "village": "Hassan"
+   },
+   "reply": "Hassan. Which district is that in?",
+   "now_asking": "district",
+   "first_content_audio_s": 79.037,
+   "response_s": 4.0,
+   "first_audio_after_s": 0.5
+  },
+  {
+   "turn": 13,
+   "speech_end_s": 85.259,
+   "eot_s": 85.527,
+   "asking": "district",
+   "asr_ms": 78,
+   "heard": "No no Hassanali Village.",
+   "first_audio_s": 85.606,
+   "nlu_ms": 1305,
+   "nlu_source": "muse+prev",
+   "intent": "correction",
+   "facts": {
+    "village": "Hassanali"
+   },
+   "reply": "Sorry, corrected: Hassanali. Which district? For example Tumakuru, Mandya, or Ramanagara.",
+   "now_asking": "district",
+   "first_content_audio_s": 87.045,
+   "response_s": 1.786,
+   "first_audio_after_s": 0.347
+  },
+  {
+   "turn": 14,
+   "speech_end_s": 96.932,
+   "eot_s": 97.22,
+   "asking": "district",
+   "asr_ms": 65,
+   "heard": "Ramanagara District",
+   "first_audio_s": 97.286,
+   "filler": true,
+   "nlu_ms": 2177,
+   "nlu_source": "muse+rules",
+   "intent": "answer",
+   "facts": {
+    "district": "Ramanagara"
+   },
+   "reply": "Ramanagara. What phone number can the vet team call you on?",
+   "now_asking": "contact_details",
+   "first_content_audio_s": 102.015,
+   "response_s": 5.083,
+   "first_audio_after_s": 0.354
+  },
+  {
+   "turn": 15,
+   "speech_end_s": 111.436,
+   "eot_s": 112.357,
+   "asking": "contact_details",
+   "asr_ms": 52,
+   "heard": "Nine eight four five six seven two three one zero.",
+   "first_audio_s": 112.409,
+   "nlu_ms": 1060,
+   "nlu_source": "muse",
+   "intent": "answer",
+   "facts": {
+    "contact_details": "9845672310"
+   },
+   "reply": "nine eight four five six, seven two three one zero. Is that number right?",
+   "now_asking": "confirm_phone",
+   "first_content_audio_s": 113.606,
+   "response_s": 2.17,
+   "first_audio_after_s": 0.973
+  },
+  {
+   "turn": 16,
+   "speech_end_s": 121.612,
+   "eot_s": 121.879,
+   "asking": "confirm_phone",
+   "asr_ms": 56,
+   "heard": "Yes, correct.",
+   "first_audio_s": 121.936,
+   "nlu_ms": 1077,
+   "nlu_source": "muse",
+   "intent": "yes",
+   "facts": {
+    "contact_details": "9845672310"
+   },
+   "reply": "Let me read it back. One cow, not eating, very weak, since yesterday. No treatment given. Your name is Basavaraju from Hassanali, Ramanagara. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "now_asking": "summary",
+   "first_content_audio_s": 123.298,
+   "response_s": 1.686,
+   "first_audio_after_s": 0.324
+  },
+  {
+   "turn": 17,
+   "speech_end_s": 140.852,
+   "eot_s": 141.125,
+   "asking": "summary",
+   "asr_ms": 68,
+   "heard": "Yes that is correct.",
+   "first_audio_s": 141.195,
+   "nlu_ms": 1445,
+   "nlu_source": "muse",
+   "intent": "yes",
+   "facts": {
+    "animal_type": "cow",
+    "symptoms": [
+     "not eating",
+     "very weak"
+    ],
+    "symptoms_since": "yesterday",
+    "previous_treatment": "none",
+    "contact_details": "9845672310"
+   },
+   "reply": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "now_asking": null,
+   "first_content_audio_s": 142.64,
+   "response_s": 1.788,
+   "first_audio_after_s": 0.343
+  }
+ ],
+ "events": [
+  {
+   "t": 1.966,
+   "event": "agent",
+   "text": "Namaste, this is the livestock helpline. Please tell me, what happened to your animal?",
+   "kind": "content"
+  },
+  {
+   "t": 15.899,
+   "event": "speech_start"
+  },
+  {
+   "t": 19.078,
+   "event": "farmer",
+   "text": "My name is Basavaraju from Hassanali Village."
+  },
+  {
+   "t": 19.078,
+   "event": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 19.238,
+   "event": "merged_fragment"
+  },
+  {
+   "t": 19.238,
+   "event": "speech_start"
+  },
+  {
+   "t": 20.646,
+   "event": "farmer",
+   "text": "My name is Basavaraju from Hasahali Village, Ramanagara District."
+  },
+  {
+   "t": 20.646,
+   "event": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 21.018,
+   "event": "merged_fragment"
+  },
+  {
+   "t": 21.018,
+   "event": "speech_start"
+  },
+  {
+   "t": 21.873,
+   "event": "farmer",
+   "text": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow"
+  },
+  {
+   "t": 21.874,
+   "event": "agent",
+   "text": "Right.",
+   "kind": "ack"
+  },
+  {
+   "t": 21.978,
+   "event": "merged_fragment"
+  },
+  {
+   "t": 21.978,
+   "event": "speech_start"
+  },
+  {
+   "t": 23.812,
+   "event": "farmer",
+   "text": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday."
+  },
+  {
+   "t": 23.813,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 23.937,
+   "event": "merged_fragment"
+  },
+  {
+   "t": 23.937,
+   "event": "speech_start"
+  },
+  {
+   "t": 25.269,
+   "event": "farmer",
+   "text": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak."
+  },
+  {
+   "t": 25.269,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 25.338,
+   "event": "merged_fragment"
+  },
+  {
+   "t": 25.338,
+   "event": "speech_start"
+  },
+  {
+   "t": 26.422,
+   "event": "farmer",
+   "text": "My name is Basavaraju from Hasahali Village, Ramanagara District. My cow is not eating from yesterday and she is very weak, only one cow."
+  },
+  {
+   "t": 26.423,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 27.91,
+   "event": "agent",
+   "text": "A cow, since yesterday. Is the cow able to stand up?",
+   "kind": "content"
+  },
+  {
+   "t": 33.694,
+   "event": "speech_start"
+  },
+  {
+   "t": 35.328,
+   "event": "farmer",
+   "text": "Yes, she is standing."
+  },
+  {
+   "t": 35.329,
+   "event": "agent",
+   "text": "Hmm, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 36.402,
+   "event": "agent",
+   "text": "Is the cow breathing normally?",
+   "kind": "content"
+  },
+  {
+   "t": 41.231,
+   "event": "speech_start"
+  },
+  {
+   "t": 43.224,
+   "event": "farmer",
+   "text": "Yes, breathing is normal."
+  },
+  {
+   "t": 43.224,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 44.835,
+   "event": "agent",
+   "text": "How many animals are sick?",
+   "kind": "content"
+  },
+  {
+   "t": 48.991,
+   "event": "speech_start"
+  },
+  {
+   "t": 50.514,
+   "event": "farmer",
+   "text": "Only One Cow"
+  },
+  {
+   "t": 50.515,
+   "event": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 51.63,
+   "event": "agent",
+   "text": "One animal. Have you given any medicine or treatment already?",
+   "kind": "content"
+  },
+  {
+   "t": 58.443,
+   "event": "speech_start"
+  },
+  {
+   "t": 60.419,
+   "event": "farmer",
+   "text": "No, no treatment given."
+  },
+  {
+   "t": 60.419,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 61.39,
+   "event": "agent",
+   "text": "What is your name?",
+   "kind": "content"
+  },
+  {
+   "t": 65.156,
+   "event": "speech_start"
+  },
+  {
+   "t": 67.389,
+   "event": "farmer",
+   "text": "My name is Basavaraju."
+  },
+  {
+   "t": 67.39,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 68.592,
+   "event": "agent",
+   "text": "Basavaraju. Which village are you calling from?",
+   "kind": "content"
+  },
+  {
+   "t": 73.716,
+   "event": "speech_start"
+  },
+  {
+   "t": 75.536,
+   "event": "farmer",
+   "text": "Hassan Village"
+  },
+  {
+   "t": 75.537,
+   "event": "agent",
+   "text": "Right.",
+   "kind": "ack"
+  },
+  {
+   "t": 77.114,
+   "event": "agent",
+   "text": "Hmm, one moment.",
+   "kind": "filler"
+  },
+  {
+   "t": 78.188,
+   "event": "agent",
+   "text": "Hassan. Which district is that in?",
+   "kind": "content"
+  },
+  {
+   "t": 83.48,
+   "event": "speech_start"
+  },
+  {
+   "t": 85.606,
+   "event": "farmer",
+   "text": "No no Hassanali Village."
+  },
+  {
+   "t": 85.606,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 87.045,
+   "event": "agent",
+   "text": "Sorry, corrected: Hassanali. Which district? For example Tumakuru, Mandya, or Ramanagara.",
+   "kind": "content"
+  },
+  {
+   "t": 95.751,
+   "event": "speech_start"
+  },
+  {
+   "t": 97.285,
+   "event": "farmer",
+   "text": "Ramanagara District"
+  },
+  {
+   "t": 97.286,
+   "event": "agent",
+   "text": "Achha, okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 99.376,
+   "event": "agent",
+   "text": "One second, writing it down.",
+   "kind": "filler"
+  },
+  {
+   "t": 99.462,
+   "event": "agent",
+   "text": "Ramanagara. What phone number can the vet team call you on?",
+   "kind": "content"
+  },
+  {
+   "t": 107.937,
+   "event": "speech_start"
+  },
+  {
+   "t": 112.408,
+   "event": "farmer",
+   "text": "Nine eight four five six seven two three one zero."
+  },
+  {
+   "t": 112.409,
+   "event": "agent",
+   "text": "Right.",
+   "kind": "ack"
+  },
+  {
+   "t": 113.469,
+   "event": "agent",
+   "text": "nine eight four five six, seven two three one zero. Is that number right?",
+   "kind": "content"
+  },
+  {
+   "t": 120.571,
+   "event": "speech_start"
+  },
+  {
+   "t": 121.935,
+   "event": "farmer",
+   "text": "Yes, correct."
+  },
+  {
+   "t": 121.936,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 123.25,
+   "event": "agent",
+   "text": "Let me read it back. One cow, not eating, very weak, since yesterday. No treatment given. Your name is Basavaraju from Hassanali, Ramanagara. Phone nine eight four five six, seven two three one zero. Is that correct?",
+   "kind": "content"
+  },
+  {
+   "t": 139.572,
+   "event": "speech_start"
+  },
+  {
+   "t": 141.194,
+   "event": "farmer",
+   "text": "Yes that is correct."
+  },
+  {
+   "t": 141.195,
+   "event": "agent",
+   "text": "Okay.",
+   "kind": "ack"
+  },
+  {
+   "t": 142.64,
+   "event": "agent",
+   "text": "Thank you. I have registered this for the vet team. This is a demo, so no vet is actually sent. Take care, goodbye.",
+   "kind": "content"
+  },
+  {
+   "t": 150.64,
+   "event": "ended"
+  }
+ ]
+}

@@ -269,3 +269,11 @@ service-account*.json
 /examples/livelihoods/livestock/full_call_center/**/*.png
 /examples/livelihoods/livestock/full_call_center/**/*.jpg
 /examples/livelihoods/livestock/full_call_center/**/*.zip
+
+# Voice work: call audio, models and caches stay on /mnt/seagate/silo/voice-robust/ or ~/.local/share/silo-voice/
+examples/livelihoods/livestock/call_center_assist/**/*.wav
+examples/livelihoods/livestock/call_center_assist/**/*.mp3
+examples/livelihoods/livestock/call_center_assist/**/*.ogg
+examples/livelihoods/livestock/call_center_assist/**/*.opus
+examples/livelihoods/livestock/call_center_assist/**/*.flac
+examples/livelihoods/livestock/call_center_assist/**/sessions/

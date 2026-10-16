@@ -1,0 +1,17 @@
+{
+ "nlu": "or:deepseek/deepseek-v4-flash",
+ "condition": "gsm",
+ "calls": 10,
+ "checks_passed": 120,
+ "checks_total": 130,
+ "response_s_p50_p90_p95": [
+  1.93,
+  3.37,
+  4.15
+ ],
+ "first_audio_s_p50_p90_p95": [
+  0.35,
+  0.93,
+  1.0
+ ]
+}
