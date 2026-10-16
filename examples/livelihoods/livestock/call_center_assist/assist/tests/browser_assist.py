@@ -67,8 +67,7 @@ def main():
         if get(api)['status'] != 'ended': page.click('#end')
         page.wait_for_selector('#review:not([hidden])', timeout=60000); time.sleep(.5)
         page.screenshot(path=str(out / 'review.png'), full_page=True)
-        # The operator opens the case record and fixes a field by hand.
-        page.click('#record-tab')
+        # The operator fixes a field in the visible care record by hand.
         page.click('dd[data-k="animals_affected"] button.edit'); page.fill('dd[data-k="animals_affected"] .edit-input', '4')
         page.press('dd[data-k="animals_affected"] .edit-input', 'Enter'); time.sleep(.8)
         edited = get(api)['record']['fields']['animals_affected']

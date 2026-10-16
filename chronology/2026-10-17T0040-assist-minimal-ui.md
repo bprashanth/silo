@@ -1,5 +1,7 @@
 # Call center assist: a quieter operator screen
 
+Superseded by the green-chat restoration: the user wanted the original theme and simultaneous transcript/record panels retained. See `2026-10-17-assist-green-cards.md`.
+
 Checkpoint before this change: tag `assist-ui-before-minimal-20261017`, commit `ce8dfd3`. Revert this UI commit and restart only `examples/livelihoods/livestock/call_center_assist/assist/start.sh` to restore it. No changes to the full-call-center bot or its case desk.
 
 The assist at :8776 now opens on a plain, readable transcript. Case record is a separate editable tab. Call setup collapses during the call; practice checks and timings stay collapsed after it. Plain text buttons replace decorative icons. Reading an older transcript line keeps the scroll position when new speech arrives.

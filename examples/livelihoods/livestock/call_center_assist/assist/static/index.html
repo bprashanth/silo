@@ -2,44 +2,65 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Livestock helpline</title>
+<title>Operator Assist Console</title>
+<link rel="stylesheet" href="/base/style.css">
 <link rel="stylesheet" href="assist.css">
 </head>
 <body>
-<div class="workspace">
 <header>
-  <div class="heading"><div><h1>Livestock helpline</h1><p class="muted">Operator practice</p></div><div class="call-controls"><span id="status" role="status">Ready</span><span id="timer">00:00</span><button id="call" class="primary">Answer call</button><button id="end" disabled>End call</button></div></div>
-  <details id="setup" open><summary>Call setup</summary><div class="setup-fields">
-    <label>Farmer’s opening<select id="case"></select></label>
-    <label>Practice mode<select id="mode"><option value="ai">Live roleplay</option><option value="recorded">Recorded farmer</option></select></label>
-    <label id="fixture-box" hidden><input type="checkbox" id="fixture"> Use test audio</label>
-  </div><p id="modenote" class="small muted"></p><div id="fixtures" hidden></div></details>
-  <p id="error" role="alert" hidden></p>
+  <div class="title"><strong>Livestock helpline · operator assist</strong> <span class="muted">you take Lakshmamma's call; the care record fills itself as you talk</span></div>
+  <div class="controls">
+    <label>Case <select id="case"></select></label>
+    <label>Lakshmamma <select id="mode">
+      <option value="ai">live (AI)</option>
+      <option value="recorded">recorded clips</option>
+    </select></label>
+    <label class="check" id="fixture-box" hidden><input type="checkbox" id="fixture"> Test audio instead of mic</label>
+    <button id="call" class="primary">Answer call</button>
+    <button id="end" disabled>End call</button>
+    <span id="timer" class="mono">00:00</span>
+    <span id="status" class="pill">idle</span>
+  </div>
+  <div id="modenote" class="small muted"></div>
+  <div id="fixtures" hidden></div><p id="error" role="alert" hidden></p>
 </header>
-<main>
-  <section class="conversation">
-    <div class="section-heading"><div class="tabs" role="tablist" aria-label="Call information"><button id="transcript-tab" role="tab" aria-selected="true" aria-controls="transcript-panel">Transcript</button><button id="record-tab" role="tab" aria-selected="false" aria-controls="record-panel">Case record</button></div><span id="record-progress" class="small muted"></span></div>
-    <div id="transcript-panel" role="tabpanel" aria-labelledby="transcript-tab"><div id="transcript" tabindex="0" aria-label="Call transcript"><div class="empty"><h2>Ready to listen</h2><p>Answer the practice call. The farmer’s words and your questions will appear here.</p><p class="small muted">Use headphones. You can correct the case record while talking.</p></div></div><button id="latest" class="text-button" hidden>Latest message</button></div>
-    <div id="record-panel" role="tabpanel" aria-labelledby="record-tab" hidden><p class="small muted">Heard details remain unconfirmed until you check them with the farmer.</p><dl id="fields"></dl><button id="export" class="text-button">Export record</button></div>
+<main class="two">
+  <section>
+    <h2>Call</h2>
+    <div id="transcript"><p class="muted">Pick a case and answer the call (use headphones). Take the case in any order you like.
+      Repeating a fact back, now or later in the call ("okay, I have noted the goats"), marks it confirmed.
+      Anything still empty in the care record is left to ask.</p></div><button id="latest" class="text-button" hidden>Latest message</button>
   </section>
-  <aside aria-label="Advisories">
-    <div class="section-heading"><h2>Advisories</h2><span id="advisory-count" class="small muted"></span></div>
-    <p class="small muted approval-note">Reference prompts. Veterinary approval pending.</p>
-    <p id="urgent" class="urgent-line" hidden></p>
-    <div id="cards"><div class="empty small">Relevant prompts appear as the farmer describes the problem.</div></div>
-    <details id="cleared-panel" hidden><summary id="cleared-label">Cleared cards</summary><p class="small muted">Clearing removes a prompt from this view. It does not resolve a clinical concern.</p><div id="cleared-cards"></div></details>
-    <p id="card-error" role="alert" hidden></p>
+  <aside>
+    <h2>Care record <span id="record-progress" class="small muted"></span></h2>
+    <div id="urgent" class="urgent-line" hidden></div>
+    <dl id="fields"></dl>
+    <p class="legend small muted"><span class="tag confirmed">confirmed</span> you repeated it and the line agrees ·
+      <span class="tag operator">you said</span> · <span class="tag heard_only">heard only</span> not repeated yet ·
+      <span class="tag operator_differs">differs</span> check it · <span class="todo">to ask</span></p>
+    <div class="row"><button id="export">Export JSON</button></div>
+    <section class="advisories" aria-label="Advisories">
+      <div class="advisory-title"><h2>Advisories</h2><span id="advisory-count" class="small muted"></span></div>
+      <p class="small muted approval-note">Reference prompts. Veterinary approval pending.</p>
+      <div id="cards"><p class="small muted">Relevant prompts appear as the farmer describes the problem.</p></div>
+      <details id="cleared-panel" hidden><summary id="cleared-label">Cleared cards</summary><div id="cleared-cards"></div></details>
+      <p id="card-error" role="alert" hidden></p>
+    </section>
   </aside>
 </main>
 <section id="review" hidden>
-  <div class="section-heading"><h2>After the call</h2><span class="small muted">Review before handoff</span></div>
-  <div id="handoff" hidden><h3>Veterinary handoff</h3><div id="handoff-body"></div></div>
-  <details><summary>Practice review</summary><div class="review-grid"><div><h3>Legacy prototype checks</h3><p class="small muted">These include unapproved advice lines and dispatch assumptions, not an assessment of clinical safety.</p><ul id="qa"></ul></div><div><h3>Record consistency</h3><div id="diff"></div></div><div><h3>Roleplay answers</h3><ul id="truth"></ul></div></div>
-    <div id="casesheet" hidden><h3>Practice case sheet</h3><div id="sheet"></div></div>
-  </details>
-  <details><summary>Call diagnostics</summary><div class="table-scroll"><table><thead><tr><th>Turn</th><th>Operator transcript</th><th>Recognition</th><th>Question</th><th>Farmer delay</th><th>Farmer model</th><th>Extraction</th></tr></thead><tbody id="metrics"></tbody></table></div></details>
+  <h2>After the call</h2>
+  <div class="cols">
+    <div><h3>Prototype practice checks</h3><p class="small muted">Includes legacy advice checks; not a clinical safety assessment.</p><ul id="qa"></ul></div>
+    <div><h3>Second read of the whole call (local Muse)</h3><div id="diff"></div></div>
+    <div><h3>Role-play only: vs Lakshmamma's real answers</h3><ul id="truth"></ul></div>
+  </div>
+  <div id="handoff" hidden><h3>For the vet (handoff)</h3><div id="handoff-body"></div></div>
+  <div id="casesheet" hidden><h3>The case sheet (what Lakshmamma knew)</h3><div id="sheet"></div>
+  </div>
+  <h3>Timings</h3>
+  <table><thead><tr><th>#</th><th>You said (as heard)</th><th>ASR</th><th>Asked</th><th>Farmer answers after</th><th>Farmer LLM</th><th>Your words read</th></tr></thead><tbody id="metrics"></tbody></table>
 </section>
-</div>
 <audio id="remote" autoplay></audio>
 <script src="app.js"></script>
 </body>

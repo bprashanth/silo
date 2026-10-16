@@ -70,13 +70,13 @@ Indian field report, named in the case sheet:
 
 ## What the screen shows
 
-The transcript is the default view. Farmer and operator turns have clear labels, plain text and a **Listen** control for recorded audio. New lines follow the conversation only while you are at the bottom; reading an older line keeps your position, with **Latest message** available to catch up.
+The original green chat interface is preserved, with the transcript on the left and the care record filling alongside it on the right. Farmer and operator turns have clear labels, plain text and a **Listen** control for recorded audio. New lines follow the conversation only while you are at the bottom; reading an older line keeps your position, with **Latest message** available to catch up.
 
-**Case record** opens a separate tab for the captured fields and their confirmation states. **Edit** changes a field when recognition was wrong. Typed values remain marked as edited. Tab controls work with the keyboard. Call setup collapses when a call starts, and detailed practice checks and timings stay in disclosures after the call.
+**Care record** stays visible beside the transcript with captured fields and their confirmation states. **Edit** changes a field when recognition was wrong. Typed values remain marked as edited. Call controls and the after-call review retain the original layout.
 
 ### Advisory stack
 
-Five fixed, observation-based classes replace nine overlapping visible cards:
+Below the care record, five fixed, observation-based classes replace nine overlapping visible cards. Their borders, headers and hover states use the existing green chat palette:
 
 | Class | Topics grouped |
 |---|---|
@@ -90,7 +90,7 @@ One card expands at a time. It shows **Trigger** (the actual farmer or operator 
 
 Click **Clear card** to move a reviewed prompt out of the active stack; the next card opens. **Cleared cards** offers **Restore**. This state is held by the session and included in saved session data; clearing does not fill fields, change urgency, resolve a clinical concern or satisfy protocol QA. An additional underlying concern or a higher priority reopens the class. Starting a new call has its own stack. Generic mentions of eating no longer trigger the exposure class.
 
-The classes and priority rules are a prototype, not an approved ERC taxonomy. The active UI does not display the former clinical instructions, notifiable-disease badges or promised dispatch/callback times. Legacy rules and advice checks remain in the backend and are explicitly labeled under the collapsed practice review. They must not be interpreted as clinical approval or dispatch commitments. A veterinarian still needs to approve the questionnaire and operational SOP before real use. `ASSIST_PROTOCOL=0` disables protocol prompts.
+The classes and priority rules are a prototype, not an approved ERC taxonomy. The active UI does not display the former clinical instructions, notifiable-disease badges or promised dispatch/callback times. Legacy rules and advice checks remain in the backend and are explicitly labeled in the after-call practice review. They must not be interpreted as clinical approval or dispatch commitments. A veterinarian still needs to approve the questionnaire and operational SOP before real use. `ASSIST_PROTOCOL=0` disables protocol prompts.
 
 ### Evidence behind the prompts
 
@@ -101,9 +101,11 @@ The classes and priority rules are a prototype, not an approved ERC taxonomy. Th
 
 ### Visual checks and rollback
 
-Before-change checkpoint: `assist-ui-before-minimal-20261017` (commit `ce8dfd3`). Revert the minimal-UI commit to return to that interface, then restart only `assist/start.sh`. The original full-call-center bot and case desk do not need restarting.
+The first minimal redesign was rejected because it changed the chat theme and replaced the simultaneous panels with tabs. It is preserved at `assist-ui-minimal-first-pass-20261017` (`a9cfe38`). The corrected design restores the original interface and limits the visual redesign to the advisory stack. New screenshots are at `/mnt/seagate/silo/voice-robust/ui-green-cards-20261017/`.
 
-UI evidence is outside Git at `/mnt/seagate/silo/voice-robust/ui-minimal-20261017/`: before/after screenshots, synthetic layout interactions, mobile screenshots and an actual Chromium/WebRTC recorded-farmer call. `assist/tests/browser_layout.py` tests five-card presentation, clearing/restoration, source disclosures, keyboard tabs, scroll retention and horizontal overflow using synthetic UI state. `assist/tests/browser_assist.py` tests the real call transport and editing, including clearing and restoring a card via the live API. Synthetic clips are not evidence of human accent/noise robustness.
+Before-change checkpoint: `assist-ui-before-minimal-20261017` (commit `ce8dfd3`). To restore the original code without rewriting history, restore `examples/livelihoods/livestock/call_center_assist/` from that tag in a new commit, then restart only `assist/start.sh`. The original full-call-center bot and case desk do not need restarting.
+
+UI evidence is outside Git at `/mnt/seagate/silo/voice-robust/ui-minimal-20261017/`: before/after screenshots, synthetic layout interactions, mobile screenshots and an actual Chromium/WebRTC recorded-farmer call. `assist/tests/browser_layout.py` tests five-card presentation, clearing/restoration, source disclosures, simultaneous transcript/record visibility, keyboard card controls, scroll retention and horizontal overflow using synthetic UI state. `assist/tests/browser_assist.py` tests the real call transport and editing, including clearing and restoring a card via the live API. Synthetic clips are not evidence of human accent/noise robustness.
 
 ## How it works
 

@@ -69,7 +69,7 @@ async function startCall() {
   selectedAdvisory = null; lastCardsHTML = ''; lastTranscriptHTML = ''; last = null; sid = null;
   $('transcript').innerHTML = '<p class=muted>Connecting the practice call.</p>'; $('fields').innerHTML = '';
   renderProtocol(null); $('urgent').hidden = true; $('record-progress').textContent = ''; $('timer').textContent = '00:00';
-  $('setup').open = false; $('case').disabled = $('mode').disabled = true;
+  $('case').disabled = $('mode').disabled = true;
   ctx = new AudioContext({sampleRate: 48000});
   const id = $('case').value;
   const s = await api('/api/sessions', id.startsWith('rec:') ? {scenario: id.slice(4), mode: 'recorded', fixture: $('fixture').checked}
@@ -103,7 +103,7 @@ async function refresh() {
 }
 
 function render(s) {
-  $('status').textContent = s.farmer_speaking ? 'farmer speaking' : s.status; $('status').className = '';
+  $('status').textContent = s.farmer_speaking ? 'farmer speaking' : s.status; $('status').className = 'pill' + (s.farmer_speaking ? ' speaking' : '');
   const t = $('transcript'), atBottom = t.scrollHeight - t.scrollTop - t.clientHeight < 40;
   const msgs = (s.transcript || []).map(m => m.role === 'farmer'
     ? `<div class="msg farmer ${m.interrupted ? 'interrupted' : ''}"><span class="who">Farmer${m.audio ? ` <button class="play" onclick="playClip('${esc(m.audio)}')">Listen</button>` : ''}</span>${esc(m.text) || '<span class="muted">(nothing recognised)</span>'}` +
@@ -206,14 +206,6 @@ async function setCleared(id, cleared, button) {
     ($('cards').querySelector('[aria-expanded=true]') || $('cleared-label')).focus();
   } catch (error) { $('card-error').textContent = 'Could not update this card. Please try again.'; $('card-error').hidden = false; button.disabled = false; }
 }
-function showPanel(record) {
-  $('record-panel').hidden = !record; $('transcript-panel').hidden = record;
-  $('record-tab').setAttribute('aria-selected', String(record)); $('transcript-tab').setAttribute('aria-selected', String(!record));
-}
-$('record-tab').onclick = () => showPanel(true); $('transcript-tab').onclick = () => showPanel(false);
-for (const id of ['record-tab', 'transcript-tab']) $(id).onkeydown = e => {
-  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const record = id !== 'record-tab'; showPanel(record); $(record ? 'record-tab' : 'transcript-tab').focus(); }
-};
 $('latest').onclick = () => { $('transcript').scrollTop = $('transcript').scrollHeight; $('latest').hidden = true; };
 
 function renderReview(s) {
@@ -237,7 +229,7 @@ function renderReview(s) {
 $('call').onclick = () => startCall().catch(e => {
   $('status').textContent = 'Not connected'; $('error').textContent = e.message; $('error').hidden = false;
   clearInterval(poll); clearInterval(clock); micStream?.getTracks().forEach(t => t.stop()); pc?.close(); pc = null; ctx?.close();
-  $('call').disabled = false; $('case').disabled = $('mode').disabled = false; $('setup').open = true;
+  $('call').disabled = false; $('case').disabled = $('mode').disabled = false;
 });
 $('end').onclick = () => endCall().catch(e => { ending = false; $('end').disabled = false; $('error').textContent = 'Could not finish the call review. Try End call again.'; $('error').hidden = false; });
 $('export').onclick = () => { if (!last) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(last, null, 1)], {type: 'application/json'})); a.download = `assist-${last.id}.json`; a.click(); };
