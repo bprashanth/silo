@@ -1,11 +1,11 @@
 import tempfile
 import unittest
 from pathlib import Path
-from livestock.engine import Engine
-from livestock.model import Muse
-from livestock.hindi import canonicalize_input, localize_reply, HINDI_QUESTIONS
-from livestock.config import QUESTIONS
-from livestock.tests.test_engine import FakeMuse
+from examples.livelihoods.livestock.full_call_center.engine import Engine
+from examples.livelihoods.livestock.full_call_center.model import Muse
+from examples.livelihoods.livestock.full_call_center.hindi import canonicalize_input, localize_reply, HINDI_QUESTIONS
+from examples.livelihoods.livestock.full_call_center.config import QUESTIONS
+from examples.livelihoods.livestock.full_call_center.tests.test_engine import FakeMuse
 
 
 class HindiTest(unittest.TestCase):

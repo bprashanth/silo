@@ -1,11 +1,11 @@
-"""Opt-in actual local Muse test: python -m livestock.tests.test_hindi_live."""
+"""Opt-in actual local Muse test: python -m examples.livelihoods.livestock.full_call_center.tests.test_hindi_live."""
 import json
 from copy import deepcopy
 from pathlib import Path
 import tempfile
-from livestock.engine import Engine
-from livestock.model import Muse
-from livestock.config import QUESTIONS
+from examples.livelihoods.livestock.full_call_center.engine import Engine
+from examples.livelihoods.livestock.full_call_center.model import Muse
+from examples.livelihoods.livestock.full_call_center.config import QUESTIONS
 
 
 def run():

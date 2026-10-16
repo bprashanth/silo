@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from livestock.engine import Engine
+from examples.livelihoods.livestock.full_call_center.engine import Engine
 
 FIELDS={'animal_type':'cow','symptoms':['weak'],'urgent_warning_signs':[],'symptoms_since':'yesterday','animals_affected':1,'previous_treatment':'none','farmer_name':'Demo Farmer','village':'Neemgaon','district':'Demo North'}
 

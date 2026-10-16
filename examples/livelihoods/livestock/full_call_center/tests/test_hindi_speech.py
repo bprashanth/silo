@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import time
 import unittest
-from livestock import speech
+from examples.livelihoods.livestock.full_call_center import speech
 
 FIXTURES = {
     'complaint': 'मेरी गाय कल से बीमार है। वह चारा नहीं खा रही है और कमज़ोर है।',

@@ -71,7 +71,6 @@ local model and start it.
 
 ```text
 examples/      frozen domain examples; livestock/full_call_center is under livelihoods
-livestock      compatibility symlink to the frozen call-center example
 tg-bridge/     the Telegram bot, its python-tool harness and sandbox image, test and eval scripts
 wa-bridge/     the abandoned WhatsApp bridge (see chronology)
 docs/          how to deploy and operate

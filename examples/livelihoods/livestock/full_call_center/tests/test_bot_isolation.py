@@ -1,7 +1,7 @@
 """The new bot cannot route through or broaden the original bot."""
 import unittest
 from unittest.mock import Mock,patch
-from livestock import bot
+from examples.livelihoods.livestock.full_call_center import bot
 
 class Isolation(unittest.TestCase):
     def message(self, actor=7, kind='private'):

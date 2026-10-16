@@ -1,4 +1,4 @@
-"""Opt-in integration check: python -m livestock.tests.test_live_model [--voice].
+"""Opt-in integration check: python -m examples.livelihoods.livestock.full_call_center.tests.test_live_model [--voice].
 
 Calls actual local Muse (and Whisper/Kokoro with --voice). Only Telegram delivery
 is a recording mock: no Telegram account receives these synthetic test messages.
@@ -11,9 +11,9 @@ from pathlib import Path
 import sys
 import time
 
-from livestock.engine import Engine
-from livestock.model import Muse
-from livestock.storage import AssetStore
+from examples.livelihoods.livestock.full_call_center.engine import Engine
+from examples.livelihoods.livestock.full_call_center.model import Muse
+from examples.livelihoods.livestock.full_call_center.storage import AssetStore
 
 
 class MeasuredMuse(Muse):
@@ -60,7 +60,7 @@ def run(voice=False):
         initial='My cow has been unwell since yesterday. She is not eating and looks weak.'
         media=None
         if voice:
-            from livestock import speech
+            from examples.livelihoods.livestock.full_call_center import speech
             import onnxruntime as ort
             from kokoro_onnx import Kokoro
             options=ort.SessionOptions()

@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
-from livestock.fizzy_sync import Mirror, payload
+from examples.livelihoods.livestock.full_call_center.fizzy_sync import Mirror, payload
 
 class FizzyTests(unittest.TestCase):
     def test_payload_escapes_and_omits_private_evidence(self):

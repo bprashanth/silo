@@ -6,11 +6,11 @@ mkdir -p "$state"
 case "${1:-start}" in
   stop)
     systemctl --user disable --now silo-livestock-fizzy-sync.service 2>/dev/null || true
-    docker compose -f livestock/fizzy-compose.yaml stop
+    docker compose -p livestock -f examples/livelihoods/livestock/full_call_center/fizzy-compose.yaml stop
     ;;
   start)
-    test -f "$state/config.json" || { echo 'Run the bootstrap instructions in livestock/fizzy.md first.'; exit 1; }
-    docker compose -f livestock/fizzy-compose.yaml up -d
+    test -f "$state/config.json" || { echo 'Run the bootstrap instructions in examples/livelihoods/livestock/full_call_center/fizzy.md first.'; exit 1; }
+    docker compose -p livestock -f examples/livelihoods/livestock/full_call_center/fizzy-compose.yaml up -d
     python3 - <<'PYCONFIG'
 import json
 from pathlib import Path
@@ -27,7 +27,7 @@ Description=Optional local livestock Fizzy mirror
 After=network-online.target
 [Service]
 WorkingDirectory=$PWD
-ExecStart=/usr/bin/python3 $PWD/livestock/fizzy_sync.py
+ExecStart=/usr/bin/python3 $PWD/examples/livelihoods/livestock/full_call_center/fizzy_sync.py
 Restart=on-failure
 RestartSec=5
 UMask=0077
@@ -39,5 +39,5 @@ EOF
     systemctl --user daemon-reload
     systemctl --user enable --now silo-livestock-fizzy-sync.service
     ;;
-  *) echo 'Usage: livestock/fizzy.sh [start|stop]'; exit 2;;
+  *) echo 'Usage: examples/livelihoods/livestock/full_call_center/fizzy.sh [start|stop]'; exit 2;;
 esac

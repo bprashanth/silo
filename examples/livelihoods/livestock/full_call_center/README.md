@@ -1,6 +1,6 @@
 # Buffalo Soldiers livestock POC — frozen example
 
-Canonical source: `examples/livelihoods/livestock/full_call_center/`. The repository-root `livestock` symlink preserves imports and service commands below; there is only one code copy. Run commands from the repository root.
+Canonical source: `examples/livelihoods/livestock/full_call_center/`. There is no root compatibility symlink. Python modules use `examples.livelihoods.livestock.full_call_center` directly. Run commands from the repository root.
 
 Frozen after commit `39340af` (16 October 2026), with relocation and documentation changes only. The proposed conversational checklist agent is **not implemented**. Clarification requests and partial answers can still repeat questions. See the [narrative](../../../../narrative/call_center_automation.md).
 
@@ -10,7 +10,7 @@ Send an English voice note to [@Buffalosoldiers_bot](https://t.me/Buffalosoldier
 
 ## Independent bot
 
-All Buffalo code lives in `livestock/`: `bot.py`, `transport.py`, `client.py`, and `speech.py`. The original Silo bot stays in `tg-bridge/`, running its restored code without a livestock menu or routing. Buffalo has its own polling state and service; both share the existing local Muse endpoint at `127.0.0.1:8181` and local speech models.
+All Buffalo code lives in `examples/livelihoods/livestock/full_call_center/`: `bot.py`, `transport.py`, `client.py`, and `speech.py`. The original Silo bot stays in `tg-bridge/`, running its restored code without a livestock menu or routing. Buffalo has its own polling state and service; both share the existing local Muse endpoint at `127.0.0.1:8181` and local speech models.
 
 The new token is read from `livestock_botfather_api_key` in `~/.config/idlisseus/telegram.json`. Private-chat access uses the numeric Telegram account IDs in `~/.config/livestock/allowed.txt`, currently permitting only the owner. This is an account-ID allow list, not phone-number matching. No channel or second account is needed for the current demonstration. Never commit either configuration file.
 
@@ -19,15 +19,15 @@ The new token is read from `livestock_botfather_api_key` in `~/.config/idlisseus
 From the repository root:
 
 ```sh
-livestock/setup.sh             # Install the independent environment if needed
-livestock/start.sh             # Case desk/API on 0.0.0.0:8766
-livestock/bot.sh start         # Dedicated systemd user service
-livestock/bot.sh status
+examples/livelihoods/livestock/full_call_center/setup.sh             # Install the independent environment if needed
+examples/livelihoods/livestock/full_call_center/start.sh             # Case desk/API on 0.0.0.0:8766
+examples/livelihoods/livestock/full_call_center/bot.sh start         # Dedicated systemd user service
+examples/livelihoods/livestock/full_call_center/bot.sh status
 # Optional case board:
-livestock/fizzy.sh start
+examples/livelihoods/livestock/full_call_center/fizzy.sh start
 ```
 
-`livestock/bot.sh stop` stops only Buffalo; `livestock/start.sh stop` stops only the case desk/API. Logs are available with `journalctl --user -u silo-buffalo` and the private `server.log`. These commands do not restart or modify the original bot.
+`examples/livelihoods/livestock/full_call_center/bot.sh stop` stops only Buffalo; `examples/livelihoods/livestock/full_call_center/start.sh stop` stops only the case desk/API. Logs are available with `journalctl --user -u silo-buffalo` and the private `server.log`. These commands do not restart or modify the original bot.
 
 Private database, key, assets and Buffalo state live under `~/.local/share/idli-bridge/livestock/` by default (`LIVESTOCK_STATE`; optional `LIVESTOCK_DB`). Packages and large synthetic artifacts live under `/mnt/seagate/silo/livestock-v2/`. The independent Python environment is `$LIVESTOCK_STATE/venv`, not `tg-bridge/.venv`.
 
@@ -46,7 +46,7 @@ Same-account feedback is explicitly roleplay, not independent verification. The 
 
 [Fizzy setup and limitations](fizzy.md) describe the local instance on port **8767**. Use the Fizzy link in the case desk to open its shared board. It mirrors confirmed cases one way; assignment and other operational actions remain in the case desk. No case data is uploaded to fizzy.do. Drafts, historical seeds, raw transcripts, Telegram identifiers and media are excluded.
 
-`livestock/fizzy.sh stop` disables the mirror and board while leaving both bots and the case desk running. The existing desk remains the fallback; disabling Fizzy requires no case database restore.
+`examples/livelihoods/livestock/full_call_center/fizzy.sh stop` disables the mirror and board while leaving both bots and the case desk running. The existing desk remains the fallback; disabling Fizzy requires no case database restore.
 
 The Git tag **`livestock-v2-before-buffalo-hindi`** checkpoints the preceding implementation. A private database checkpoint is stored under `~/.local/share/idli-bridge/livestock/checkpoints/`. Restoring that database would discard later case changes, so it is not part of disabling Fizzy. Code rollback and database restore are separate operations.
 
@@ -64,11 +64,11 @@ Run tests from the repository root:
 ```sh
 export PYTHONPATH=/mnt/seagate/silo/livestock-v2/packages
 livestock_python="$HOME/.local/share/idli-bridge/livestock/venv/bin/python"
-"$livestock_python" -m unittest discover -s livestock/tests -p 'test_*.py'
-"$livestock_python" -m unittest livestock.fizzy_test
+"$livestock_python" -m unittest discover -s examples/livelihoods/livestock/full_call_center/tests -p 'test_*.py'
+"$livestock_python" -m unittest examples.livelihoods.livestock.full_call_center.fizzy_test
 # Explicit integration tests; these call local models:
-"$livestock_python" -m livestock.tests.test_hindi_live
-"$livestock_python" -m livestock.tests.test_hindi_speech --generate /mnt/seagate/silo/livestock-v2/buffalo-tests/fixtures
+"$livestock_python" -m examples.livelihoods.livestock.full_call_center.tests.test_hindi_live
+"$livestock_python" -m examples.livelihoods.livestock.full_call_center.tests.test_hindi_speech --generate /mnt/seagate/silo/livestock-v2/buffalo-tests/fixtures
 ```
 
 The Hindi model integration test has passed intake through explicit unknown, negative warning answer, corrections and confirmed submission. It uses actual Muse with a scratch database, not Telegram transport. Synthetic Hindi speech tests exercise Kokoro and Whisper separately. The actual Buffalo Hindi Telegram run created and closed `CASE-A27665EA9D` through intake, vet acceptance/report and farmer feedback. All 26 deterministic tests pass. See `../../../../chronology/2026-10-16T0830-buffalo-hindi-fizzy.md` and `tests/evidence/buffalo-hindi-live.json`. That completed test left no open case; subsequent user testing created an unfinished intake.

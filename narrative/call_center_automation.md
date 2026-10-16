@@ -10,7 +10,7 @@ Submitted cases appear in the case desk. An operator assigns a registered vet, w
 
 Fizzy is a self-hosted, one-way display of submitted live cases. It mirrors status and structured fields; the case desk remains authoritative for assignment and closure. Drafts and synthetic historical seed cases are excluded. Telegram identifiers, original transcripts and media are not copied to Fizzy. No case data was uploaded to fizzy.do. Fizzy can be stopped without changing either bot or the case database.
 
-Buffalo Soldiers has its own token, owner-only allowlist, inbox and process. The original io/Silo bot remains in `tg-bridge/`, without livestock routing. The code was moved into the example directory; a root `livestock` symlink preserves existing Python imports, service paths and historical instructions. Private configuration and runtime databases remain outside the checkout; large model, audio and screenshot artifacts stay on Seagate or the existing host model store.
+Buffalo Soldiers has its own token, owner-only allowlist, inbox and process. The original io/Silo bot remains in `tg-bridge/`, without livestock routing. The code lives in the example directory, and Python imports and service commands use that location directly. The temporary root compatibility symlink was removed; historical chronology retains the commands used at the time. Private configuration and runtime databases remain outside the checkout; large model, audio and screenshot artifacts stay on Seagate or the existing host model store.
 
 ## What the evidence actually covers
 
