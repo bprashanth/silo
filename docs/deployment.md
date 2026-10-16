@@ -104,7 +104,7 @@ export IDLI_MODEL=<name from GET $IDLI_BASE_URL/models>
 ```sh
 cd tg-bridge
 export TELEGRAM_BOT_TOKEN=123456:ABC...        # or ~/.config/silo/telegram.json
-printf 'alice\nbob\n7196436554\n' > ~/.config/silo/allowed.txt
+printf 'alice\nbob\nYOUR_TELEGRAM_USER_ID\n' > ~/.config/silo/allowed.txt
 ./start.sh
 ```
 

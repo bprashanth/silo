@@ -7,7 +7,7 @@ model server; the bridge only makes outbound requests.
 Supported inputs: text, PDF (pdftotext), xlsx/xls (openpyxl; soffice converts
 .xls), txt/md/csv, and png/jpeg as images. Anything else gets an "unsupported"
 reply instead of a guess. Access is limited by `TG_ALLOWED` (currently the
-owner only: `redpig,7196436554`).
+owner only: `redpig,YOUR_TELEGRAM_USER_ID`).
 
 End-to-end tests run as the owner's Telegram account through Telethon
 (`tl_login.py`, `tl_roundtrip.py`, `tl_session.py`), so the bot is tested exactly

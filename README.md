@@ -63,9 +63,15 @@ reliably on the server, because the user base's Windows machines vary too much.
 **To run it:** [docs/deployment.md](docs/deployment.md) explains how to point the bridge at a
 local model and start it.
 
+## Frozen examples
+
+[Livestock call center](examples/livelihoods/livestock/full_call_center/) contains the independent Telegram intake and case-workflow POC. [Call center automation](narrative/call_center_automation.md) describes the evidence, conversational failures and proposed next design.
+
 ## Layout
 
 ```text
+examples/      frozen domain examples; livestock/full_call_center is under livelihoods
+livestock      compatibility symlink to the frozen call-center example
 tg-bridge/     the Telegram bot, its python-tool harness and sandbox image, test and eval scripts
 wa-bridge/     the abandoned WhatsApp bridge (see chronology)
 docs/          how to deploy and operate

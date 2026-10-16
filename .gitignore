@@ -228,3 +228,44 @@ __pycache__/
 *.gguf
 .agents/
 .prompts/
+
+# Private credentials and live runtime state (examples use ~/.config and ~/.local/share)
+.env.*
+!.env.example
+runtime.env
+*.session-*
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite*-*
+*.pem
+*.key
+telegram.json
+openrouter.json
+allowed.txt
+credentials*.json
+service-account*.json
+
+# Large local inference weights
+*.onnx
+*.safetensors
+*.pt
+*.pth
+
+# Livestock example: generated/private artifacts stay outside the checkout
+/examples/livelihoods/livestock/full_call_center/state/
+/examples/livelihoods/livestock/full_call_center/checkpoints/
+/examples/livelihoods/livestock/full_call_center/models/
+/examples/livelihoods/livestock/full_call_center/packages/
+/examples/livelihoods/livestock/full_call_center/artifacts/
+/examples/livelihoods/livestock/full_call_center/config.json
+/examples/livelihoods/livestock/full_call_center/**/session.json
+/examples/livelihoods/livestock/full_call_center/**/*.bin
+/examples/livelihoods/livestock/full_call_center/**/*.ogg
+/examples/livelihoods/livestock/full_call_center/**/*.wav
+/examples/livelihoods/livestock/full_call_center/**/*.mp3
+/examples/livelihoods/livestock/full_call_center/**/*.mp4
+/examples/livelihoods/livestock/full_call_center/**/*.png
+/examples/livelihoods/livestock/full_call_center/**/*.jpg
+/examples/livelihoods/livestock/full_call_center/**/*.zip

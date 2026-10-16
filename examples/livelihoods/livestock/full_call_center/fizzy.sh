@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 state="$HOME/.local/share/silo-livestock-fizzy"
 mkdir -p "$state"
 case "${1:-start}" in

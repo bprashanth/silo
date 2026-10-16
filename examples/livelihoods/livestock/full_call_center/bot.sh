@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")/.."
+cd "$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 state="${LIVESTOCK_STATE:-$HOME/.local/share/idli-bridge/livestock}"
 unit=silo-buffalo
 case "${1:-start}" in

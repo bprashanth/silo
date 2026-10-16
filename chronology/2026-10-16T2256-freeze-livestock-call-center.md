@@ -1,0 +1,13 @@
+# Freeze the livestock call-center example
+
+The user requested a freeze, relocation to `examples/livelihoods/livestock/full_call_center/`, chronology and a narrative entry, then a local commit for review. No push is authorized as part of this step; the user will handle origin/main.
+
+Moved the existing `livestock/` implementation, tests and sanitized evidence into that example directory. The repository-root `livestock` is now a relative symlink to the canonical source, preserving Python imports and existing service paths without maintaining a second copy. Start/bot/Fizzy scripts resolve the repository root so they also work when invoked using the new path. Existing private configuration, case data and large Seagate artifacts were not moved or copied into Git. Running services remain available.
+
+The functional baseline is `39340af`: English Buffalo intake and speech, fixed questionnaire, explicit observation fallback, vet-role guidance, operator-controlled assignment/closure and optional local Fizzy mirroring. This freeze does not implement the proposed conversational agent. In particular, clarification requests, partial answers to compound questions and free exploration remain limitations. Current case state is preserved, including the user's unfinished intake.
+
+Added `narrative/call_center_automation.md` covering the workflow, actual evidence, failures found during user testing, and the agreed but unimplemented conversational-checklist design. Updated the narrative index, root README and example README. Historical chronology is retained; one older entry and deployment instructions had a pre-existing owner account ID redacted for privacy, without changing the historical conclusion.
+
+Expanded ignore rules for credentials, live databases and sidecars, sessions, keys, weights, and example-specific generated media/state. Checked current tracked content for Telegram/OpenRouter tokens, private-key markers and the known owner ID. No credentials or owner ID remain in the staged tree. This is a current-tree check, not a rewrite of Git history. No tracked file exceeds 1 MB; the largest existing file is a 790,093-byte benchmark spreadsheet. Small synthetic evidence JSON remains versioned. Representative secret, database, model, audio and session paths are confirmed ignored.
+
+Validation after relocation: 29 deterministic tests pass through the compatibility import path; shell syntax checks pass; the new-path start command finds the existing API; API health is ready and Buffalo/Fizzy-mirror services are active. No Telegram test messages, role changes or case transitions were needed for this move. Local commit and freeze tag `livestock-full-call-center-frozen` identify the reviewable snapshot.

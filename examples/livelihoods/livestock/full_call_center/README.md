@@ -1,4 +1,8 @@
-# Buffalo Soldiers livestock POC
+# Buffalo Soldiers livestock POC — frozen example
+
+Canonical source: `examples/livelihoods/livestock/full_call_center/`. The repository-root `livestock` symlink preserves imports and service commands below; there is only one code copy. Run commands from the repository root.
+
+Frozen after commit `39340af` (16 October 2026), with relocation and documentation changes only. The proposed conversational checklist agent is **not implemented**. Clarification requests and partial answers can still repeat questions. See the [narrative](../../../../narrative/call_center_automation.md).
 
 Current trial: English input, English replies and Kokoro `af_heart` (`en-us`). The Hindi implementation and validation below describe the preceding trial; Hindi is not currently enabled in the Telegram adapter. Existing case records are retained.
 
@@ -27,10 +31,10 @@ livestock/fizzy.sh start
 
 Private database, key, assets and Buffalo state live under `~/.local/share/idli-bridge/livestock/` by default (`LIVESTOCK_STATE`; optional `LIVESTOCK_DB`). Packages and large synthetic artifacts live under `/mnt/seagate/silo/livestock-v2/`. The independent Python environment is `$LIVESTOCK_STATE/venv`, not `tg-bridge/.venv`.
 
-## Demonstrate
+## Demonstrate the current English trial
 
-1. Open Buffalo and the case desk side by side. Send a Hindi voice note directly, for example: “मेरी गाय कल से बीमार है। वह चारा नहीं खा रही है और कमज़ोर है।” A new account automatically enters the farmer role.
-2. Answer the questions about the animal, symptoms, urgent signs, onset, number affected, prior treatment, name, village and district. Hindi text works too. Unknown answers and corrections are supported. Confirm the summary to submit the case.
+1. Open Buffalo and the case desk side by side. Send an English voice note directly, for example: “My cow has been weak since yesterday.” A new account automatically enters the farmer role.
+2. Answer the questions about the animal, symptoms, urgent signs, onset, number affected, prior treatment, name, village and district. English text works too. Unknown answers and corrections are supported. Confirm the summary to submit the case.
 3. Open the case in the desk to inspect its details and original evidence. Draft intake records remain distinguishable from submitted cases.
 4. For the same-account vet roleplay, send `/vet VET-01`. Approve assignment to that connected vet in the desk, then accept it in Telegram.
 5. Report the visit by voice, including observations, assistance and whether another visit is needed. Send a photograph and location, then confirm the report. Media alone does not prove a completed visit.
@@ -47,6 +51,8 @@ Same-account feedback is explicitly roleplay, not independent verification. The 
 The Git tag **`livestock-v2-before-buffalo-hindi`** checkpoints the preceding implementation. A private database checkpoint is stored under `~/.local/share/idli-bridge/livestock/checkpoints/`. Restoring that database would discard later case changes, so it is not part of disabling Fizzy. Code rollback and database restore are separate operations.
 
 ## Implementation and validation
+
+At freeze, 29 deterministic tests pass. Use `PYTHONPATH=/mnt/seagate/silo/livestock-v2/packages` with the private venv when running the tests. Historical Hindi tests do not change the active English bot.
 
 - `engine.py` controls case state, grounded extraction, permissions, confirmation, evidence and notifications.
 - `config.py` defines the questionnaire, fictional roster and routing protocols.
@@ -65,8 +71,8 @@ livestock_python="$HOME/.local/share/idli-bridge/livestock/venv/bin/python"
 "$livestock_python" -m livestock.tests.test_hindi_speech --generate /mnt/seagate/silo/livestock-v2/buffalo-tests/fixtures
 ```
 
-The Hindi model integration test has passed intake through explicit unknown, negative warning answer, corrections and confirmed submission. It uses actual Muse with a scratch database, not Telegram transport. Synthetic Hindi speech tests exercise Kokoro and Whisper separately. The actual Buffalo Hindi Telegram run created and closed `CASE-A27665EA9D` through intake, vet acceptance/report and farmer feedback. All 26 deterministic tests pass. See `chronology/2026-10-16T0830-buffalo-hindi-fizzy.md` and `tests/evidence/buffalo-hindi-live.json`. The bot is left in farmer mode with no open case for the owner.
+The Hindi model integration test has passed intake through explicit unknown, negative warning answer, corrections and confirmed submission. It uses actual Muse with a scratch database, not Telegram transport. Synthetic Hindi speech tests exercise Kokoro and Whisper separately. The actual Buffalo Hindi Telegram run created and closed `CASE-A27665EA9D` through intake, vet acceptance/report and farmer feedback. All 26 deterministic tests pass. See `../../../../chronology/2026-10-16T0830-buffalo-hindi-fizzy.md` and `tests/evidence/buffalo-hindi-live.json`. That completed test left no open case; subsequent user testing created an unfinished intake.
 
-The 15 October English end-to-end run in `tests/evidence/` and `chronology/2026-10-15T2343-livestock-v2-telegram-complete.md` is historical evidence from the former Silo integration. It verified real Telegram delivery and browser workflow using synthetic media; it does not establish validation of the new Buffalo Hindi deployment.
+The 15 October English end-to-end run in `tests/evidence/` and `../../../../chronology/2026-10-15T2343-livestock-v2-telegram-complete.md` is historical evidence from the former Silo integration. It verified real Telegram delivery and browser workflow using synthetic media; it does not establish validation of the new Buffalo Hindi deployment.
 
 This is a trusted-network POC without production operator authentication, clinical protocols or real veterinary dispatch. Speech recognition and translation can make mistakes; the farmer's confirmation and operator's original-evidence review remain necessary. Synthetic speech tests do not establish performance with human accents, background noise or independent farmer/vet accounts.
