@@ -1,0 +1,24 @@
+{
+  "case_id": "CASE-A27665EA9D",
+  "status": "CLOSED",
+  "transport": "real Telegram, Buffalo Soldiers",
+  "inputs": "synthetic Hindi voice fixtures plus typed Hindi clarification",
+  "speech": "Whisper large-v3-turbo Hindi; Kokoro hf_alpha Hindi",
+  "verification": "single-account roleplay",
+  "evidence_count": 42,
+  "workflow": [
+    "voice intake",
+    "Hindi questions",
+    "confirmed submission",
+    "operator assignment",
+    "Hindi acceptance",
+    "voice report with explicit typed visit clarification",
+    "report confirmation",
+    "farmer voice feedback",
+    "operator closure"
+  ],
+  "unit_tests_passed": 26,
+  "original_bot": "pre-livestock source restored; running; livestock command absent",
+  "only_owner_allowed": true,
+  "large_evidence": "/mnt/seagate/silo/livestock-v2/buffalo-tests/"
+}

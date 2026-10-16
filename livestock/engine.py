@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from .config import PROTOCOLS, VETS, QUESTIONS
 from .model import Muse
+from .hindi import canonicalize_input, localize_reply
 
 
 def now():
@@ -123,7 +124,7 @@ class Engine:
         if not isinstance(result,dict): raise ValueError('Muse returned invalid structured data. Please retry.')
         return result
 
-    def message(self, actor_id, text, message_id, role=None, media=None, case_id=None, metadata=None):
+    def message(self, actor_id, text, message_id, role=None, media=None, case_id=None, metadata=None, language="en"):
         actor_id=str(actor_id); message_id=str(message_id)
         with self.lock, self.db() as db:
             duplicate=db.execute('SELECT response FROM messages WHERE actor=? AND message_id=?',(actor_id,message_id)).fetchone()
@@ -139,17 +140,29 @@ class Engine:
             elif available: c=available[0]
             elif actor['role']=='farmer': c=self._new(actor_id)
             else: raise ValueError('No assignment is awaiting you.')
-            self._evidence(db,c,actor_id,message_id,text,media,metadata)
-            c['transcript'].append({'actor':actor['role'],'text':text,'timestamp':now(),'message_id':message_id})
+            original_text=text
+            if language=='hi':
+                text=canonicalize_input(text,self.model)
+                metadata={**(metadata or {}),'source_language':'hi','canonical_text':text,'translation_model':'local Muse; fixed short-answer vocabulary'}
+                c['language']='hi'
+            self._evidence(db,c,actor_id,message_id,original_text,media,metadata)
+            entry={'actor':actor['role'],'text':original_text,'timestamp':now(),'message_id':message_id}
+            if language=='hi': entry.update({'language':'hi','canonical_text':text})
+            c['transcript'].append(entry)
             if text=='[Voice note unclear; please ask me to repeat.]':
                 reply='I could not hear that clearly. Please repeat or send a text message. '+c.get('last_question','')
             elif actor['role']=='vet': reply=self._vet(db,c,text,media)
             elif c['status'] in ('AWAITING_FEEDBACK','NEEDS_REVIEW') and c.get('report'): reply=self._feedback(db,c,text)
             elif c['status']=='INTAKE': reply=self._intake(db,c,text)
             else: reply=f"Your case {c['case_id']} is {c['status'].lower().replace('_',' ')}. Your message has been added for the operator."
-            c['transcript'].append({'actor':'silo','text':reply,'timestamp':now()})
+            canonical_reply=reply
+            if language=='hi': reply=localize_reply(reply,self.model)
+            entry={'actor':'silo','text':reply,'timestamp':now()}
+            if language=='hi': entry.update({'language':'hi','canonical_text':canonical_reply})
+            c['transcript'].append(entry)
             self._save(db,c)
             response={'reply':reply,'case_id':c['case_id'],'status':c['status']}
+            if language=='hi': response.update({'language':'hi','canonical_reply':canonical_reply})
             db.execute('INSERT INTO messages VALUES(?,?,?)',(actor_id,message_id,json.dumps(response)))
             return response
 

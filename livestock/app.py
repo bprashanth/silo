@@ -48,11 +48,15 @@ def health():
 
 @app.get('/api/config')
 def config():
-    try:
-        cfg=json.loads((Path.home()/'.config/silo/telegram.json').read_text())
-        name=cfg.get('botfather_bot_name','')
-    except (OSError, ValueError): name=''
-    return {'bot_username':name, 'voice':'hf_alpha'}
+    identity=ROOT/'buffalo/identity.json'
+    try: name=json.loads(identity.read_text())['username']
+    except (OSError,ValueError,KeyError): name='Buffalosoldiers_bot'
+    result={'bot_username':name,'voice':'hf_alpha','language':'hi'}
+    public=ROOT/'fizzy/public.json'
+    if public.exists():
+        try: result['fizzy_url']=json.loads(public.read_text()).get('public_url')
+        except (OSError,ValueError): pass
+    return result
 
 @app.get('/api/cases')
 def cases(): return engine.list_cases()

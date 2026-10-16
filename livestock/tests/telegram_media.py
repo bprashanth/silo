@@ -12,11 +12,11 @@ async def main():
     parser.add_argument('--photo',required=True)
     parser.add_argument('--output',required=True)
     args=parser.parse_args()
-    cfg=Path.home()/'.config/silo'
+    cfg=Path.home()/'.config/idlisseus'
     config=json.loads((cfg/'telegram.json').read_text())
     records=[]
-    async with TelegramClient(str(cfg/'telethon_user'),int(config['telethon_ap_id']),config['telethon_app_hash']) as client:
-        bot=config['botfather_bot_name']
+    async with TelegramClient(str(Path.home()/'.config/silo/telethon_user'),int(config['telethon_ap_id']),config['telethon_app_hash']) as client:
+        bot=json.loads((Path.home()/'.local/share/idli-bridge/livestock/buffalo/identity.json').read_text())['username']
         async def wait(sent):
             seen=set(); quiet=0
             for _ in range(180):

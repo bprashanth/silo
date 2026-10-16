@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import Mock,patch
 import urllib.error
 
-spec=importlib.util.spec_from_file_location('livestock_bridge_test',Path(__file__).resolve().parents[2]/'tg-bridge/livestock_bridge.py')
+spec=importlib.util.spec_from_file_location('livestock_bridge_test',Path(__file__).resolve().parents[1]/'transport.py')
 bridge=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bridge)
 

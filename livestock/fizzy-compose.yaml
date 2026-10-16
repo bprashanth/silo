@@ -1,0 +1,11 @@
+services:
+  fizzy:
+    image: ghcr.io/basecamp/fizzy@sha256:8ad3bd3e4b59980a4f2dc528b68d6edfe28b7a4cdc81b90d442a0939eea92b38
+    container_name: silo-livestock-fizzy
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:8767:80"
+    env_file:
+      - ${HOME}/.local/share/silo-livestock-fizzy/runtime.env
+    volumes:
+      - ${HOME}/.local/share/silo-livestock-fizzy/storage:/rails/storage

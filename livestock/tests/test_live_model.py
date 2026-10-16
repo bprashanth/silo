@@ -60,8 +60,7 @@ def run(voice=False):
         initial='My cow has been unwell since yesterday. She is not eating and looks weak.'
         media=None
         if voice:
-            sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'tg-bridge'))
-            import speech
+            from livestock import speech
             import onnxruntime as ort
             from kokoro_onnx import Kokoro
             options=ort.SessionOptions()
@@ -71,7 +70,7 @@ def run(voice=False):
             speech._kokoro=Kokoro.from_session(session,str(Path(speech.MODELS)/'kokoro/voices-v1.0.bin'))
             begin=time.monotonic()
             audio=speech.synth(initial,voice='hf_alpha',lang='en-us')
-            transcript=speech.transcribe(audio)
+            transcript=speech.transcribe(audio,language='en')
             result['voice']={'voice':'hf_alpha','language':'en-us','source_text':initial,'transcript':transcript,'seconds':round(time.monotonic()-begin,3)}
             media=[assets.put(audio,'audio/ogg')]
             check('cow' in transcript.lower(),'Whisper recovers animal from synthetic hf_alpha voice note')
