@@ -50,6 +50,37 @@ Two columns, on purpose: the operator works from the record, not from a script.
   the record against Lakshmamma's real answers, the case sheet (what she knew, and what she'd only say if
   asked), and timings.
 
+## Protocol cards (prototype; `ASSIST_PROTOCOL=0` turns them off)
+
+Real dispatch systems give a non-clinical call-taker more than a checklist, but not diagnosis or treatment. In
+MPDS (ambulance dispatch) and NHS Pathways (NHS 111), what the caller says selects a protocol; its key questions
+set a priority level and a response time, and the call-taker reads out pre-approved instructions ("pre-arrival
+instructions", "care advice", "call back if it gets worse"). Clinicians take over anything outside the script. The
+1962 veterinary ERCs work the same way: the call-taker collects the case, and a vet at the centre triages and
+gives the medical direction ("online medical direction") or dispatches the mobile unit.
+
+So the assist now does the same, inside the care record column:
+
+- **Cards open from what was said**: the farmer's words, or the operator's statements (not their questions).
+  Nine cards in `protocol_cards.json`: sudden death, possible poisoning, spreading disease, skin lumps, belly pain
+  or bloat, difficult birth, cough, loose motions, animal down.
+- **Each card adds its key questions as record fields** (*ask: what did they eat, and where?*), with the same
+  confirmed / heard-only states.
+- **A priority from fixed rules** on the answers: E (dispatch now, bring the ERC vet on), D, C or A. It shows
+  whether the operator has brought the vet in.
+- **Lines to read out**, ticked when the operator says them: "move the animals away from that field", "don't pour
+  anything into their mouths", "don't pull", "keep the sick ones apart", and before closing, "call again if it gets
+  worse".
+- **Never to the farmer:** disease names or medicines. The after-call checks flag a disease named on the call.
+  Disease names and the DAHD Standard Veterinary Treatment Guidelines appear only in the vet's handoff.
+- **Rules, not the LLM, open cards and set the level.** Local Muse only fills a card's fields, and only the
+  fields the operator just asked about. An operator line can only confirm what the farmer said. A value must be
+  in the words: Muse had filled "Ate what" with the operator's goodbye, and "Age" with "two of them are coughing".
+
+The cards, levels and lines are **illustrative**, written for the prototype from public sources and common
+first-aid practice. A vet has to own them before any real use. The real thing would be the state's ERC
+disease-severity mapping and SOPs.
+
 ## How it works
 
 ```text

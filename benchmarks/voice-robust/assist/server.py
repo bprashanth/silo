@@ -33,7 +33,7 @@ from pipecat.audio.turn.base_turn_analyzer import EndOfTurnState
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent)); sys.path.insert(0, str(HERE))
 import speech as speech_mod, nlu
-import assist as assist_mod, farmer as farmer_mod, farmer_ai, degrade
+import assist as assist_mod, farmer as farmer_mod, farmer_ai, degrade, protocol as protocol_mod
 
 ART = Path(os.getenv('VR_ART', '/mnt/seagate/silo/voice-robust')) / 'assist'
 STATE = Path(os.getenv('VR_ASSIST_STATE', Path.home() / '.local/share/silo-voice/assist'))
@@ -63,6 +63,7 @@ class Session(FrameProcessor):
     def __init__(self, rec):
         super().__init__()
         self.rec = rec; self.ai = rec['mode'] == 'ai'; self.assist = assist_mod.Assist(); self.http = aiohttp.ClientSession()
+        self.protocol = protocol_mod.Protocol() if protocol_mod.ENABLED else None
         if self.ai:
             self.case = CASES[rec['case']]; self.truth = self.case['truth']; self.farmer = farmer_ai.AIFarmer(PERSONA, self.case); self.n_said = 0
         else:
@@ -162,6 +163,10 @@ class Session(FrameProcessor):
         if prev: await asyncio.wait([prev])
         op['asking'] = asking or op.get('asking'); m['op_ms'] = op['ms']; m['op_source'] = op['source']
         self.assist.on_operator(text, op, entry)
+        if self.protocol:
+            self.protocol.see(text, 'operator')
+            last_farmer = next((x['text'] for x in reversed(self.assist.transcript) if x['role'] == 'farmer'), '')
+            asyncio.create_task(self.protocol.extract(text, 'operator', last_farmer, self.http))
 
     async def _nudge(self):
         """The operator said something, then went quiet: after a while the farmer checks the line is alive."""
@@ -207,6 +212,10 @@ class Session(FrameProcessor):
         topic = (key and clip_topic(key)) or topic or self.assist.asking
         r = await nlu.interpret(c['heard'], topic if topic in assist_mod.REQUIRED else None, {}, '', 'muse')
         self.assist.on_farmer(c['heard'], r, c['file'])
+        if self.protocol:
+            opened = self.protocol.see(c['heard'], 'farmer')
+            last_op = next((x['text'] for x in reversed(self.assist.transcript) if x['role'] == 'operator'), '')
+            asyncio.create_task(self.protocol.extract(c['heard'], 'farmer', last_op, self.http, opened=opened))
         self.assist.transcript[-1].update(t=round(start - self.t0, 3), clip=key, said=c['text'])
         if key == 'bye' or hangup: await self.finish()
 
@@ -217,6 +226,10 @@ class Session(FrameProcessor):
         live = self.assist.record()
         self.rec['review'] = {'qa': self.assist.qa(), 'offline': rv, 'differences': assist_mod.differences(live, rv['record']),
                               'truth_check': truth_check(live, self.truth), 'truth': self.truth}
+        if self.protocol:
+            self.rec['review']['qa'] += self.protocol.qa(live, self.assist.transcript)
+            self.rec['review']['handoff'] = self.protocol.handoff(live, self.assist.transcript)
+            self.rec['review']['protocol_log'] = self.protocol.extract_log
         if self.ai: self.rec['review']['case'] = {k: self.case[k] for k in ('title', 'story', 'reveal_only_if_asked', 'source')}
         self.rec['status'] = 'ended'; save(self.rec)
         await self.http.close()
@@ -229,7 +242,9 @@ def public(rec):
     s = rec.get('_s'); out = {k: v for k, v in rec.items() if not k.startswith('_')}
     if s:
         out.update(transcript=sorted(s.assist.transcript, key=lambda x: x.get('t', 1e9)), partial=s.partial, record=s.assist.record(), help=s.assist.suggestions(),
-                   metrics=s.metrics, farmer_speaking=s.farmer_speaking(), asking=s.assist.asking)
+                   metrics=s.metrics, farmer_speaking=s.farmer_speaking(), asking=s.assist.asking,
+                   protocol=None)
+        if s.protocol: out['protocol'] = s.protocol.view(out['record'], s.assist.transcript)
     return out
 
 def save(rec):
@@ -252,7 +267,7 @@ async def config():
     return {'farmer': PERSONA['name'], 'llm': farmer_ai.MODEL, 'ai': farmer_ai.KEY_FILE.exists(),
             'cases': [{'id': c['id'], 'opening': c['opening'], 'recorded': c.get('recorded') in recorded} for c in CASES.values()],  # not the title: it gives the case away
             'recorded_only': {k: SCENARIOS[k]['title'] for k in recorded if k not in {c.get('recorded') for c in CASES.values()}},
-            'asr': speech_mod.ASR_ENGINE, 'ready': SP is not None}
+            'asr': speech_mod.ASR_ENGINE, 'ready': SP is not None, 'protocol': protocol_mod.ENABLED}
 
 @app.post('/api/sessions')
 async def create(req: Request):

@@ -1,0 +1,20 @@
+{"voice": "af_heart", "case": "young-jowar", "dir": "operator-lk-jowar",
+ "note": "Follows the protocol cards: asks what they ate, reads the advice lines, brings the vet in, gives the call-back advice.",
+ "lines": [
+  ["01-greet", "Namaskara, animal helpline. Tell me, what happened?"],
+  ["02-animal", "Which animal is shaking?"],
+  ["03-count", "How many goats?"],
+  ["04-ate", "Did they eat anything different today?"],
+  ["05-when", "Jowar sprouts, okay. How long ago did they eat it?"],
+  ["06-move", "Please move all the animals away from that field now, and do not pour anything into their mouths."],
+  ["07-breath", "How is their breathing?"],
+  ["08-stand", "Can they stand?"],
+  ["09-vet", "This is an emergency. I am sending the van and connecting the vet now. What is your name?"],
+  ["10-village", "Which village?"],
+  ["11-district", "Which district?"],
+  ["12-phone", "Tell me your phone number, please."],
+  ["13-readback", "Nine nine zero zero one, two three four five six. Correct?"],
+  ["14-medicine", "Have you given anything so far?"],
+  ["15-summary", "Let me read it back. Lakshmamma from Hosahalli, Ramanagara. Four goats ate young jowar one hour ago, trembling, breathing fast, one cannot stand. Is that correct?"],
+  ["16-bye", "The vet is coming on the line now. If it gets worse, or another animal falls sick, call us again. Goodbye."]
+ ]}

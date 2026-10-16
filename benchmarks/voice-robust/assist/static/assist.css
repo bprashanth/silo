@@ -22,3 +22,12 @@ dt.empty { color: var(--soft); }
 #review h3 { font-size: 14px; margin: 8px 0 6px; }
 #review ul { margin: 0; padding-left: 18px; }
 .ok { color: var(--accent); } .bad { color: var(--warn); }
+.priority { border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; border: 1px solid var(--line); border-left: 5px solid var(--soft); }
+.priority.lvlE { border-left-color: var(--warn); } .priority.lvlD { border-left-color: #c58a00; } .priority.lvlC { border-left-color: var(--accent); }
+.card { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
+.card h3 { font-size: 14px; margin: 0 0 6px; }
+.card dl { margin-bottom: 6px; } .card dd { font-size: 15px; }
+.lvl { font-size: 11px; border-radius: 4px; padding: 0 5px; border: 1px solid var(--line); }
+.lvl.lvlE { border-color: var(--warn); color: var(--warn); } .lvl.lvlD { border-color: #c58a00; color: #c58a00; }
+.say { font-size: 14px; margin: 3px 0; } .say.closing { margin-top: 10px; }
+.said { color: var(--accent); font-weight: 600; }

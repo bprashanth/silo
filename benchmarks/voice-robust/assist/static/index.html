@@ -34,7 +34,9 @@
   <aside>
     <h2>Care record <span id="urgency" class="badge" hidden>URGENT</span></h2>
     <div id="urgent" class="urgent-line" hidden></div>
+    <div id="priority" class="priority" hidden></div>
     <dl id="fields"></dl>
+    <div id="cards"></div>
     <p class="legend small muted"><span class="tag confirmed">confirmed</span> you repeated it and the line agrees ·
       <span class="tag operator">you said</span> · <span class="tag heard_only">heard only</span> not repeated yet ·
       <span class="tag operator_differs">differs</span> check it · <span class="todo">to ask</span></p>
@@ -48,6 +50,7 @@
     <div><h3>Second read of the whole call (local Muse)</h3><div id="diff"></div></div>
     <div><h3>Role-play only: vs Lakshmamma's real answers</h3><ul id="truth"></ul></div>
   </div>
+  <div id="handoff" hidden><h3>For the vet (handoff)</h3><div id="handoff-body"></div></div>
   <div id="casesheet" hidden><h3>The case sheet (what Lakshmamma knew)</h3><div id="sheet"></div>
   </div>
   <h3>Timings</h3>

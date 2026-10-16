@@ -116,7 +116,25 @@ function render(s) {
     const hint = (hints[k] || []).map(t => `<span class="hint">${esc(t)}</span>`).join('');
     return `<dt class="${f.state}">${label}</dt><dd class="${f.state}">${v || '<span class="todo">to ask</span>'}${tag}${alt}${hint}</dd>`;
   }).join('') + (rec.farmer_questions?.length ? `<dt>She asked</dt><dd>${esc(rec.farmer_questions.join('; '))}</dd>` : '');
+  renderProtocol(s.protocol);
   if (s.review) renderReview(s);
+}
+
+// Protocol cards (prototype): opened by what was said; extra questions, a priority, and lines to read out.
+function renderProtocol(p) {
+  $('priority').hidden = !p; $('cards').innerHTML = '';
+  if (!p) return;
+  $('priority').className = 'priority lvl' + p.level;
+  $('priority').innerHTML = `<strong>Priority ${p.level} · ${esc(p.label)}</strong> ${esc(p.response)}` +
+    (p.escalate ? (p.escalated ? ' <span class="said">✓ done</span>' : ' <span class="todo">not yet</span>') : '');
+  const said = x => x.said ? '<span class="said">✓</span>' : '<span class="todo">say</span>';
+  $('cards').innerHTML = p.cards.map(c => `<div class="card"><h3>${esc(c.title)} <span class="lvl lvl${c.level}">${c.level}</span>` +
+      `${c.notifiable ? ' <span class="tag operator_differs">tell the vet: notifiable?</span>' : ''}</h3><dl>` +
+      c.fields.map(f => `<dt class="${f.state}">${esc(f.label)}</dt><dd class="${f.state}">${f.value != null ? esc(fmt(f.value)) +
+        (STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '') : `<span class="todo">ask: ${esc(f.ask)}</span>`}</dd>`).join('') +
+      '</dl>' + c.say.map(x => `<div class="say">${said(x)} “${esc(x.text)}”</div>`).join('') + '</div>').join('') +
+    `<div class="say closing">${said(p.closing)} Before closing: “${esc(p.closing.text)}”</div>` +
+    `<p class="small muted">${esc(p.status)}</p>`;
 }
 
 function renderReview(s) {
@@ -126,6 +144,10 @@ function renderReview(s) {
     : (r.differences.length ? '<ul>' + r.differences.map(d => `<li><strong>${esc(LABELS[d.field])}</strong>: live "${esc(d.live ?? '—')}", re-read "${esc(d.review ?? '—')}"</li>`).join('') + '</ul>'
       : `<p class="ok">Agrees with the live record (${r.offline.ms} ms).</p>`);
   $('truth').innerHTML = Object.entries(r.truth_check).map(([k, ok]) => `<li class="${ok ? 'ok' : 'bad'}">${ok ? '✔' : '✘'} ${esc(LABELS[k])}${ok ? '' : ` <span class="small muted">(was: ${esc(fmt(r.truth?.[k]))})</span>`}</li>`).join('');
+  $('handoff').hidden = !r.handoff;
+  if (r.handoff) $('handoff-body').innerHTML = `<p><strong>Priority ${esc(r.handoff.level)} · ${esc(r.handoff.label)}</strong> ${esc(r.handoff.response)}</p>` +
+    r.handoff.cards.map(c => `<p><strong>${esc(c.title)}</strong> (${c.level}${c.notifiable ? ', possibly notifiable' : ''}): ` +
+      Object.entries(c.answers).map(([k, v]) => `${esc(k)}: ${esc(fmt(v))}`).join('; ') + `<br><span class="small muted">${esc(c.reference)}</span></p>`).join('');
   $('casesheet').hidden = !r.case;
   if (r.case) $('sheet').innerHTML = `<p>${esc(r.case.story)}</p><p class="small muted">Only if asked:</p><ul>${r.case.reveal_only_if_asked.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="small muted">Based on: ${esc(r.case.source)}</p>`;
   $('metrics').innerHTML = (s.metrics || []).filter(m => m.heard).map(m => `<tr><td>${m.turn}</td><td class="heard">${esc(m.heard)}</td><td>${m.asr_ms} ms</td>` +
