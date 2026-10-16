@@ -28,3 +28,14 @@ class Isolation(unittest.TestCase):
         sent=api.call_args_list[2].args[1]
         self.assertEqual(sent['language'],'en');self.assertEqual(sent['message_id'],'buffalo:21')
         deliver.assert_called_once_with(tg,'7','What animal is unwell?','TEST')
+
+    def test_unassigned_vet_gets_actionable_reply(self):
+        tg=Mock();tg.username='test_buffalo'
+        def response(path,body=None,**kw):
+            if path.startswith('actor/'):return {'role':'vet','vet_id':'VET-01'}
+            if path=='message':raise ValueError('No assignment is awaiting you.')
+        with patch.object(bot,'allowed_ids',return_value={'7'}),patch.object(bot,'api',side_effect=response),patch.object(bot,'deliver') as deliver:
+            bot.handle(tg,self.message())
+        reply=deliver.call_args.args[2]
+        self.assertIn('/farmer',reply)
+        self.assertIn('no case is assigned',reply)

@@ -186,6 +186,14 @@ class Engine:
                 updates.pop(current,None)
         evidence=result.get('evidence',{})
         if not isinstance(evidence,dict): evidence={}
+        # Preserve simple explicit observations when the model returns no fields.
+        # Questions and negated statements are left to contextual extraction.
+        if '?' not in text and not re.search(r"\b(?:not|no|never|isn't|isnt|isn’t)\b",latest):
+            animals=re.findall(r'\b(?:my|our|the|a|one|big|small)\s+(cow|buffalo|goat|sheep|calf|ox|pig|horse)\b',latest)
+            if len(set(animals))==1 and 'animal_type' not in updates:
+                updates['animal_type']=animals[0]; evidence['animal_type']=animals[0]
+            if 'symptoms' not in updates and re.search(r'\b(?:looks?|is|seems?)\s+weak\b',latest):
+                updates['symptoms']=['weak']; evidence['symptoms']='weak'
         for k in list(updates):
             quote=evidence.get(k)
             if isinstance(quote,list): quote=next((q for q in quote if isinstance(q,str) and q.strip() and q.lower() in latest),None)

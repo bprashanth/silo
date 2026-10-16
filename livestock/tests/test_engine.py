@@ -33,6 +33,17 @@ class EngineTest(unittest.TestCase):
         self.send('vet','I accept',{'accepted':True})
         self.send('vet','Visited; weak. No treatment. No follow-up.',{'report':{'visit_status':'visited','observations':'weak','treatment_reported':'none','follow_up_required':False}},media=[{'media_type':'photo','storage_uri':'photo.jpg'},{'media_type':'location','latitude':12.1,'longitude':77.1}])
         self.send('vet','Correct',{'confirmed':True})
+    def test_explicit_cow_and_weakness_survive_empty_extraction(self):
+        r=self.send('farmer','my cow looks weak',{'updates':{},'ambiguous':True})
+        fields=self.e.case_detail(r['case_id'])['fields']
+        self.assertEqual(fields['animal_type'],'cow')
+        self.assertEqual(fields['symptoms'],['weak'])
+        self.assertIn('unable to stand',r['reply'])
+
+    def test_negation_does_not_use_observation_fallback(self):
+        r=self.send('farmer','My cow is not weak',{'updates':{}})
+        self.assertNotIn('symptoms',self.e.case_detail(r['case_id'])['fields'])
+
     def test_complete_workflow_evidence_and_atomic_notifications(self):
         cid=self.submit(); self.assertEqual(self.e.case_detail(cid)['status'],'AWAITING_ASSIGNMENT')
         self.assertEqual(self.e.pending_outbox(),[])

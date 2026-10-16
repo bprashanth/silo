@@ -52,7 +52,7 @@ def handle(tg,msg):
         role='vet' if command=='/vet' or command=='/livestock' and len(parts)>1 and parts[1]=='vet' else 'farmer'
         vet=next((part for part in parts if part.startswith('VET-')),'VET-01') if role=='vet' else None
         result=api('register',{'actor_id':actor,'role':role,'vet_id':vet})
-        greeting='Hello. What is wrong with your animal? You can send a voice note in English.' if role=='farmer' else 'You are in the vet role. Assigned cases will arrive here.'
+        greeting='Hello. What is wrong with your animal? You can send a voice note in English.' if role=='farmer' else 'You are in vet mode. Assign a case to your vet in the case desk to continue. To report your own animal, send /farmer.'
         deliver(tg,actor,result.get('reply') or greeting)
         return
     if command=='/status':
@@ -80,8 +80,14 @@ def handle(tg,msg):
         if document.get('file_size',0)>20*1024*1024:raise ValueError('Attachment exceeds 20MB')
         media.append(store(tg.download(document['file_id']),document.get('mime_type','application/octet-stream')))
     text=text or msg.get('caption') or ''
-    result=api('message',{'actor_id':actor,'text':text,'message_id':'buffalo:'+str(msg['message_id']),
-        'language':'en','metadata':metadata,'media':media})
+    try:
+        result=api('message',{'actor_id':actor,'text':text,'message_id':'buffalo:'+str(msg['message_id']),
+            'language':'en','metadata':metadata,'media':media})
+    except ValueError as exc:
+        if str(exc)!='No assignment is awaiting you.':raise
+        deliver(tg,actor,'You are in vet mode, but no case is assigned to you. To report your animal, send /farmer and then describe the problem. To test as a vet, assign a case to your vet in the case desk first.')
+        LOG.info('message_needs_farmer_role_or_assignment')
+        return
     if result.get('reply'):deliver(tg,actor,result['reply'],result.get('case_id'))
     LOG.info('message_replied status=%s',result.get('status','unknown'))
 
