@@ -89,3 +89,6 @@ def test_symptoms_in_other_words_merge_not_differ():
     a.on_operator('Fever and loose motions, okay.', {'facts': {'symptoms': ['fever', 'loose motions']}})
     f = a.fields['symptoms']
     assert f.state == 'operator' and f.value == ['fever', 'loose motions', 'hot ears and body']
+
+def test_qa_without_a_phone_number():
+    assert {q['check']: q['ok'] for q in assist.Assist().qa()}['Read the phone number back'] is False

@@ -278,6 +278,7 @@ class Assist:
 
     def _phone_read_back(self):
         ph = self.fields['contact_details'].value
+        if not ph: return False  # no number taken: the review crashed here
         return any(t['role'] == 'operator' and ph in (re.sub(r'\D', '', t['text']) or intake_mod.spoken_digits(t['text'])) for t in self.transcript)
 
     def record(self):
