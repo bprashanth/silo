@@ -6,14 +6,14 @@ HERE=Path(__file__).resolve().parent.parent
 sys.path[:0]=[str(HERE),str(HERE.parent)]
 from protocol import Protocol
 from assist import Assist
-OUT=Path('/mnt/seagate/silo/voice-robust/ui-green-cards-20261017/layout');OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path('/mnt/seagate/silo/voice-robust/ui-single-screen-20261017/layout');OUT.mkdir(parents=True,exist_ok=True)
 record=Assist();record.fields['animal_type'].farmer='goat';record.fields['symptoms'].farmer=['weak','loose motions']
 protocol=Protocol()
 lines=['One goat died this morning. Some have sores.', 'They ate young jowar.', 'Two young goats are coughing.', 'One has loose motions and a swollen belly.', 'Another goat is straining to give birth.']
 for line in lines:protocol.see(line,'farmer')
 state={'id':'synthetic-layout','status':'on call','record':record.record(),'protocol':protocol.view(record.record(),[]),'transcript':[{'role':'operator','text':'Please tell me what happened.'},{'role':'farmer','text':lines[0]},{'role':'operator','text':'I have noted that. What have the others eaten?'},{'role':'farmer','text':lines[1]}]}
 with sync_playwright() as p:
- browser=p.chromium.launch();page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+ browser=p.chromium.launch();page=browser.new_page(viewport={'width':1366,'height':768});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
  def update(route):
   group=route.request.url.rsplit('/',1)[-1];body=route.request.post_data_json
   protocol.set_cleared(group,body['cleared'],record.record());state['protocol']=protocol.view(record.record(),[])
@@ -23,6 +23,15 @@ with sync_playwright() as p:
  page.evaluate('(s)=>{last=s;sid=s.id;document.querySelector("#call").disabled=true;document.querySelector("#end").disabled=false;render(s)}',state)
  assert page.locator('.advisory').count()==5
  assert page.locator('.advisory-body').count()==1
+ for width,height in [(1366,768),(1280,720),(1440,900)]:
+  page.set_viewport_size({'width':width,'height':height})
+  assert page.evaluate('document.documentElement.scrollHeight <= innerHeight'),(width,height)
+  assert page.locator('.advisories').bounding_box()['x'] > page.locator('.care-record').bounding_box()['x']
+  for locator in [page.locator('.advisory-heading').nth(i) for i in range(5)]+[page.locator('[data-clear]')]:
+   box=locator.bounding_box();assert box['y']>=0 and box['y']+box['height']<=height,(width,height,box)
+  assert 'Importance' not in page.locator('#cards').inner_text()
+  page.screenshot(path=str(OUT/f'desktop-{width}.png'),full_page=True)
+ page.set_viewport_size({'width':1366,'height':768})
  page.screenshot(path=str(OUT/'five-classes.png'),full_page=True)
  page.locator('[data-clear]').click();page.wait_for_function('document.querySelectorAll(".advisory").length===4')
  page.locator('#cleared-panel summary').click();assert page.locator('[data-restore]').count()==1

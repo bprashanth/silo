@@ -277,3 +277,15 @@ examples/livelihoods/livestock/call_center_assist/**/*.ogg
 examples/livelihoods/livestock/call_center_assist/**/*.opus
 examples/livelihoods/livestock/call_center_assist/**/*.flac
 examples/livelihoods/livestock/call_center_assist/**/sessions/
+
+# Assist screenshots, recordings and local run state (keep on Seagate)
+/examples/livelihoods/livestock/call_center_assist/**/artifacts/
+/examples/livelihoods/livestock/call_center_assist/**/checkpoints/
+/examples/livelihoods/livestock/call_center_assist/**/models/
+/examples/livelihoods/livestock/call_center_assist/**/session.json
+/examples/livelihoods/livestock/call_center_assist/**/*.png
+/examples/livelihoods/livestock/call_center_assist/**/*.jpg
+/examples/livelihoods/livestock/call_center_assist/**/*.webm
+/examples/livelihoods/livestock/call_center_assist/**/*.mp4
+/examples/livelihoods/livestock/call_center_assist/**/*.zip
+/examples/livelihoods/livestock/call_center_assist/**/*.bin

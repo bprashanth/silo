@@ -1,0 +1,9 @@
+# Call center assist: advisories stay on screen
+
+Expanded the green chat interface to three desktop panels: transcript left, captured care record centre, advisory stack right. Removed Importance from the cards, retaining Trigger, Ask, optional questions, sources and clear/restore. The desktop panels fit the viewport; long record/transcript or expanded source details scroll within their own panel. Below 1100px the layout adapts to stacked panels. The after-call review remains below the call workspace.
+
+Before-change checkpoint: `assist-before-single-screen-20261017` (`512e712`). Reverting this commit restores the previous dual-panel layout. No backend or speech changes.
+
+Verified in Chromium at 1280×720, 1366×768 and 1440×900: no page scrolling, all five advisory headings and the active Clear button visible. Clear/restore, sources, keyboard activation, transcript scroll retention and mobile overflow checks passed. Also rendered the saved synthetic WebRTC call with its complete record and source disclosure; no browser errors or page scrolling. Inspected desktop screenshots. No new voice benchmark was needed for this layout-only change. Evidence: `/mnt/seagate/silo/voice-robust/ui-single-screen-20261017/`.
+
+Extended assist ignore rules for screenshots, recordings, session exports, artifacts, checkpoints and model binaries. Existing rules cover credentials, databases, local environment files and audio. Checked representative ignored paths, all tracked files and unpublished objects against the local origin/main reference: none over 5 MiB, and no matches for OpenRouter keys, Telegram bot tokens, private-key headers or AWS access-key identifiers in tracked text. This pattern scan is not a guarantee against every possible secret. Synthetic scenario fixtures and benchmark summaries remain versioned. No push performed.

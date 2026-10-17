@@ -170,7 +170,7 @@ function renderProtocol(p) {
     const title = g.level === 'E' ? 'Review first' : 'Review';
     return `<article class="advisory ${expanded ? 'active' : ''}"><button class="advisory-heading" data-advisory="${esc(g.id)}" aria-expanded="${expanded}" aria-controls="advisory-${esc(g.id)}"><strong>${esc(g.title)}</strong><span>${title}</span></button>` +
       (expanded ? `<div id="advisory-${esc(g.id)}" class="advisory-body"><dl><dt>Trigger</dt><dd class="trigger-quote">${g.triggers.map(t => `${t.side === 'farmer' ? 'Farmer' : 'Operator'}: “${esc(t.text)}”`).join('<br>')}</dd>` +
-      `<dt>Ask</dt><dd class="question">${next ? esc(next.ask) : 'Key details recorded. Check them with the farmer.'}</dd><dt>Importance</dt><dd>${esc(g.importance)}</dd></dl>` +
+      `<dt>Ask</dt><dd class="question">${next ? esc(next.ask) : 'Key details recorded. Check them with the farmer.'}</dd></dl>` +
       `<details class="card-fields"><summary>All questions and answers</summary><dl>${g.fields.map(f => `<dt>${esc(f.label)}</dt><dd data-k="${esc(f.id)}" data-bool="${f.type === 'boolean'}">${f.value != null ? esc(fmt(f.value)) : `<span class="todo">${esc(f.ask)}</span>`}${pencil(f.id)}</dd>`).join('')}</dl></details>` +
       `<details class="references"><summary>Sources (${g.sources.length})</summary>${g.sources.map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)}<br>${esc(r.section)}</a>`).join('')}<p>Sources support the questions, not a diagnosis or approval of this call protocol.</p></details>` +
       `<div class="card-actions"><span class="small muted">Clear when reviewed</span><button class="clear-card" data-clear="${esc(g.id)}">Clear card</button></div></div>` : '') + '</article>';

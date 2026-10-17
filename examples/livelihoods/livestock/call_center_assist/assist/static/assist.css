@@ -63,3 +63,44 @@ summary::-webkit-details-marker{display:none}
 .controls label:first-child{min-width:0}
 #case{max-width:100%}
 @media(max-width:600px){.controls label:first-child{width:100%}.title .muted{display:block}.card-fields dl{grid-template-columns:1fr}.advisory-heading{padding:12px} .advisory-body{padding:0 12px 12px}}
+
+/* Keep the call, captured record and advisory stack in view together. */
+header,main.console,#review{max-width:1800px}
+main.console{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr);gap:16px}
+main.console>*,.care-record{min-width:0}
+.advisories{margin-top:0;padding:10px;border:1px solid var(--line)}
+.advisory-heading{padding:10px 12px}
+.advisory-body{padding:0 12px 12px}
+.advisory-body dt{margin-top:9px}
+.advisory-body dd.question{font-size:16px}
+.card-actions{margin-top:10px}
+.references{margin-top:4px}
+#cards{gap:8px}
+.care-record dd{font-size:15px}
+.care-record .legend{font-size:12px}
+@media(min-width:1100px){
+ header{height:120px;overflow:auto}
+ .controls{gap:8px}
+ #case{max-width:330px}
+ main.console{height:calc(100dvh - 120px);min-height:450px}
+ .conversation{display:flex;flex-direction:column;min-height:0}
+ #transcript{height:auto;flex:1;min-height:0}
+ .care-record{max-height:100%;overflow-y:auto}
+ .advisories{height:100%;min-height:0;display:flex;flex-direction:column}
+ .advisory-title,.approval-note,#cleared-panel,#card-error{flex-shrink:0}
+ #cards{display:flex;flex-direction:column;min-height:0;flex:1}
+ .advisory{flex-shrink:0}
+ .advisory.active{display:flex;flex-direction:column;min-height:0;flex:0 1 auto}
+ .advisory-heading{flex-shrink:0}
+ .advisory-body{overflow-y:auto;min-height:0}
+ #cleared-panel{margin-top:10px;max-height:25%;overflow-y:auto}
+}
+@media(max-width:1099px){
+ main.console{grid-template-columns:1fr 1fr}
+ .advisories{grid-column:1/-1}
+}
+@media(max-width:700px){
+ main.console{grid-template-columns:1fr}
+ .advisories{grid-column:auto}
+ #transcript{height:55vh}
+}

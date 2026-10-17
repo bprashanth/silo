@@ -70,13 +70,13 @@ Indian field report, named in the case sheet:
 
 ## What the screen shows
 
-The original green chat interface is preserved, with the transcript on the left and the care record filling alongside it on the right. Farmer and operator turns have clear labels, plain text and a **Listen** control for recorded audio. New lines follow the conversation only while you are at the bottom; reading an older line keeps your position, with **Latest message** available to catch up.
+The original green chat interface is preserved, with the transcript on the left, the care record in the centre and advisories on the right. At desktop widths of 1100px and up, the three panels use the viewport height; the page does not need scrolling to reach advisories. Long transcript, record and expanded card details scroll inside their panels. Smaller screens stack the panels. Farmer and operator turns have clear labels, plain text and a **Listen** control for recorded audio. New lines follow the conversation only while you are at the bottom; reading an older line keeps your position, with **Latest message** available to catch up.
 
 **Care record** stays visible beside the transcript with captured fields and their confirmation states. **Edit** changes a field when recognition was wrong. Typed values remain marked as edited. Call controls and the after-call review retain the original layout.
 
 ### Advisory stack
 
-Below the care record, five fixed, observation-based classes replace nine overlapping visible cards. Their borders, headers and hover states use the existing green chat palette:
+In the right-hand panel, five fixed, observation-based classes replace nine overlapping visible cards. Their borders, headers and hover states use the existing green chat palette:
 
 | Class | Topics grouped |
 |---|---|
@@ -86,7 +86,7 @@ Below the care record, five fixed, observation-based classes replace nine overla
 | Digestion and drinking | Belly changes, loose motions and drinking |
 | Birth progress | Straining, progress and attempted assistance |
 
-One card expands at a time. It shows **Trigger** (the actual farmer or operator statement), **Ask** (the next unanswered question), and **Importance** (why to record the information for veterinary review). Other questions and answers remain available in a disclosure. The source links are present but quiet, under **Sources**.
+One card expands at a time. It shows **Trigger** (the actual farmer or operator statement) and **Ask** (the next unanswered question). Other questions and answers remain available in a disclosure. The source links are present but quiet, under **Sources**.
 
 Click **Clear card** to move a reviewed prompt out of the active stack; the next card opens. **Cleared cards** offers **Restore**. This state is held by the session and included in saved session data; clearing does not fill fields, change urgency, resolve a clinical concern or satisfy protocol QA. An additional underlying concern or a higher priority reopens the class. Starting a new call has its own stack. Generic mentions of eating no longer trigger the exposure class.
 
@@ -100,6 +100,8 @@ The classes and priority rules are a prototype, not an approved ERC taxonomy. Th
 - [NDDB Farmers’ Corner: Cyanide](https://www.nddb.coop/farmer/animal-health/poisoning/cyanide): exposure history and observable signs. The prompt asks what was eaten and when; it does not prescribe treatment.
 
 ### Visual checks and rollback
+
+Current desktop layout: three simultaneous panels, with Importance removed from advisory cards. Pre-change checkpoint: `assist-before-single-screen-20261017` (`512e712`). Screenshot evidence is at `/mnt/seagate/silo/voice-robust/ui-single-screen-20261017/`. Browser checks confirm all five card headings and the active Clear button fit without page scrolling at 1280×720, 1366×768 and 1440×900. Screenshots, audio, model binaries and session state are ignored; runtime artifacts remain on Seagate.
 
 The first minimal redesign was rejected because it changed the chat theme and replaced the simultaneous panels with tabs. It is preserved at `assist-ui-minimal-first-pass-20261017` (`a9cfe38`). The corrected design restores the original interface and limits the visual redesign to the advisory stack. New screenshots are at `/mnt/seagate/silo/voice-robust/ui-green-cards-20261017/`.
 
