@@ -121,3 +121,7 @@ on the matching test-account snapshot.
 
 Silo started as a Telegram bot on a 30B model with answer checking (October 2026), now in `archive/v1/`. The core
 was built and measured in the io repo in November 2026 and moved here; see [docs/from-io.md](docs/from-io.md).
+
+## Signal
+
+Use [the Note to Self bridge](bridges/signal/README.md) to try `idli ask` from your own Signal account.
