@@ -1,0 +1,142 @@
+[
+ {
+  "id": "O01",
+  "kind": "own_definition",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-20 ~/idli-sbx/t1",
+  "turns": [
+   "find the adivasi article from my drive and summarize it for me",
+   "is it about adivasi tribes?"
+  ],
+  "expect": "Text search finds 'Vol. 53, Issue No. 49, 15 Dec, 2018' and 'entrepreneurship_poverty_thorat.pdf' (both contain 'adivasi'); the summary keeps the word Adivasi. Any new definition is worded generally (no examples copied from the note) and shown on a yes card first."
+ },
+ {
+  "id": "O02",
+  "kind": "own_definition",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-20 ~/idli-sbx/t1",
+  "turns": [
+   "show me docs on economics"
+  ],
+  "expect": "Reuses an existing 'economics' definition if there is one (never redefines it); a new one goes through the yes card; judging covers PDFs as well as Docs."
+ },
+ {
+  "id": "O03",
+  "kind": "trust",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "which docs talk about border effects?",
+   "only the pdfs",
+   "which of those are really about border effects?"
+  ],
+  "expect": "4 files have the phrase: wincoop.pdf (55 mentions), Gravity_explained.pdf (8), gravity_cookbook.pdf (5), mtr_btr_exchange_rate.pdf (1), listed first. The judge reads only the PDFs from that search (19), via the yes card."
+ },
+ {
+  "id": "O04",
+  "kind": "trust",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "explain border effects to me"
+  ],
+  "expect": "An explanation drawn from wincoop.pdf, Gravity_explained.pdf and gravity_cookbook.pdf (McCallum's Canada-US puzzle; Anderson and van Wincoop's multilateral resistance), naming the files."
+ },
+ {
+  "id": "O05",
+  "kind": "trust",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "explain the creation of coalitions"
+  ],
+  "expect": "An explanation from the coalition papers (coalition_concept.pdf, The Coalitional Nature of the Firm, Classics); no NDSA fixity reports ranked above them in any search shown."
+ },
+ {
+  "id": "O06",
+  "kind": "trust",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "which docs owned by me speak of conservation?",
+   "who owns docs on conservation?"
+  ],
+  "expect": "'me' is 87profligate@gmail.com (157 files). Owned by me and mentioning conservation include administrator_journal.pdf, newton_mawell.pdf, bookreview_journal_caste.pdf, Lidar. The Suhail proposal is owned by the owner's work account, shared with this one and shared; 'Guests Who Never Left' by an outside account. Owners come from the owner field, never guessed from names."
+ },
+ {
+  "id": "O07",
+  "kind": "own_workflow",
+  "persona": "owner",
+  "site": "gmail+drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2 (today 2026-11-21)",
+  "turns": [
+   "any mails from leads last week?"
+  ],
+  "expect": "Leads are the people in the Leads sheets (sheet_leads_test, sheet_leads_test_2: Asha Verma 88profligate@gmail.com, Ravi Menon, Farida Khan, Joseph Dsouza, Meena Iyer). Last week (9-15 Nov) there are 0 such emails; 36 from 88profligate on 16-18 Nov. A meaning for 'leads' is proposed (view) or asked, not a text search for the word 'leads'."
+ },
+ {
+  "id": "O08",
+  "kind": "own_definition",
+  "persona": "owner",
+  "site": "gmail",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "which mails need a reply from me last week?"
+  ],
+  "expect": "18 emails received 9-15 Nov, all bulk or calendar notices (0 personal): nothing needs a reply. The reply never repeats an earlier answer about leads; no copied 'urgent' category."
+ },
+ {
+  "id": "O09",
+  "kind": "own_workflow",
+  "persona": "owner",
+  "site": "gmail+drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "show me all leads - the excel",
+   "yes show me the contact details",
+   "do i have emails from any of these people in the last few weeks?"
+  ],
+  "expect": "The Leads (test) sheet's 5 rows with full emails; then 36 emails from 88profligate@gmail.com (Asha Verma) in the last 3 weeks, none from the other four."
+ },
+ {
+  "id": "O10",
+  "kind": "trust",
+  "persona": "owner",
+  "site": "drive",
+  "changes_things": false,
+  "source": "2026-11-21 ~/idli-sbx/t2",
+  "turns": [
+   "tell me about tsunami effects on the parliament, if any",
+   "is that the doc by praveen chakravarty?"
+  ],
+  "expect": "'Election Data' (owned by me): 'Tsunami: Majority in the Lok Sabha'; it does mention Praveen Chakravarty."
+ },
+ {
+  "id": "O11",
+  "kind": "trust",
+  "persona": "owner",
+  "site": "calendar",
+  "changes_things": false,
+  "source": "2026-11-20 ~/idli-sbx/t1",
+  "turns": [
+   "show me meetings with Asha",
+   "show me emails from everyone ive declined meetings with"
+  ],
+  "expect": "Needs Google Calendar synced (sync gcalendar). 6 events mention Asha (titles; guests hold addresses). No events have my_response = 'declined' (5 accepted, 5 organizer), so there is nobody: an incoming 'Declined:' notice is someone declining my invite, not me declining."
+ }
+]

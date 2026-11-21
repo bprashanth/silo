@@ -1,0 +1,4 @@
+#!/bin/sh
+# idli: the core on the command line. IDLI_SANDBOX picks the store (a folder).
+D=$(dirname "$(readlink -f "$0")")
+cd "$D" && exec .venv/bin/python -m lib.idlicli "$@"
