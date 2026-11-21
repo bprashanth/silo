@@ -1,0 +1,479 @@
+[
+  {
+    "id": "T01",
+    "kind": "trust",
+    "persona": "programme lead",
+    "turns": ["Is my Gmail connected?"],
+    "expect": "Say whether Gmail is connected and usable for this account; if not, say what is missing.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T02",
+    "kind": "trust",
+    "persona": "office coordinator",
+    "turns": ["How many files are in the fixity folder? Just the number."],
+    "expect": "Give the count of files in the fixity folder, not a list.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T03",
+    "kind": "trust",
+    "persona": "finance head",
+    "turns": ["what columns does the leads sheet have?"],
+    "expect": "List the column headers from the leads sheet.",
+    "changes_things": false,
+    "site": "sheets"
+  },
+  {
+    "id": "T04",
+    "kind": "trust",
+    "persona": "field researcher",
+    "turns": ["Show me yesterday's meetings.", "No, just the ones after lunch."],
+    "expect": "List yesterday's calendar meetings after lunch, with title, time, and who they were with.",
+    "changes_things": false,
+    "site": "calendar"
+  },
+  {
+    "id": "T05",
+    "kind": "trust",
+    "persona": "communications person",
+    "turns": ["Do I have the 2025 NDSA fixity study in Drive?"],
+    "expect": "Confirm whether the 2025 fixity study exists in Drive and, if so, identify it by name.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T06",
+    "kind": "trust",
+    "persona": "programme lead",
+    "turns": ["How many emails did I get last week?", "Break that into replies, invites, and newsletters."],
+    "expect": "Give last week's email count, split into replies, calendar invites, and newsletters/notifications.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T07",
+    "kind": "trust",
+    "persona": "office coordinator",
+    "turns": ["Which people are on the leads sheet right now?", "Don't include blank rows."],
+    "expect": "List the non-empty people entries currently on the leads sheet, including names and emails if present.",
+    "changes_things": false,
+    "site": "sheets"
+  },
+  {
+    "id": "T08",
+    "kind": "trust",
+    "persona": "field researcher",
+    "turns": ["Show me the PDFs in Strategy Classics."],
+    "expect": "List the PDF files inside the Strategy Classics folder.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T09",
+    "kind": "trust",
+    "persona": "finance head",
+    "turns": ["What meetings do I have next Monday?"],
+    "expect": "List next Monday's calendar meetings with time, title, and attendees or meeting context.",
+    "changes_things": false,
+    "site": "calendar"
+  },
+  {
+    "id": "T10",
+    "kind": "trust",
+    "persona": "communications person",
+    "turns": ["Do I have any photos with people in them?", "If yes, just the count and file names."],
+    "expect": "Say whether there are Drive photos with people in them, and if so give the count and file names.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T11",
+    "kind": "own_definition",
+    "persona": "programme lead",
+    "turns": ["Find the emails that look urgent."],
+    "expect": "Return the Gmail threads that seem urgent, with sender, date, and why they match; empty is okay.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T12",
+    "kind": "own_definition",
+    "persona": "office coordinator",
+    "turns": ["Show me Drive files that are conservation-related."],
+    "expect": "List Drive files that seem related to conservation, with file names and a short reason for each match.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T13",
+    "kind": "own_definition",
+    "persona": "communications person",
+    "turns": ["Pull the photos that have people in them."],
+    "expect": "Identify Drive photos that contain people, with file names and a count.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T14",
+    "kind": "own_definition",
+    "persona": "field researcher",
+    "turns": ["I want papers about power.", "No, academic papers, not emails."],
+    "expect": "List the Drive documents or PDFs that are academic papers about power, not email threads.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T15",
+    "kind": "own_definition",
+    "persona": "programme lead",
+    "turns": ["Find every reply from a lead."],
+    "expect": "List Gmail threads that are replies from a lead, with sender, date, and thread subject or snippet.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T16",
+    "kind": "own_definition",
+    "persona": "office coordinator",
+    "turns": ["Show me the calendar events that feel like funder meetings."],
+    "expect": "Return calendar events that appear to be funder meetings, with title, date, and why they fit.",
+    "changes_things": false,
+    "site": "calendar"
+  },
+  {
+    "id": "T17",
+    "kind": "own_definition",
+    "persona": "finance head",
+    "turns": ["I need the 'a lead' stuff.", "Actually only the email threads where they replied to us."],
+    "expect": "List the lead's Gmail threads where they replied to us, with date and subject.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T18",
+    "kind": "own_definition",
+    "persona": "communications person",
+    "turns": ["Find the docs that are more about strategy process than strategy content."],
+    "expect": "List Drive docs that fit strategy process more than strategy content, with a brief reason for each.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T19",
+    "kind": "own_definition",
+    "persona": "field researcher",
+    "turns": ["Give me the files that look like survey data, not the report."],
+    "expect": "List the Drive files that look like survey data files rather than the report itself.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T20",
+    "kind": "own_definition",
+    "persona": "programme lead",
+    "turns": ["Find anything in Drive about caste."],
+    "expect": "List Drive files that appear to be about caste, with names and a short justification.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T21",
+    "kind": "own_definition",
+    "persona": "office coordinator",
+    "turns": ["Show me photos from field visits."],
+    "expect": "List Drive photos that seem to be from field visits, with file names and a brief reason.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T22",
+    "kind": "own_definition",
+    "persona": "communications person",
+    "turns": ["Pull the emails about the reading programme visit."],
+    "expect": "List Gmail threads about the reading programme visit, with sender, date, and subject or snippet.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T23",
+    "kind": "own_definition",
+    "persona": "finance head",
+    "turns": ["Which files are about economics?", "I only mean the econometrics stuff."],
+    "expect": "List the Drive files that fit econometrics rather than general economics, with names and brief reasons.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T24",
+    "kind": "own_definition",
+    "persona": "programme lead",
+    "turns": ["Find newsletters, not human replies."],
+    "expect": "List Gmail threads that are newsletters or automated notices, not personal replies.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T25",
+    "kind": "own_definition",
+    "persona": "office coordinator",
+    "turns": ["Show me the shared Strategy Classics folder and its subfolders."],
+    "expect": "Show the Strategy Classics folder tree, including its shared copy and subfolders.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T26",
+    "kind": "own_definition",
+    "persona": "field researcher",
+    "turns": ["Find all the files that look like GRE prep."],
+    "expect": "List Drive files that seem to be GRE prep materials, with file names and a short reason.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T27",
+    "kind": "own_definition",
+    "persona": "communications person",
+    "turns": ["What in Drive looks like blog drafts?"],
+    "expect": "List Drive files that look like blog drafts, with names and why they match.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T28",
+    "kind": "own_definition",
+    "persona": "programme lead",
+    "turns": ["Show me emails from LinkedIn and other notifications."],
+    "expect": "List Gmail threads that are LinkedIn or similar notifications, with sender and date.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T29",
+    "kind": "own_definition",
+    "persona": "finance head",
+    "turns": ["Find any slides about SI."],
+    "expect": "List Drive slide files that appear to be about SI, with file names and a brief reason.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T30",
+    "kind": "own_definition",
+    "persona": "field researcher",
+    "turns": ["Show me only the files that look like workshop notes, not final papers."],
+    "expect": "List Drive files that look like workshop notes rather than final papers, with file names and reasons.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T31",
+    "kind": "own_workflow",
+    "persona": "programme lead",
+    "turns": ["Every Monday, list leads who haven't replied and draft a nudge."],
+    "expect": "List the leads who have not replied and provide a drafted nudge for each one.",
+    "changes_things": true,
+    "site": "gmail"
+  },
+  {
+    "id": "T32",
+    "kind": "own_workflow",
+    "persona": "office coordinator",
+    "turns": ["Take the meeting invites from this week and send me a short summary of who accepted and who declined."],
+    "expect": "Summarize this week's meeting invites by accepted versus declined responses.",
+    "changes_things": false,
+    "site": "calendar"
+  },
+  {
+    "id": "T33",
+    "kind": "own_workflow",
+    "persona": "finance head",
+    "turns": ["For each lead, check the latest email and tell me who needs a follow-up.", "Only the ones with no reply since our last note."],
+    "expect": "Report which leads need a follow-up because they have not replied since the last note.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T34",
+    "kind": "own_workflow",
+    "persona": "field researcher",
+    "turns": ["Draft a reply to the latest message from the lead who suggested Tuesday."],
+    "expect": "Produce a draft reply to the most recent lead email that suggested Tuesday.",
+    "changes_things": true,
+    "site": "gmail"
+  },
+  {
+    "id": "T35",
+    "kind": "own_workflow",
+    "persona": "communications person",
+    "turns": ["Put my next two lead meetings into a neat list with time, place, and whether I need to prep."],
+    "expect": "Create a concise list of the next two lead meetings with time, place or medium, and prep needed.",
+    "changes_things": false,
+    "site": "calendar"
+  },
+  {
+    "id": "T36",
+    "kind": "own_workflow",
+    "persona": "programme lead",
+    "turns": ["Find every unread email from the last 7 days and group them by lead vs newsletter."],
+    "expect": "Group unread emails from the last 7 days into lead mail and newsletters/notifications.",
+    "changes_things": false,
+    "site": "gmail"
+  },
+  {
+    "id": "T37",
+    "kind": "own_workflow",
+    "persona": "office coordinator",
+    "turns": ["Move the fixity report PDF and CSV into a folder called Fixity 2025."],
+    "expect": "Move the fixity report PDF and CSV into a folder named Fixity 2025.",
+    "changes_things": true,
+    "site": "drive"
+  },
+  {
+    "id": "T38",
+    "kind": "own_workflow",
+    "persona": "finance head",
+    "turns": ["Rename the current draft doc so it says v2 and keep the old one untouched."],
+    "expect": "Rename or duplicate the draft doc so the new copy is labeled v2 while the old one remains.",
+    "changes_things": true,
+    "site": "drive"
+  },
+  {
+    "id": "T39",
+    "kind": "own_workflow",
+    "persona": "field researcher",
+    "turns": ["Before Friday, make a quick list of all meetings with leads and what I owe each person."],
+    "expect": "Create a list of lead meetings before Friday and note what follow-up or prep is owed to each person.",
+    "changes_things": false,
+    "site": "calendar"
+  },
+  {
+    "id": "T40",
+    "kind": "own_workflow",
+    "persona": "programme lead",
+    "turns": ["Prepare a follow-up for the lead with the earliest unanswered email.", "Make it polite and mention the reading programme visit."],
+    "expect": "Draft a polite follow-up for the lead whose unanswered email is oldest, mentioning the reading programme visit.",
+    "changes_things": true,
+    "site": "gmail"
+  },
+  {
+    "id": "T41",
+    "kind": "own_workflow",
+    "persona": "office coordinator",
+    "turns": ["Collect the latest replies from the leads sheet and tell me which ones are still missing a response."],
+    "expect": "Identify which entries from the leads sheet are still missing a response based on the latest replies.",
+    "changes_things": false,
+    "site": "sheets"
+  },
+  {
+    "id": "T42",
+    "kind": "own_workflow",
+    "persona": "finance head",
+    "turns": ["Create a clean summary of the papers I should read for power and caste this week."],
+    "expect": "Summarize the relevant papers for this week on power and caste in a clean reading list.",
+    "changes_things": false,
+    "site": "drive"
+  },
+  {
+    "id": "T43",
+    "kind": "own_workflow",
+    "persona": "communications person",
+    "turns": ["Draft a Slack update from yesterday's meetings."],
+    "expect": "Produce a short Slack-ready update from yesterday's meetings.",
+    "changes_things": true,
+    "site": "slack"
+  },
+  {
+    "id": "T44",
+    "kind": "other_site",
+    "persona": "programme lead",
+    "turns": ["Draft a WhatsApp message to the field staff group saying the visit starts at 10."],
+    "expect": "Draft a WhatsApp message for the field staff group with the visit start time and any needed context.",
+    "changes_things": true,
+    "site": "whatsapp"
+  },
+  {
+    "id": "T45",
+    "kind": "other_site",
+    "persona": "office coordinator",
+    "turns": ["Check the Slack channel for anything about the Saturday training.", "Summarize only the action items, not the chatty bits."],
+    "expect": "Summarize the Saturday training Slack messages and list only the action items.",
+    "changes_things": false,
+    "site": "slack"
+  },
+  {
+    "id": "T46",
+    "kind": "other_site",
+    "persona": "communications person",
+    "turns": ["Find the LinkedIn posts from people we met this month and pull the ones worth replying to."],
+    "expect": "List the LinkedIn posts from people met this month that seem worth replying to, with a brief reason.",
+    "changes_things": false,
+    "site": "linkedin"
+  },
+  {
+    "id": "T47",
+    "kind": "other_site",
+    "persona": "finance head",
+    "turns": ["Make a simple Canva post for next week's reading programme visit."],
+    "expect": "Create a Canva-ready post for next week's reading programme visit.",
+    "changes_things": true,
+    "site": "canva"
+  },
+  {
+    "id": "T48",
+    "kind": "other_site",
+    "persona": "field researcher",
+    "turns": ["Search Amazon for books on strategy process and tell me which one looks cheapest."],
+    "expect": "Return the cheapest-looking Amazon option for books on strategy process, with title and price if available.",
+    "changes_things": false,
+    "site": "amazon"
+  },
+  {
+    "id": "T49",
+    "kind": "other_site",
+    "persona": "programme lead",
+    "turns": ["Open the funder portal and show me what grants are due this month.", "Only the ones from the literacy programme."],
+    "expect": "List the literacy-programme grants due this month from the funder portal.",
+    "changes_things": false,
+    "site": "portal"
+  },
+  {
+    "id": "T50",
+    "kind": "other_site",
+    "persona": "office coordinator",
+    "turns": ["Post a brief update in Mattermost to the office team about today's meeting."],
+    "expect": "Draft or post a short Mattermost update about today's meeting for the office team.",
+    "changes_things": true,
+    "site": "mattermost"
+  },
+  {
+    "id": "T51",
+    "kind": "other_site",
+    "persona": "communications person",
+    "turns": ["Draft a LinkedIn message asking a contact if they'd be open to a coffee chat."],
+    "expect": "Draft a LinkedIn message inviting a contact to a coffee chat.",
+    "changes_things": true,
+    "site": "linkedin"
+  },
+  {
+    "id": "T52",
+    "kind": "other_site",
+    "persona": "finance head",
+    "turns": ["Look through WhatsApp for the messages I sent last week that got a heart or blue tick.", "Just the funder chats."],
+    "expect": "List last week's WhatsApp messages in funder chats that received a heart or blue tick.",
+    "changes_things": false,
+    "site": "whatsapp"
+  },
+  {
+    "id": "T53",
+    "kind": "other_site",
+    "persona": "field researcher",
+    "turns": ["Prepare a Canva version of the event poster with the date changed to Friday."],
+    "expect": "Create a Canva version of the poster with the date changed to Friday.",
+    "changes_things": true,
+    "site": "canva"
+  }
+]

@@ -36,3 +36,71 @@ dt.empty { color: var(--soft); }
 .edit-input { font: inherit; font-size: 15px; padding: 2px 6px; max-width: 100%; width: 14em; }
 .tag.edited { border-color: var(--accent); color: var(--accent); border-style: dashed; }
 .err { color: var(--warn); }
+
+/* Advisory cards share the existing green chat palette. */
+[hidden]{display:none!important}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#cards{display:grid;gap:10px}.advisory{background:var(--panel);border:1px solid var(--line);border-radius:3px;overflow:hidden}.advisory.active{border-color:#aeb7aa}.advisory-heading{display:flex;align-items:center;width:100%;justify-content:space-between;gap:10px;text-align:left;border:0;background:none;padding:15px 16px;border-radius:0}.advisory-heading strong{font-size:14px;font-weight:600}.advisory-heading span{font-size:11px;color:var(--muted);white-space:nowrap}.advisory-body{padding:0 16px 16px}.advisory-body dl{margin:0;display:block}.advisory-body dt{font-size:11px;color:var(--muted);margin-top:13px;text-transform:uppercase;letter-spacing:.06em}.advisory-body dd{margin:3px 0 0;font-size:14px;overflow-wrap:anywhere}.advisory-body dd.question{font-size:17px;line-height:1.5}.trigger-quote{max-height:90px;overflow:auto}.card-actions{display:flex;align-items:center;justify-content:space-between;margin-top:18px;gap:12px}.clear-card{font-size:12px;padding:5px 12px}.references{margin-top:12px;font-size:11px;color:var(--muted)}.references summary{font-size:11px}.references a{display:block;margin-top:8px}.card-fields{padding-top:6px}.card-fields dl{display:grid;grid-template-columns:1fr 1.2fr;gap:8px 12px;font-size:12px}.card-fields dt,.card-fields dd{margin:0;text-transform:none;letter-spacing:normal;font-size:12px}.card-fields .edit{font-size:11px}.card-fields summary{font-size:12px}.urgent-line{color:var(--warn);font-size:13px;padding:0 0 15px}#cleared-panel{margin-top:18px}#cleared-cards{display:grid;gap:8px;margin-top:10px}.cleared-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--muted)}
+.advisories{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
+.advisory-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.approval-note{margin:0 0 12px}
+.advisory.active{border-color:var(--accent)}
+.advisory-heading:hover,.advisory.active .advisory-heading{background:var(--agent)}
+.advisory-heading:focus-visible{outline-offset:-3px}
+.advisory-heading span,.references,.text-button{color:var(--muted)}
+.advisory-body details>summary{list-style:none;cursor:pointer;font-size:12px;color:var(--muted);padding:6px 0;width:fit-content;border-bottom:1px solid transparent}
+summary::-webkit-details-marker{display:none}
+.advisory-body summary:hover,.advisory-body details[open]>summary,#cleared-panel summary:hover{color:var(--accent);border-bottom-color:var(--accent)}
+.references a{color:var(--muted);text-underline-offset:3px}
+.references a:hover{color:var(--accent)}
+#cleared-panel>summary{list-style:none;cursor:pointer;font-size:12px;color:var(--muted)}
+.clear-card:hover,.text-button:hover{background:var(--agent);border-color:var(--accent)}
+.text-button{background:none;border:1px solid transparent;font-size:12px;padding:3px 6px}
+#card-error,#error{color:var(--warn)}
+#record-progress{font-weight:normal;margin-left:8px}
+#latest{margin-top:6px}
+#review{overflow-x:auto}
+.controls label:first-child{min-width:0}
+#case{max-width:100%}
+@media(max-width:600px){.controls label:first-child{width:100%}.title .muted{display:block}.card-fields dl{grid-template-columns:1fr}.advisory-heading{padding:12px} .advisory-body{padding:0 12px 12px}}
+
+/* Keep the call, captured record and advisory stack in view together. */
+header,main.console,#review{max-width:1800px}
+main.console{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,1fr);gap:16px}
+main.console>*,.care-record{min-width:0}
+.advisories{margin-top:0;padding:10px;border:1px solid var(--line)}
+.advisory-heading{padding:10px 12px}
+.advisory-body{padding:0 12px 12px}
+.advisory-body dt{margin-top:9px}
+.advisory-body dd.question{font-size:16px}
+.card-actions{margin-top:10px}
+.references{margin-top:4px}
+#cards{gap:8px}
+.care-record dd{font-size:15px}
+.care-record .legend{font-size:12px}
+@media(min-width:1100px){
+ header{height:120px;overflow:auto}
+ .controls{gap:8px}
+ #case{max-width:330px}
+ main.console{height:calc(100dvh - 120px);min-height:450px}
+ .conversation{display:flex;flex-direction:column;min-height:0}
+ #transcript{height:auto;flex:1;min-height:0}
+ .care-record{max-height:100%;overflow-y:auto}
+ .advisories{height:100%;min-height:0;display:flex;flex-direction:column}
+ .advisory-title,.approval-note,#cleared-panel,#card-error{flex-shrink:0}
+ #cards{display:flex;flex-direction:column;min-height:0;flex:1}
+ .advisory{flex-shrink:0}
+ .advisory.active{display:flex;flex-direction:column;min-height:0;flex:0 1 auto}
+ .advisory-heading{flex-shrink:0}
+ .advisory-body{overflow-y:auto;min-height:0}
+ #cleared-panel{margin-top:10px;max-height:25%;overflow-y:auto}
+}
+@media(max-width:1099px){
+ main.console{grid-template-columns:1fr 1fr}
+ .advisories{grid-column:1/-1}
+}
+@media(max-width:700px){
+ main.console{grid-template-columns:1fr}
+ .advisories{grid-column:auto}
+ #transcript{height:55vh}
+}

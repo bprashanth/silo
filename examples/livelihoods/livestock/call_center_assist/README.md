@@ -4,8 +4,7 @@ A paravet at a livestock helpline (an ERC, like the 1962 centres) takes the farm
 both sides and fills a **care record** as facts are said. The operator is trained to **repeat key facts back**
 ("Buffalo, not getting up since morning. Which village?"). Their headset audio is clean, so what they repeat is far
 easier to recognise than the farmer's 2G audio, and it counts as confirmed. The agent never speaks to the farmer.
-It never overrides the operator either. For important complaints it adds **protocol cards**: the extra questions,
-a priority, and approved lines to read out. Diagnosis and medicines stay with the vet.
+It never overrides the operator either. For important complaints it adds source-backed questions grouped into five advisory classes. These prototype prompts are not approved SOPs. Diagnosis and medicines stay with the vet.
 
 Its sibling, [`../full_call_center/`](../full_call_center/) (Codex), automates the whole workflow over Telegram.
 The longer story, with what the evidence does and doesn't cover, is in
@@ -71,52 +70,44 @@ Indian field report, named in the case sheet:
 
 ## What the screen shows
 
-Two columns, on purpose: the operator works from the record, not from a script.
+The original green chat interface is preserved, with the transcript on the left, the care record in the centre and advisories on the right. At desktop widths of 1100px and up, the three panels use the viewport height; the page does not need scrolling to reach advisories. Long transcript, record and expanded card details scroll inside their panels. Smaller screens stack the panels. Farmer and operator turns have clear labels, plain text and a **Listen** control for recorded audio. New lines follow the conversation only while you are at the bottom; reading an older line keeps your position, with **Latest message** available to catch up.
 
-- **Call.** Your words as recognised, live while you speak, and Lakshmamma's words as the line delivered them,
-  with ▶ to replay. After the call each of her lines also shows what she really said.
-- **Care record.** Each field with where it came from: *confirmed* (you repeated it and the line agrees), *you said*,
-  *heard only* (not repeated yet), *differs* (check it), or *to ask*. A repeat confirms whenever it comes: "okay, I
-  have noted the goat problem" ten turns later confirms the animal. Hints sit on the field they're about (a
-  gazetteer spelling for a village, a phone number that isn't 10 digits). The urgent signs are at the top.
-- **✎ on every field**, record and protocol cards, during or after the call. Type the value where recognition
-  failed (yes/no for the booleans, a number for *Animals sick*, comma-separated problems). A typed value wins,
-  shows as *edited*, and later turns don't overwrite it. An empty value clears the edit, and the field goes back
-  to what was heard.
-- **After the call:** protocol checks, a second read of the whole call by local Muse and where it disagrees,
-  the record against Lakshmamma's real answers, the case sheet (what she knew, and what she'd only say if
-  asked), and timings.
+**Care record** stays visible beside the transcript with captured fields and their confirmation states. **Edit** changes a field when recognition was wrong. Typed values remain marked as edited. Call controls and the after-call review retain the original layout.
 
-## Protocol cards (prototype; `ASSIST_PROTOCOL=0` turns them off)
+### Advisory stack
 
-Real dispatch systems give a non-clinical call-taker more than a checklist, but not diagnosis or treatment. In
-MPDS (ambulance dispatch) and NHS Pathways (NHS 111), what the caller says selects a protocol; its key questions
-set a priority level and a response time, and the call-taker reads out pre-approved instructions ("pre-arrival
-instructions", "care advice", "call back if it gets worse"). Clinicians take over anything outside the script. The
-1962 veterinary ERCs work the same way: the call-taker collects the case, and a vet at the centre triages and
-gives the medical direction ("online medical direction") or dispatches the mobile unit.
+In the right-hand panel, five fixed, observation-based classes replace nine overlapping visible cards. Their borders, headers and hover states use the existing green chat palette:
 
-So the assist now does the same, inside the care record column:
+| Class | Topics grouped |
+|---|---|
+| Herd health | Deaths, similar signs in other animals, skin changes |
+| Feed and exposure | Suspected feed or chemical exposure |
+| Breathing and standing | Respiratory signs, inability to stand |
+| Digestion and drinking | Belly changes, loose motions and drinking |
+| Birth progress | Straining, progress and attempted assistance |
 
-- **Cards open from what was said**: the farmer's words, or the operator's statements (not their questions).
-  Nine cards in `protocol_cards.json`: sudden death, possible poisoning, spreading disease, skin lumps, belly pain
-  or bloat, difficult birth, cough, loose motions, animal down.
-- **Each card adds its key questions as record fields** (*ask: what did they eat, and where?*), with the same
-  confirmed / heard-only states.
-- **A priority from fixed rules** on the answers: E (dispatch now, bring the ERC vet on), D, C or A. It shows
-  whether the operator has brought the vet in.
-- **Lines to read out**, ticked when the operator says them: "move the animals away from that field", "don't pour
-  anything into their mouths", "don't pull", "keep the sick ones apart", and before closing, "call again if it gets
-  worse".
-- **Never to the farmer:** disease names or medicines. The after-call checks flag a disease named on the call.
-  Disease names and the DAHD Standard Veterinary Treatment Guidelines appear only in the vet's handoff.
-- **Rules, not the LLM, open cards and set the level.** Local Muse only fills a card's fields, and only the
-  fields the operator just asked about. An operator line can only confirm what the farmer said. A value must be
-  in the words: Muse had filled "Ate what" with the operator's goodbye, and "Age" with "two of them are coughing".
+One card expands at a time. It shows **Trigger** (the actual farmer or operator statement) and **Ask** (the next unanswered question). Other questions and answers remain available in a disclosure. The source links are present but quiet, under **Sources**.
 
-The cards, levels and lines are **illustrative**, written for the prototype from public sources and common
-first-aid practice. A vet has to own them before any real use. The real thing would be the state's ERC
-disease-severity mapping and SOPs.
+Click **Clear card** to move a reviewed prompt out of the active stack; the next card opens. **Cleared cards** offers **Restore**. This state is held by the session and included in saved session data; clearing does not fill fields, change urgency, resolve a clinical concern or satisfy protocol QA. An additional underlying concern or a higher priority reopens the class. Starting a new call has its own stack. Generic mentions of eating no longer trigger the exposure class.
+
+The classes and priority rules are a prototype, not an approved ERC taxonomy. The active UI does not display the former clinical instructions, notifiable-disease badges or promised dispatch/callback times. Legacy rules and advice checks remain in the backend and are explicitly labeled in the after-call practice review. They must not be interpreted as clinical approval or dispatch commitments. A veterinarian still needs to approve the questionnaire and operational SOP before real use. `ASSIST_PROTOCOL=0` disables protocol prompts.
+
+### Evidence behind the prompts
+
+`assist/protocol_cards.json` holds each topic's class and reference metadata. Sources support the questions and background observations, not a diagnosis from a keyword or approval of the prototype priority rules.
+
+- [DAHD Standard Veterinary Treatment Guidelines (2024), official government mirror](https://dahd.maharashtra.gov.in/en/publication/standard-veterinary-treatment/): downer cow syndrome p. 21; ruminal tympany pp. 24–25; diarrhoea pp. 26–27; respiratory disease pp. 32–34; dystocia p. 58; FMD pp. 77–78; LSD pp. 78–80; anthrax pp. 98–99. Card links open the relevant PDF page; printed-page numbers differ from PDF-page numbers.
+- [NDDB Farmers’ Corner: Cyanide](https://www.nddb.coop/farmer/animal-health/poisoning/cyanide): exposure history and observable signs. The prompt asks what was eaten and when; it does not prescribe treatment.
+
+### Visual checks and rollback
+
+Current desktop layout: three simultaneous panels, with Importance removed from advisory cards. Pre-change checkpoint: `assist-before-single-screen-20261017` (`512e712`). Screenshot evidence is at `/mnt/seagate/silo/voice-robust/ui-single-screen-20261017/`. Browser checks confirm all five card headings and the active Clear button fit without page scrolling at 1280×720, 1366×768 and 1440×900. Screenshots, audio, model binaries and session state are ignored; runtime artifacts remain on Seagate.
+
+The first minimal redesign was rejected because it changed the chat theme and replaced the simultaneous panels with tabs. It is preserved at `assist-ui-minimal-first-pass-20261017` (`a9cfe38`). The corrected design restores the original interface and limits the visual redesign to the advisory stack. New screenshots are at `/mnt/seagate/silo/voice-robust/ui-green-cards-20261017/`.
+
+Before-change checkpoint: `assist-ui-before-minimal-20261017` (commit `ce8dfd3`). To restore the original code without rewriting history, restore `examples/livelihoods/livestock/call_center_assist/` from that tag in a new commit, then restart only `assist/start.sh`. The original full-call-center bot and case desk do not need restarting.
+
+UI evidence is outside Git at `/mnt/seagate/silo/voice-robust/ui-minimal-20261017/`: before/after screenshots, synthetic layout interactions, mobile screenshots and an actual Chromium/WebRTC recorded-farmer call. `assist/tests/browser_layout.py` tests five-card presentation, clearing/restoration, source disclosures, simultaneous transcript/record visibility, keyboard card controls, scroll retention and horizontal overflow using synthetic UI state. `assist/tests/browser_assist.py` tests the real call transport and editing, including clearing and restoring a card via the live API. Synthetic clips are not evidence of human accent/noise robustness.
 
 ## How it works
 
@@ -221,7 +212,7 @@ real Indian-accented speech over a simulated 2G line), ten simulated callers, br
 is in [`agent_call.md`](agent_call.md), with raw results in `runs/`. It was `benchmarks/voice-robust/` until
 16 October 2026; the chronology entries before then use that path.
 
-Tests (54, no models needed):
+Tests (62, no models needed):
 
 ```sh
 cd examples/livelihoods/livestock/call_center_assist

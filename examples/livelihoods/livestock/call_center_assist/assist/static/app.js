@@ -5,6 +5,7 @@ const LABELS = {animal_type: 'Animal', symptoms: 'Problem', can_stand: 'Can stan
   caller_name: 'Farmer name', village: 'Village', district: 'District', contact_details: 'Phone'};
 const STATE = {confirmed: 'confirmed', operator: 'you said', heard_only: 'heard only', operator_differs: 'differs', edited: 'edited'};
 const BOOL = new Set(['can_stand', 'breathing_ok']);
+let selectedAdvisory = null, lastCardsHTML = '', lastTranscriptHTML = '', ending = false;
 let editing = null;  // the field being typed in: polling leaves the record alone meanwhile
 let pc, ctx, sid, poll, clock, started, last = null, micStream, fixtureDest, CFG;
 const TEST = new URLSearchParams(location.search).has('test');  // automated runs: test audio and the recorded-only scenarios
@@ -19,7 +20,7 @@ function fmt(v) { if (Array.isArray(v)) return v.join(', '); if (v === true) ret
 
 async function init() {
   CFG = await api('/api/config');
-  CFG.cases.forEach((c, i) => $('case').add(new Option(`${i + 1}. "${c.opening}"${c.recorded ? '  (recorded too)' : ''}`, c.id)));
+  CFG.cases.forEach((c, i) => $('case').add(new Option(c.opening, c.id)));
   if (TEST) for (const [k, v] of Object.entries(CFG.recorded_only)) $('case').add(new Option('(recorded only) ' + v, 'rec:' + k));
   $('fixture-box').hidden = !TEST;
   if (!CFG.ai) $('mode').value = 'recorded';
@@ -33,8 +34,8 @@ function modeNote() {
   if ($('mode').value === 'ai' && !canAi) $('mode').value = 'recorded';
   if ($('mode').value === 'recorded' && !canRec) $('mode').value = 'ai';
   $('modenote').textContent = $('mode').value === 'ai'
-    ? `Live: ${CFG.llm} on OpenRouter plays Lakshmamma from the case sheet. It hears your words as recognised (synthetic role-play only); her voice is local Kokoro over a 2G line.`
-    : 'Recorded: fixed clips answer the question you ask, in the checklist order. Same farmer every time.';
+    ? 'An AI plays the farmer for this practice call. No real farmer or veterinary dispatch is involved.'
+    : 'Recorded farmer replies for a repeatable practice call.';
 }
 
 async function loadFixtures() {
@@ -64,7 +65,11 @@ window.speakFixture = async function (file) {
 window.playClip = url => new Audio(url).play();
 
 async function startCall() {
-  $('call').disabled = true; $('status').textContent = 'connecting'; $('review').hidden = true;
+  $('call').disabled = true; $('status').textContent = 'connecting'; $('review').hidden = true; $('error').hidden = true;
+  selectedAdvisory = null; lastCardsHTML = ''; lastTranscriptHTML = ''; last = null; sid = null;
+  $('transcript').innerHTML = '<p class=muted>Connecting the practice call.</p>'; $('fields').innerHTML = '';
+  renderProtocol(null); $('urgent').hidden = true; $('record-progress').textContent = ''; $('timer').textContent = '00:00';
+  $('case').disabled = $('mode').disabled = true;
   ctx = new AudioContext({sampleRate: 48000});
   const id = $('case').value;
   const s = await api('/api/sessions', id.startsWith('rec:') ? {scenario: id.slice(4), mode: 'recorded', fixture: $('fixture').checked}
@@ -84,10 +89,12 @@ async function startCall() {
 }
 
 async function endCall() {
+  if (ending) return; ending = true; clearInterval(poll);
   $('end').disabled = true; clearInterval(clock); $('status').textContent = 'reviewing';
   micStream?.getTracks().forEach(t => t.stop()); pc?.close(); pc = null;
   if (sid) { last = await api(`/api/sessions/${sid}/end`, {}); render(last); }
   clearInterval(poll); ctx?.close(); $('call').disabled = false;
+  $('case').disabled = $('mode').disabled = false; ending = false;
 }
 
 async function refresh() {
@@ -96,23 +103,29 @@ async function refresh() {
 }
 
 function render(s) {
-  $('status').textContent = s.farmer_speaking ? 'farmer speaking' : s.status; $('status').className = 'pill ' + (s.farmer_speaking ? 'speaking' : '');
+  $('status').textContent = s.farmer_speaking ? 'farmer speaking' : s.status; $('status').className = 'pill' + (s.farmer_speaking ? ' speaking' : '');
   const t = $('transcript'), atBottom = t.scrollHeight - t.scrollTop - t.clientHeight < 40;
   const msgs = (s.transcript || []).map(m => m.role === 'farmer'
-    ? `<div class="msg farmer ${m.interrupted ? 'interrupted' : ''}"><span class="who">Lakshmamma, as the line heard it${m.audio ? ` <button class="play" onclick="playClip('${esc(m.audio)}')">▶</button>` : ''}</span>${esc(m.text) || '<span class="muted">(nothing recognised)</span>'}` +
+    ? `<div class="msg farmer ${m.interrupted ? 'interrupted' : ''}"><span class="who">Farmer${m.audio ? ` <button class="play" onclick="playClip('${esc(m.audio)}')">Listen</button>` : ''}</span>${esc(m.text) || '<span class="muted">(nothing recognised)</span>'}` +
       (s.status === 'ended' && m.said ? `<span class="truth">she said: ${esc(m.said)}</span>` : '') + '</div>'
     : `<div class="msg operator"><span class="who">You</span>${esc(m.text)}</div>`);
-  if (s.partial) msgs.push(`<div class="msg partial">${esc(s.partial)} …</div>`);
-  if (msgs.length) { t.innerHTML = msgs.join(''); if (atBottom) t.scrollTop = t.scrollHeight; }
+  if (s.partial) msgs.push(`<div class="msg partial">${esc(s.partial)}</div>`);
+  const transcriptHTML = msgs.join('');
+  if (msgs.length && transcriptHTML !== lastTranscriptHTML) {
+    t.innerHTML = transcriptHTML; lastTranscriptHTML = transcriptHTML;
+    if (atBottom) t.scrollTop = t.scrollHeight;
+    $('latest').hidden = atBottom;
+  }
   const rec = s.record; if (!rec) return;
   // Only the record: hints about a field (a gazetteer spelling, a short phone number) sit on that field.
   const hints = {}; for (const a of (s.help?.alerts || [])) if (a.slot && a.level === 'check') (hints[a.slot] ||= []).push(a.text);
-  $('urgency').hidden = !rec.urgent_warning_signs?.length;
   $('urgent').hidden = !rec.urgent_warning_signs?.length;
-  $('urgent').textContent = 'Urgent: ' + (rec.urgent_warning_signs || []).join(', ');
+  $('urgent').textContent = 'For veterinary review: ' + (rec.urgent_warning_signs || []).join(', ');
+  const complete = Object.values(rec.fields).filter(f => f.value != null && f.value !== '' && (!Array.isArray(f.value) || f.value.length)).length;
+  $('record-progress').textContent = `${complete} of ${Object.keys(LABELS).length} recorded`;
   if (editing) return;
   $('fields').innerHTML = Object.entries(LABELS).map(([k, label]) => {
-    const f = rec.fields[k]; let v = esc(fmt(f.value));
+    const f = rec.fields[k] || {state:'empty', value:null}; let v = esc(fmt(f.value));
     if (k === 'contact_details' && f.value) v = esc(String(f.value).replace(/(\d{5})(?=\d)/, '$1 ')) + ` <span class="small muted">${String(f.value).length}/10</span>`;
     const tag = STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '';
     const alt = f.state === 'operator_differs' ? `<span class="small muted"> line: ${esc(fmt(f.farmer))}</span>` : '';
@@ -123,8 +136,8 @@ function render(s) {
   if (s.review) renderReview(s);
 }
 
-// ✎ on every field: the operator types the value where recognition failed. Typed values win and say "edited".
-function pencil(k) { return sid ? `<button class="edit" title="Edit" onclick="editField(this)">✎</button>` : ''; }
+// Edit on every field: the operator types the value where recognition failed. Typed values win and say "edited".
+function pencil(k) { return sid ? `<button class="edit" aria-label="Edit ${esc(LABELS[k] || k)}" onclick="editField(this)">Edit</button>` : ''; }
 window.editField = function (btn) {
   const dd = btn.closest('dd'), k = dd.dataset.k, f = last?.record?.fields?.[k] ?? findCardField(k), cur = f?.value;
   editing = k;
@@ -145,43 +158,79 @@ window.editField = function (btn) {
 };
 function findCardField(k) { for (const c of last?.protocol?.cards || []) for (const f of c.fields) if (f.id === k) return f; }
 
-// Protocol cards (prototype): opened by what was said; extra questions, a priority, and lines to read out.
+// Fixed reference classes; one expanded card, explicit clearing, no clinical resolution implied.
 function renderProtocol(p) {
   if (editing) return;
-  $('priority').hidden = !p; $('cards').innerHTML = '';
-  if (!p) return;
-  $('priority').className = 'priority lvl' + p.level;
-  $('priority').innerHTML = `<strong>Priority ${p.level} · ${esc(p.label)}</strong> ${esc(p.response)}` +
-    (p.escalate ? (p.escalated ? ' <span class="said">✓ done</span>' : ' <span class="todo">not yet</span>') : '');
-  const said = x => x.said ? '<span class="said">✓</span>' : '<span class="todo">say</span>';
-  $('cards').innerHTML = p.cards.map(c => `<div class="card"><h3>${esc(c.title)} <span class="lvl lvl${c.level}">${c.level}</span>` +
-      `${c.notifiable ? ' <span class="tag operator_differs">tell the vet: notifiable?</span>' : ''}</h3><dl>` +
-      c.fields.map(f => `<dt class="${f.state}">${esc(f.label)}</dt><dd class="${f.state}" data-k="${f.id}" data-bool="${f.type === 'boolean'}">${f.value != null ? esc(fmt(f.value)) +
-        (STATE[f.state] ? `<span class="tag ${f.state}">${STATE[f.state]}</span>` : '') : `<span class="todo">ask: ${esc(f.ask)}</span>`}${pencil(f.id)}</dd>`).join('') +
-      '</dl>' + c.say.map(x => `<div class="say">${said(x)} “${esc(x.text)}”</div>`).join('') + '</div>').join('') +
-    `<div class="say closing">${said(p.closing)} Before closing: “${esc(p.closing.text)}”</div>` +
-    `<p class="small muted">${esc(p.status)}</p>`;
+  const groups = p?.advisories || [], active = groups.filter(g => !g.cleared), cleared = groups.filter(g => g.cleared);
+  if (!active.some(g => g.id === selectedAdvisory)) selectedAdvisory = active[0]?.id || null;
+  $('advisory-count').textContent = active.length ? `${active.length} to review` : '';
+  const html = active.map(g => {
+    const expanded = g.id === selectedAdvisory;
+    const next = g.fields.find(f => f.value == null || f.value === '' || Array.isArray(f.value) && !f.value.length);
+    const title = g.level === 'E' ? 'Review first' : 'Review';
+    return `<article class="advisory ${expanded ? 'active' : ''}"><button class="advisory-heading" data-advisory="${esc(g.id)}" aria-expanded="${expanded}" aria-controls="advisory-${esc(g.id)}"><strong>${esc(g.title)}</strong><span>${title}</span></button>` +
+      (expanded ? `<div id="advisory-${esc(g.id)}" class="advisory-body"><dl><dt>Trigger</dt><dd class="trigger-quote">${g.triggers.map(t => `${t.side === 'farmer' ? 'Farmer' : 'Operator'}: “${esc(t.text)}”`).join('<br>')}</dd>` +
+      `<dt>Ask</dt><dd class="question">${next ? esc(next.ask) : 'Key details recorded. Check them with the farmer.'}</dd></dl>` +
+      `<details class="card-fields"><summary>All questions and answers</summary><dl>${g.fields.map(f => `<dt>${esc(f.label)}</dt><dd data-k="${esc(f.id)}" data-bool="${f.type === 'boolean'}">${f.value != null ? esc(fmt(f.value)) : `<span class="todo">${esc(f.ask)}</span>`}${pencil(f.id)}</dd>`).join('')}</dl></details>` +
+      `<details class="references"><summary>Sources (${g.sources.length})</summary>${g.sources.map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)}<br>${esc(r.section)}</a>`).join('')}<p>Sources support the questions, not a diagnosis or approval of this call protocol.</p></details>` +
+      `<div class="card-actions"><span class="small muted">Clear when reviewed</span><button class="clear-card" data-clear="${esc(g.id)}">Clear card</button></div></div>` : '') + '</article>';
+  }).join('') || `<div class="empty small">${cleared.length ? 'All current cards cleared. New concerns will appear here.' : 'Relevant prompts appear as the farmer describes the problem.'}</div>`;
+  // Polling must not collapse disclosures or replace focused buttons every 300 ms.
+  if (html !== lastCardsHTML) {
+    const open = [...$('cards').querySelectorAll('details[open]')].map(d => d.className);
+    const oldSelected = $('cards').querySelector('[aria-expanded=true]')?.dataset.advisory;
+    $('cards').innerHTML = html; lastCardsHTML = html;
+    if (oldSelected === selectedAdvisory) $('cards').querySelectorAll('details').forEach(d => d.open = open.includes(d.className));
+  }
+  $('cleared-panel').hidden = !cleared.length; $('cleared-label').textContent = `Cleared cards (${cleared.length})`;
+  const clearedHTML = cleared.map(g => `<div class="cleared-card"><span>${esc(g.title)}</span><button class="text-button" data-restore="${esc(g.id)}">Restore</button></div>`).join('');
+  if ($('cleared-cards').innerHTML !== clearedHTML) $('cleared-cards').innerHTML = clearedHTML;
 }
+$('cards').onclick = async event => {
+  const heading = event.target.closest('[data-advisory]');
+  if (heading) { selectedAdvisory = heading.dataset.advisory; renderProtocol(last?.protocol); $('cards').querySelector(`[data-advisory="${selectedAdvisory}"]`)?.focus(); }
+  const clear = event.target.closest('[data-clear]');
+  if (clear) await setCleared(clear.dataset.clear, true, clear);
+};
+$('cleared-cards').onclick = async event => {
+  const restore = event.target.closest('[data-restore]');
+  if (restore) await setCleared(restore.dataset.restore, false, restore);
+};
+async function setCleared(id, cleared, button) {
+  if (!sid) return;
+  button.disabled = true; $('card-error').hidden = true;
+  try {
+    last = await api(`/api/sessions/${sid}/advisories/${id}`, {cleared});
+    if (!cleared) selectedAdvisory = id;
+    render(last);
+    ($('cards').querySelector('[aria-expanded=true]') || $('cleared-label')).focus();
+  } catch (error) { $('card-error').textContent = 'Could not update this card. Please try again.'; $('card-error').hidden = false; button.disabled = false; }
+}
+$('latest').onclick = () => { $('transcript').scrollTop = $('transcript').scrollHeight; $('latest').hidden = true; };
 
 function renderReview(s) {
   const r = s.review; $('review').hidden = false;
-  $('qa').innerHTML = r.qa.map(q => `<li class="${q.ok ? 'ok' : 'bad'}">${q.ok ? '✔' : '✘'} ${esc(q.check)}</li>`).join('');
+  $('qa').innerHTML = r.qa.map(q => `<li class="${q.ok ? 'ok' : 'bad'}">${q.ok ? 'Recorded:' : 'Not recorded:'} ${esc(q.check)}</li>`).join('');
   $('diff').innerHTML = r.offline.error ? `<p class="muted">Not available: ${esc(r.offline.error)}</p>`
-    : (r.differences.length ? '<ul>' + r.differences.map(d => `<li><strong>${esc(LABELS[d.field])}</strong>: live "${esc(d.live ?? '—')}", re-read "${esc(d.review ?? '—')}"</li>`).join('') + '</ul>'
+    : (r.differences.length ? '<ul>' + r.differences.map(d => `<li><strong>${esc(LABELS[d.field])}</strong>: live "${esc(d.live ?? 'not recorded')}", re-read "${esc(d.review ?? 'not recorded')}"</li>`).join('') + '</ul>'
       : `<p class="ok">Agrees with the live record (${r.offline.ms} ms).</p>`);
-  $('truth').innerHTML = Object.entries(r.truth_check).map(([k, ok]) => `<li class="${ok ? 'ok' : 'bad'}">${ok ? '✔' : '✘'} ${esc(LABELS[k])}${ok ? '' : ` <span class="small muted">(was: ${esc(fmt(r.truth?.[k]))})</span>`}</li>`).join('');
+  $('truth').innerHTML = Object.entries(r.truth_check).map(([k, ok]) => `<li class="${ok ? 'ok' : 'bad'}">${ok ? 'Matches:' : 'Check:'} ${esc(LABELS[k])}${ok ? '' : ` <span class="small muted">(was: ${esc(fmt(r.truth?.[k]))})</span>`}</li>`).join('');
   $('handoff').hidden = !r.handoff;
-  if (r.handoff) $('handoff-body').innerHTML = `<p><strong>Priority ${esc(r.handoff.level)} · ${esc(r.handoff.label)}</strong> ${esc(r.handoff.response)}</p>` +
-    r.handoff.cards.map(c => `<p><strong>${esc(c.title)}</strong> (${c.level}${c.notifiable ? ', possibly notifiable' : ''}): ` +
+  if (r.handoff) $('handoff-body').innerHTML = `<p><strong>Veterinary review</strong> ${esc(r.handoff.label)} in the prototype rules.</p>` +
+    r.handoff.cards.map(c => `<p><strong>${esc(c.title)}</strong> (${c.notifiable ? 'vet to assess reporting' : 'reported observations'}): ` +
       Object.entries(c.answers).map(([k, v]) => `${esc(k)}: ${esc(fmt(v))}`).join('; ') + `<br><span class="small muted">${esc(c.reference)}</span></p>`).join('');
   $('casesheet').hidden = !r.case;
   if (r.case) $('sheet').innerHTML = `<p>${esc(r.case.story)}</p><p class="small muted">Only if asked:</p><ul>${r.case.reveal_only_if_asked.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="small muted">Based on: ${esc(r.case.source)}</p>`;
   $('metrics').innerHTML = (s.metrics || []).filter(m => m.heard).map(m => `<tr><td>${m.turn}</td><td class="heard">${esc(m.heard)}</td><td>${m.asr_ms} ms</td>` +
-    `<td>${esc(m.asked ?? '')}${m.farmer_clip ? ' → ' + esc(m.farmer_clip) : ''}</td><td>${m.farmer_starts_after_s != null ? m.farmer_starts_after_s.toFixed(2) + ' s' : ''}</td>` +
+    `<td>${esc(m.asked ?? '')}${m.farmer_clip ? ' / ' + esc(m.farmer_clip) : ''}</td><td>${m.farmer_starts_after_s != null ? m.farmer_starts_after_s.toFixed(2) + ' s' : ''}</td>` +
     `<td>${m.farmer_llm_ms != null ? m.farmer_llm_ms + ' ms' : ''}</td><td>${m.op_ms ?? ''} ms ${esc(m.op_source ?? '')}</td></tr>`).join('');
 }
 
-$('call').onclick = () => startCall().catch(e => { $('status').textContent = 'error: ' + e.message; $('call').disabled = false; });
-$('end').onclick = endCall;
+$('call').onclick = () => startCall().catch(e => {
+  $('status').textContent = 'Not connected'; $('error').textContent = e.message; $('error').hidden = false;
+  clearInterval(poll); clearInterval(clock); micStream?.getTracks().forEach(t => t.stop()); pc?.close(); pc = null; ctx?.close();
+  $('call').disabled = false; $('case').disabled = $('mode').disabled = false;
+});
+$('end').onclick = () => endCall().catch(e => { ending = false; $('end').disabled = false; $('error').textContent = 'Could not finish the call review. Try End call again.'; $('error').hidden = false; });
 $('export').onclick = () => { if (!last) return; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(last, null, 1)], {type: 'application/json'})); a.download = `assist-${last.id}.json`; a.click(); };
-init();
+init().catch(e => { $('error').textContent = 'Unable to load the call setup. Refresh to retry.'; $('error').hidden = false; });

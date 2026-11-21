@@ -1,14 +1,47 @@
 # Benchmarks
 
-Each benchmark is a directory with a README (question, protocol, how to run),
-`cases/` (inputs and how ground truth is computed), and `runs/<date>-<slug>/`
-with the raw output of each run. A number reported in chronology or narrative
-must point to a run here. Model weights and caches are never checked in.
+How we check the core. Results that hold real test-account rows stay on the machine that ran them, not in git.
 
-| benchmark | question |
-|---|---|
-| [ngo-workbook-correctness](ngo-workbook-correctness/) | Does a model answer spreadsheet questions correctly, called directly or through a harness? |
-| [decode-speed](decode-speed/) | How fast does local Muse decode under each quant and drafter setting? |
-| [harness-compare](harness-compare/) | On messy NGO spreadsheets, is the bridge's harness or io's Codex more correct and auditable, and which receipt catches wrong answers? |
-| [livestock-voice](livestock-voice/) | Can a browser voice intake collect a fictional livestock report with low response latency across Pipecat, native Dograh and hosted audio? |
-| voice-robust → [examples/livelihoods/livestock/call_center_assist](../examples/livelihoods/livestock/call_center_assist/agent_call.md) | Can a voice agent hear a tired farmer on a bad 2G line and hold a sound conversation, locally? (Moved with the code on 16 Oct 2026; results in its `runs/`.) |
+## Banks (`bank/`)
+
+| File | What | Use |
+|---|---|---|
+| [tasks_dev.json](bank/tasks_dev.json) | 53 tasks written blind on 2026-11-19 (trust, own definition, own workflow, other site) | while fixing |
+| [tasks_owner_dev.json](bank/tasks_owner_dev.json) | the owner's own questions with answers checked by SQL on the test account | while fixing; add to it |
+| [tasks_heldout.json](bank/tasks_heldout.json) | 27 tasks, frozen (sha256 c81e4cd249e09e62fe3150254f59a3fd5c0e6ddaae715e78776092a394cd4587) | **used up**: run twice already; write a new held-out set before the next claim |
+
+Kinds in the banks predate search-first: many "own definition" tasks are now answered by search.
+
+The three JSON banks above ship with Silo. The original question banks also live
+in the local io checkout. The upstream paths are included for completeness.
+Private run outputs and sandbox copies stay on the DGX. Ask a maintainer for
+the matching clean test-account snapshot to reproduce a historical run.
+
+- [Original record-store bank](https://github.com/bprashanth/io/tree/main/benchmarks/runs/2026-11-19-record-store/bank)
+- [Capability CLI questions for mail and Drive](https://github.com/bprashanth/io/tree/main/benchmarks/runs/2026-11-19-capability-cli-mapping)
+- [Agent trial questions, round 3 and retries](https://github.com/bprashanth/io/tree/main/benchmarks/runs/2026-11-21-agent-trial)
+- [Blind tester prompts](https://github.com/bprashanth/io/tree/main/benchmarks/runs/2026-11-19-blind-tester/prompts)
+
+## Running
+
+From the Silo repository root, choose a fresh output path per run (the runner appends).
+
+```
+core/.venv/bin/python benchmarks/bench.py run --tasks "$PWD/benchmarks/bank/tasks_owner_dev.json" \
+    --mapper nine_compressed --sandbox ~/idli-sbx/COPY --out /tmp/run.jsonl
+```
+
+Run on a copy of a synced sandbox with no definitions, labels or views. The bench says yes to a yes card on the
+tester's behalf and logs it.
+
+## Grading
+
+Blind: a separate agent per run whose only tool is read-only SQL on that run's store, following
+[the grading rubric](grader/RUBRIC.md). The script that sets this up (`grade.sh`, a Cursor `agent` in a network wall) is still in io
+(`benchmarks/runs/2026-11-19-record-store/grader/` and `2026-11-19-blind-tester/wall.sh`). One grader per run is
+noisy (1 to 3 tasks, sometimes more); compare with repeats or two graders.
+
+## Rules
+
+- General fixes only, measured on dev. A claim needs a held-out set written blind, run once on frozen code.
+- A change that can't be shown safe ships off by default.

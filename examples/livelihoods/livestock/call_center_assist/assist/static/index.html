@@ -22,31 +22,36 @@
     <span id="status" class="pill">idle</span>
   </div>
   <div id="modenote" class="small muted"></div>
-  <div id="fixtures" hidden></div>
+  <div id="fixtures" hidden></div><p id="error" role="alert" hidden></p>
 </header>
-<main class="two">
-  <section>
+<main class="console">
+  <section class="conversation">
     <h2>Call</h2>
     <div id="transcript"><p class="muted">Pick a case and answer the call (use headphones). Take the case in any order you like.
       Repeating a fact back, now or later in the call ("okay, I have noted the goats"), marks it confirmed.
-      Anything still empty in the care record is left to ask.</p></div>
+      Anything still empty in the care record is left to ask.</p></div><button id="latest" class="text-button" hidden>Latest message</button>
   </section>
-  <aside>
-    <h2>Care record <span id="urgency" class="badge" hidden>URGENT</span></h2>
+  <aside class="care-record">
+    <h2>Care record <span id="record-progress" class="small muted"></span></h2>
     <div id="urgent" class="urgent-line" hidden></div>
-    <div id="priority" class="priority" hidden></div>
     <dl id="fields"></dl>
-    <div id="cards"></div>
     <p class="legend small muted"><span class="tag confirmed">confirmed</span> you repeated it and the line agrees ·
       <span class="tag operator">you said</span> · <span class="tag heard_only">heard only</span> not repeated yet ·
       <span class="tag operator_differs">differs</span> check it · <span class="todo">to ask</span></p>
     <div class="row"><button id="export">Export JSON</button></div>
   </aside>
+    <aside class="advisories" aria-label="Advisories">
+      <div class="advisory-title"><h2>Advisories</h2><span id="advisory-count" class="small muted"></span></div>
+      <p class="small muted approval-note">Reference prompts. Veterinary approval pending.</p>
+      <div id="cards"><p class="small muted">Relevant prompts appear as the farmer describes the problem.</p></div>
+      <details id="cleared-panel" hidden><summary id="cleared-label">Cleared cards</summary><div id="cleared-cards"></div></details>
+      <p id="card-error" role="alert" hidden></p>
+    </aside>
 </main>
 <section id="review" hidden>
   <h2>After the call</h2>
   <div class="cols">
-    <div><h3>Protocol checks</h3><ul id="qa"></ul></div>
+    <div><h3>Prototype practice checks</h3><p class="small muted">Includes legacy advice checks; not a clinical safety assessment.</p><ul id="qa"></ul></div>
     <div><h3>Second read of the whole call (local Muse)</h3><div id="diff"></div></div>
     <div><h3>Role-play only: vs Lakshmamma's real answers</h3><ul id="truth"></ul></div>
   </div>

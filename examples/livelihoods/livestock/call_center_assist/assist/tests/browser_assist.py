@@ -32,6 +32,7 @@ def main():
         page.check('#fixture')
         page.click('#call'); page.wait_for_function('window.currentSessionId', timeout=20000)
         api = f'{a.url}/api/sessions/' + page.evaluate('window.currentSessionId')
+        card_checked = False; card_checks = {}
         t0 = time.time()
         while get(api)['status'] != 'on call' and time.time() - t0 < 20: time.sleep(.3)
         time.sleep(1)
@@ -47,13 +48,26 @@ def main():
                 if any(m.get('farmer_clip') == '(quiet)' for m in s.get('metrics', [])[n_turns:]): break  # the live farmer chose to stay quiet
                 time.sleep(.25)
             time.sleep(.5); page.screenshot(path=str(out / f'turn{i + 1:02d}-{key}.png'))
+            if not card_checked and page.locator('[data-clear]').count():
+                page.locator('[data-clear]').first.click()
+                page.wait_for_selector('#cleared-panel:not([hidden])')
+                page.locator('#cleared-panel summary').click()
+                page.screenshot(path=str(out / 'card-cleared.png'))
+                page.locator('[data-restore]').first.click()
+                page.wait_for_selector('[data-clear]')
+                page.locator('.references summary').first.click()
+                card_checks = {'clear_restore': True, 'source_links': page.locator('.references a').count()}
+                assert card_checks['source_links'] > 0
+                page.screenshot(path=str(out / 'card-restored-sources.png'))
+                card_checked = True
+            print('Completed operator turn', i+1, key, flush=True)
             if s['status'] == 'ended': break
         t = time.time()
         while get(api)['status'] != 'ended' and time.time() - t < 10: time.sleep(.5)
         if get(api)['status'] != 'ended': page.click('#end')
         page.wait_for_selector('#review:not([hidden])', timeout=60000); time.sleep(.5)
         page.screenshot(path=str(out / 'review.png'), full_page=True)
-        # The operator fixes a field by hand (✎): typed values win and show as "edited".
+        # The operator fixes a field in the visible care record by hand.
         page.click('dd[data-k="animals_affected"] button.edit'); page.fill('dd[data-k="animals_affected"] .edit-input', '4')
         page.press('dd[data-k="animals_affected"] .edit-input', 'Enter'); time.sleep(.8)
         edited = get(api)['record']['fields']['animals_affected']
@@ -67,7 +81,7 @@ def main():
               'asked': [(m.get('asked'), m.get('farmer_clip')) for m in s['metrics'] if m.get('heard')],
               'farmer_llm_ms': [m['farmer_llm_ms'] for m in s['metrics'] if m.get('farmer_llm_ms')],
               'conversation': [(t['role'], t.get('said') or t['text'], t['text']) for t in s['transcript']],
-              'states': {k: f['state'] for k, f in s['record']['fields'].items()}, 'edit_ok': edit_ok, 'console_errors': errors}
+              'states': {k: f['state'] for k, f in s['record']['fields'].items()}, 'edit_ok': edit_ok, 'console_errors': errors, 'card_checks': card_checks}
     (out / 'session.json').write_text(json.dumps(s, indent=1)); (out / 'result.json').write_text(json.dumps(result, indent=1))
     print(json.dumps(result, indent=1))
 

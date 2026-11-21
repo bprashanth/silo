@@ -88,12 +88,20 @@
     }
    ],
    "notifiable": true,
-   "for_vet": "Sudden death: carcass precautions before opening (anthrax, HS). DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Sudden death: carcass precautions before opening (anthrax, HS). DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "herd",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Anthrax, pp. 98–99",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=116"
+    }
+   ]
   },
   {
    "id": "poisoning",
    "title": "Possible poisoning",
-   "triggers": "\\b(ate|eaten|eating (the|some|new)|grazed|got into|jowar|jola|sorghum|pesticide|spray(ed)?|poison|froth\\w*|foam\\w*)\\b",
+   "triggers": "\\b(jowar|jola|sorghum|pesticide|poison\\w*|froth\\w*|foam\\w*|sprayed (field|feed)|new feed|feed change)\\b",
    "fields": [
     {
      "id": "ate_what",
@@ -136,7 +144,15 @@
     }
    ],
    "notifiable": false,
-   "for_vet": "Plant or chemical poisoning; young sorghum is the commonest cyanogenic source in India. DAHD Standard Veterinary Treatment Guidelines (2024), toxicology."
+   "for_vet": "Plant or chemical poisoning; young sorghum is the commonest cyanogenic source in India. DAHD Standard Veterinary Treatment Guidelines (2024), toxicology.",
+   "class_id": "exposure",
+   "sources": [
+    {
+     "title": "NDDB: Cyanide",
+     "section": "Symptoms and exposure history",
+     "url": "https://www.nddb.coop/farmer/animal-health/poisoning/cyanide"
+    }
+   ]
   },
   {
    "id": "spreading",
@@ -198,7 +214,15 @@
     }
    ],
    "notifiable": true,
-   "for_vet": "Contagious picture (PPR, FMD, HS, goat pox): consider sampling and reporting to the district. DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Contagious picture (PPR, FMD, HS, goat pox): consider sampling and reporting to the district. DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "herd",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Foot-and-mouth disease, pp. 77–78",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=95"
+    }
+   ]
   },
   {
    "id": "skin_lumps",
@@ -253,7 +277,15 @@
     }
    ],
    "notifiable": true,
-   "for_vet": "Skin nodules with fever and milk drop (lumpy skin disease): report; ring vaccination. DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Skin nodules with fever and milk drop (lumpy skin disease): report; ring vaccination. DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "herd",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Lumpy skin disease, pp. 78–80",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=96"
+    }
+   ]
   },
   {
    "id": "belly",
@@ -301,7 +333,15 @@
     }
    ],
    "notifiable": false,
-   "for_vet": "Colic/bloat; with a sudden death after a feed change, consider enterotoxaemia. DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Colic/bloat; with a sudden death after a feed change, consider enterotoxaemia. DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "digestion",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Ruminal tympany, pp. 24–25",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=42"
+    }
+   ]
   },
   {
    "id": "birth",
@@ -339,7 +379,15 @@
     }
    ],
    "notifiable": false,
-   "for_vet": "Dystocia. DAHD Standard Veterinary Treatment Guidelines (2024), obstetrics."
+   "for_vet": "Dystocia. DAHD Standard Veterinary Treatment Guidelines (2024), obstetrics.",
+   "class_id": "birth",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Dystocia, p. 58",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=76"
+    }
+   ]
   },
   {
    "id": "breathing_young",
@@ -390,7 +438,15 @@
     }
    ],
    "notifiable": false,
-   "for_vet": "Respiratory disease; in kids under 3 months in winter, a top cause of death. DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Respiratory disease; in kids under 3 months in winter, a top cause of death. DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "breathing",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Respiratory disease, pp. 32–34",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=50"
+    }
+   ]
   },
   {
    "id": "diarrhoea",
@@ -440,7 +496,15 @@
     }
    ],
    "notifiable": false,
-   "for_vet": "Diarrhoea; check age, worms, coccidia, contagious causes. DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Diarrhoea; check age, worms, coccidia, contagious causes. DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "digestion",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Diarrhoea, pp. 26–27",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=44"
+    }
+   ]
   },
   {
    "id": "down",
@@ -468,7 +532,37 @@
     }
    ],
    "notifiable": false,
-   "for_vet": "Downer: milk fever if recently calved; check for poisoning and injury. DAHD Standard Veterinary Treatment Guidelines (2024)."
+   "for_vet": "Downer: milk fever if recently calved; check for poisoning and injury. DAHD Standard Veterinary Treatment Guidelines (2024).",
+   "class_id": "breathing",
+   "sources": [
+    {
+     "title": "DAHD: Veterinary Treatment Guidelines (2024)",
+     "section": "Downer cow syndrome, p. 21",
+     "url": "https://cdnbbsr.s3waas.gov.in/s369dafe8b58066478aea48f3d0f384820/uploads/2025/10/202510191139401917.pdf#page=39"
+    }
+   ]
   }
- ]
+ ],
+ "classes": {
+  "herd": {
+   "title": "Herd health",
+   "importance": "Record deaths, new animals and similar signs elsewhere for veterinary review."
+  },
+  "exposure": {
+   "title": "Feed and exposure",
+   "importance": "Record the suspected feed or chemical and timing. Do not identify a poison from symptoms alone."
+  },
+  "breathing": {
+   "title": "Breathing and standing",
+   "importance": "Make breathing difficulty or inability to stand clear in the veterinary handoff."
+  },
+  "digestion": {
+   "title": "Digestion and drinking",
+   "importance": "Record abdominal changes, dung and drinking for veterinary assessment."
+  },
+  "birth": {
+   "title": "Birth progress",
+   "importance": "Record progress and any attempted assistance for prompt veterinary assessment."
+  }
+ }
 }

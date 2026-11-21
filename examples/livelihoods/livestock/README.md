@@ -1,3 +1,5 @@
+> **Old (v1).** Frozen example from the Telegram version of Silo. Not part of the core; see the top-level README.
+
 # Livestock helpline examples
 
 Two ways to handle a farmer's call about a sick animal, with one hub page:

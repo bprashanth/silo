@@ -277,3 +277,32 @@ examples/livelihoods/livestock/call_center_assist/**/*.ogg
 examples/livelihoods/livestock/call_center_assist/**/*.opus
 examples/livelihoods/livestock/call_center_assist/**/*.flac
 examples/livelihoods/livestock/call_center_assist/**/sessions/
+
+# Assist screenshots, recordings and local run state (keep on Seagate)
+/examples/livelihoods/livestock/call_center_assist/**/artifacts/
+/examples/livelihoods/livestock/call_center_assist/**/checkpoints/
+/examples/livelihoods/livestock/call_center_assist/**/models/
+/examples/livelihoods/livestock/call_center_assist/**/session.json
+/examples/livelihoods/livestock/call_center_assist/**/*.png
+/examples/livelihoods/livestock/call_center_assist/**/*.jpg
+/examples/livelihoods/livestock/call_center_assist/**/*.webm
+/examples/livelihoods/livestock/call_center_assist/**/*.mp4
+/examples/livelihoods/livestock/call_center_assist/**/*.zip
+/examples/livelihoods/livestock/call_center_assist/**/*.bin
+
+# The core (2026-11-21)
+# lib/ is ignored above (Python template); the core's code lives in core/lib
+!/core/lib/
+!/core/lib/**
+/core/lib/**/__pycache__/
+/core/lib/**/*.pyc
+# Claude's drafts next to the owner's docs (docs/*.claude.md): read and folded in by the owner, not committed
+*.claude.md
+*.claude.*
+# Sandboxes and their logs hold real account data; they live outside the repo, but never commit one by mistake
+*.duckdb
+*.duckdb.wal
+log.jsonl
+session.json
+vault/
+/docs/handoff-prompt*.md

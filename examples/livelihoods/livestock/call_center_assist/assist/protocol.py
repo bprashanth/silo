@@ -4,9 +4,9 @@ The pattern real dispatch systems use for non-clinical call-takers (MPDS, NHS Pa
 the call-taker doesn't diagnose or prescribe. A card, opened by what the caller says, adds
   - key questions (here: more fields in the care record, with the same confirmed / heard-only states),
   - a priority level from fixed rules on the answers (E dispatch now and bring the vet on, D, C, A),
-  - a few pre-approved lines to read to the caller (keep them apart, don't pull, don't pour anything in the mouth),
+  - illustrative, unapproved lines to read to the caller (keep them apart, don't pull, don't pour anything in the mouth),
   - and escalation to a clinician, who gives the medical direction.
-The clinical layer (DAHD's Standard Veterinary Treatment Guidelines) is only named in the vet's handoff.
+The clinical layer is reference material, not approval of the prototype rules.
 
 Deterministic on purpose: triggers and levels are rules from protocol_cards.json. The LLM (local Muse) only
 fills a card's fields from what was said; it never sets the level or writes advice.
@@ -55,6 +55,8 @@ class Protocol:
         self.fields = {}               # card field id -> Field (shared when two cards ask the same thing)
         self.meta = {}                 # card field id -> {'label', 'ask', 'type'}
         self.extract_log = []
+        self.trigger_evidence = {}
+        self.cleared = {}
 
     # ---------- opening cards ----------
     def see(self, text, side):
@@ -63,6 +65,7 @@ class Protocol:
         for cid, c in self.cards.items():
             if cid not in self.open and re.search(c['triggers'], t, re.I):
                 self.open.append(cid); new.append(cid)
+                self.trigger_evidence[cid] = {'text': t.strip(), 'side': side}
                 for f in c['fields']:
                     self.fields.setdefault(f['id'], Field(f['id'])); self.meta.setdefault(f['id'], f)
         return new
@@ -144,10 +147,41 @@ class Protocol:
             cards.append({'id': cid, 'title': c['title'], 'level': self.card_level(cid, record), 'notifiable': c['notifiable'],
                           'fields': [{'id': f['id'], 'label': f['label'], 'ask': f['ask'], 'type': f['type'], **self.fields[f['id']].as_dict()} for f in c['fields']],
                           'say': [{'text': s['text'], 'said': self._said(s['heard_if'], transcript)} for s in c['say']]})
-        return {'level': lvl, 'label': L['label'], 'response': L['response'], 'escalate': L['escalate'],
+        return {'advisories': self.advisories(record), 'level': lvl, 'label': L['label'], 'response': L['response'], 'escalate': L['escalate'],
                 'escalated': L['escalate'] and self._said(self.spec['escalated_if'], transcript),
                 'cards': cards, 'closing': {'text': self.spec['closing']['text'], 'said': self._said(self.spec['closing']['heard_if'], transcript)},
                 'status': self.spec['status']}
+
+    def advisories(self, record):
+        """Five fixed presentation classes. Clearing hides a prompt, never resolves a risk."""
+        groups = {}
+        for cid in self.open:
+            card = self.cards[cid]
+            group_id = card['class_id']
+            category = self.spec['classes'][group_id]
+            group = groups.setdefault(group_id, {'id': group_id, 'title': category['title'],
+                'importance': category['importance'], 'level': 'A', 'fields': [], 'triggers': [],
+                'sources': [], 'members': []})
+            level = self.card_level(cid, record)
+            group['members'].append([cid, level])
+            if ORDER.index(level) > ORDER.index(group['level']): group['level'] = level
+            evidence = self.trigger_evidence.get(cid)
+            if evidence and evidence not in group['triggers']: group['triggers'].append(evidence)
+            for f in card['fields']:
+                if not any(x['id'] == f['id'] for x in group['fields']):
+                    group['fields'].append({**f, **self.fields[f['id']].as_dict()})
+            for source in card.get('sources', []):
+                if source not in group['sources']: group['sources'].append(source)
+        result = list(groups.values())
+        for group in result:
+            group['cleared'] = self.cleared.get(group['id']) == group['members']
+        return sorted(result, key=lambda g: -ORDER.index(g['level']))
+
+    def set_cleared(self, group_id, cleared, record):
+        group = next((g for g in self.advisories(record) if g['id'] == group_id), None)
+        if group is None: raise ValueError('Unknown advisory')
+        if cleared: self.cleared[group_id] = group['members']
+        else: self.cleared.pop(group_id, None)
 
     # ---------- after the call ----------
     def qa(self, record, transcript):
