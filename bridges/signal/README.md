@@ -58,3 +58,18 @@ the account selector. A tester's Google account and data must be provisioned
 separately before enabling access. Other senders and groups are ignored.
 
 See [the alpha rollout](../../docs/signal-alpha.md) for onboarding, separate Google accounts and the mobile test cases.
+
+## Organizer experiment
+
+Set `IDLI_SIGNAL_BRIEF_UNTIL=YYYY-MM-DD` on the paired bot service and restart it.
+On weekdays it queues one brief at 08:30 India time, with catch-up until 11:00.
+The end date is inclusive. The tester can DM **my plan** for a fresh edition,
+**draft times** for an editable reply to the latest scheduling request, or
+**pause briefs** and **resume briefs** to control morning delivery.
+
+The brief refreshes Calendar, Gmail and Drive metadata in separate local transactions.
+It shows the upcoming week, flags a recent scheduling request only when the latest
+synced message in its thread is incoming, and links recent proposals by title.
+Suggested half hours use the tester’s primary calendar and weekday working hours
+of 10:00–17:00 IST. Attendee availability is unknown. Drafts stay in Signal.
+Preview the saved data with `core/idli agenda`, or use `core/idli agenda --refresh`.

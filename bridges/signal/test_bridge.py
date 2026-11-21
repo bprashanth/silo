@@ -58,3 +58,22 @@ class DirectQuestionTest(unittest.TestCase):
         event = {'envelope': {'sourceUuid': 'owner', 'dataMessage': data}}
         self.assertEqual(direct_question(event, 'owner'), (42, ''))
         self.assertIsNone(direct_question(event, 'other'))
+
+
+class MorningDeliveryTest(unittest.TestCase):
+    def test_schedule_restarts_pause_and_expiry(self):
+        import datetime as dt
+        import sqlite3
+        from bridges.signal.bridge import enqueue_morning
+        db = sqlite3.connect(':memory:')
+        self.addCleanup(db.close)
+        db.execute('CREATE TABLE turns(stamp INTEGER PRIMARY KEY,body TEXT)')
+        db.execute('CREATE TABLE organizer(id INTEGER PRIMARY KEY,paused INTEGER)')
+        db.execute('INSERT INTO organizer VALUES (1,0)')
+        until = dt.date(2026,11,27)
+        for date in ('2026-11-22 09:00','2026-11-23 08:29','2026-11-23 08:30','2026-11-23 09:15',
+                     '2026-11-24 12:00','2026-11-30 09:00'):
+            enqueue_morning(db, dt.datetime.fromisoformat(date), until)
+        db.execute('UPDATE organizer SET paused=1')
+        enqueue_morning(db, dt.datetime(2026,11,24,9), until)
+        self.assertEqual(db.execute('SELECT body FROM turns').fetchall(), [('my plan',)])

@@ -318,6 +318,9 @@ def parser():
                                                    '(hosted, sees real content: test accounts only)')
     a.add_argument('--output', choices=['shell', 'humanize'], default='shell', help='presentation for this conversation')
     a.add_argument('--new', action='store_true', help='start a new conversation')
+    ag = sub.add_parser('agenda', help='upcoming meetings, scheduling requests and recent proposals')
+    ag.add_argument('--refresh', action='store_true')
+    ag.add_argument('--draft', action='store_true')
     sub.add_parser('size', help="the store's size")
     return p
 
@@ -339,6 +342,10 @@ def run_argv(con, argv, chat=False):
         return Result(kind='text', text=__doc__)
     a = parser().parse_args(argv)
     v = a.verb
+    if v == 'agenda':
+        from lib import organizer
+        failed = organizer.refresh(con, account()) if a.refresh else []
+        return Result(kind='text', text=organizer.agenda(con, account(), rs.local(rs.now()), source_link, failed, a.draft))
     if v == 'sync':
         acct, out = account(a.role), []
         whats = {'all': ['mail', 'events', 'files', 'sheets'], 'drive': ['files', 'sheets'], 'gmail': ['mail'],
