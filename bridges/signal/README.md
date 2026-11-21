@@ -37,3 +37,22 @@ just before a crash, you may see its reply twice. A crash while receiving a
 batch can lose a note before it reaches the local queue. Resend it if needed.
 
 [signal-cli linked device and command reference](https://github.com/AsamK/signal-cli)
+
+## Direct messages to the bot
+
+The DGX also has a separate linked device for the bot. This pilot pairs one
+tester with one sandbox. In the bot service environment set:
+
+- `IDLI_SIGNAL_BOT_ACI` to the bot's Signal account UUID. The bridge checks
+  this against the linked account before receiving messages.
+- `IDLI_SIGNAL_PEER_ACI` to the tester's independently verified Signal account
+  UUID. Only direct messages from this sender can query the sandbox.
+- `IDLI_SANDBOX` to a dedicated copy of that tester's synced store. Use a
+  different directory from the Note to Self service so each chat has its own
+  history, queue and writer.
+
+Run the same Python entry point as above. The bot transport uses
+`silo-signal-bot` and `/opt/bot-cli/bin/signal-cli` (0.14.10 on the DGX)
+with its private device keys in `/device`. A numberless bot uses its ACI for
+the account selector. A tester's Google account and data must be provisioned
+separately before enabling access. Other senders and groups are ignored.

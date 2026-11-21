@@ -40,3 +40,14 @@ class NoteToSelfTest(unittest.TestCase):
     def test_attachment_only(self):
         del self.sent["message"]
         self.assertIsNone(question(self.event, self.account, 2))
+
+
+class DirectQuestionTest(unittest.TestCase):
+    def test_only_paired_direct_text(self):
+        from bridges.signal.bridge import direct_question
+        data = {'timestamp': 42, 'message': 'hi'}
+        envelope = {'sourceUuid': 'owner', 'dataMessage': data}
+        self.assertEqual(direct_question({'envelope': envelope}, 'owner'), (42, 'hi'))
+        self.assertIsNone(direct_question({'envelope': envelope}, 'stranger'))
+        data['groupInfo'] = {}
+        self.assertIsNone(direct_question({'envelope': envelope}, 'owner'))

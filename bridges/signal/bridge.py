@@ -1,4 +1,4 @@
-"""Single-account Signal Note to Self adapter for core/idli."""
+"""Run core/idli for Note to Self or one explicitly paired DM sandbox."""
 import fcntl
 import json
 import os
@@ -8,6 +8,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+import uuid
 
 CLI = Path(__file__).resolve().parents[2] / "core/idli"
 SIGNAL = ["docker", "exec", "-i", "silo-signal", "signal-cli", "-d", "/device"]
@@ -35,8 +36,24 @@ def question(event, account, local_device):
         return timestamp, body
 
 
-def signal(*args, message=None):
-    proc = subprocess.run(SIGNAL + list(args), input=message or "", text=True,
+BOT_SIGNAL = ["docker", "exec", "-i", "silo-signal-bot", "/opt/bot-cli/bin/signal-cli", "-d", "/device"]
+
+
+def direct_question(event, peer):
+    envelope = event.get("envelope") or {}
+    data = envelope.get("dataMessage") or {}
+    if envelope.get("sourceUuid") != peer or data.get("groupInfo") is not None:
+        return
+    if data.get("storyContext") or data.get("remoteDelete"):
+        return
+    body = (data.get("message") or "").strip()
+    stamp = data.get("timestamp")
+    if body and isinstance(stamp, int):
+        return stamp, body
+
+
+def signal(*args, message=None, transport=SIGNAL):
+    proc = subprocess.run(transport + list(args), input=message or "", text=True,
                           capture_output=True, timeout=90)
     if proc.returncode:
         raise RuntimeError("Signal operation failed")
@@ -54,12 +71,17 @@ def ask(body):
     return proc.stdout.strip()
 
 
-def serve(account, db):
-    devices = signal("-a", account, "listDevices")
-    match = re.search(r"^- Device (\d+) \(this device\):", devices, re.MULTILINE)
-    if not match:
-        raise RuntimeError("Cannot identify the bridge device")
-    local_device = int(match[1])
+def serve(account, db, peer=None):
+    transport = BOT_SIGNAL if peer else SIGNAL
+    if peer:
+        recipient = [peer]
+    else:
+        recipient = ["--note-to-self"]
+        devices = signal("-a", account, "listDevices")
+        match = re.search(r"^- Device (\d+) \(this device\):", devices, re.MULTILINE)
+        if not match:
+            raise RuntimeError("Cannot identify the bridge device")
+        local_device = int(match[1])
     # A process exit mid-ask leaves an ambiguous CLI turn. Never execute it twice.
     with db:
         db.execute("UPDATE turns SET reply=? WHERE started=1 AND reply IS NULL",
@@ -74,23 +96,28 @@ def serve(account, db):
                 reply = ask(body)
                 with db:
                     db.execute("UPDATE turns SET reply=? WHERE stamp=?", (reply, stamp))
-            signal("-a", account, "send", "--note-to-self", "--message-from-stdin",
-                   message=reply)
+            signal("-a", account, "send", *recipient, "--message-from-stdin",
+                   message=reply, transport=transport)
             with db:
                 db.execute("UPDATE turns SET delivered=1, body=NULL, reply='' WHERE stamp=?", (stamp,))
             continue
         output = signal("-a", account, "-o", "json", "receive", "-t", "5",
                         "--max-messages", "16", "--ignore-attachments", "--ignore-avatars",
-                        "--ignore-stickers", "--ignore-stories")
+                        "--ignore-stickers", "--ignore-stories", transport=transport)
         with db:
             for line in output.splitlines():
-                item = question(json.loads(line), account, local_device)
+                event = json.loads(line)
+                item = direct_question(event, peer) if peer else question(event, account, local_device)
                 if item:
                     db.execute("INSERT OR IGNORE INTO turns(stamp,body) VALUES (?,?)", item)
 
 
 def main():
     os.umask(0o077)
+    peer = os.environ.get("IDLI_SIGNAL_PEER_ACI")
+    if peer:
+        peer = str(uuid.UUID(peer))
+        bot_aci = str(uuid.UUID(os.environ["IDLI_SIGNAL_BOT_ACI"]))
     sandbox = Path(os.environ["IDLI_SANDBOX"])
     if not (sandbox / "store.duckdb").is_file():
         sys.exit("Set IDLI_SANDBOX to a private copy of a synced sandbox.")
@@ -102,11 +129,13 @@ def main():
             reply TEXT, delivered INTEGER DEFAULT 0)""")
         while True:
             try:
-                accounts = json.loads(signal("-o", "json", "listAccounts"))
+                accounts = json.loads(signal("-o", "json", "listAccounts", transport=BOT_SIGNAL if peer else SIGNAL))
                 if len(accounts) > 1:
                     sys.exit("Use a dedicated container with one linked Signal account.")
                 if accounts:
-                    serve(accounts[0]["number"], db)
+                    if peer and accounts[0].get("aci") != bot_aci:
+                        sys.exit("Linked account does not match the configured bot.")
+                    serve(accounts[0]["number"] or accounts[0]["aci"], db, peer)
             except (RuntimeError, subprocess.TimeoutExpired):
                 print("Signal transport unavailable. Retrying in ten seconds.", file=sys.stderr)
             time.sleep(10)
