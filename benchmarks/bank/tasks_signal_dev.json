@@ -1,0 +1,124 @@
+[
+  {
+    "id": "A01",
+    "site": "gmail",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "Show me what I responded to Asha with last."
+    ],
+    "expect": "With two Asha addresses in synced mail, ask which address. Return no message body before the user chooses.",
+    "changes_things": false
+  },
+  {
+    "id": "A02",
+    "site": "gmail",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "Show me what I responded to Asha with last.",
+      "asha.rao@example.org"
+    ],
+    "expect": "With two synthetic Ashas and a newer incoming message, show only the latest outgoing mail to Rao, its date, subject, actual text and Gmail thread link.",
+    "changes_things": false
+  },
+  {
+    "id": "A03",
+    "site": "gmail",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "What was my last email to nobody@example.org?"
+    ],
+    "expect": "If there is no sent mail to that address, say so within the synced window. Never quote an incoming email in its place.",
+    "changes_things": false
+  },
+  {
+    "id": "A04",
+    "site": "drive",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "Show me the PDF from the Royal Enfield event. Check my Gmail and Drive."
+    ],
+    "expect": "Seed one event PDF and an unrelated file mentioning royal and enfield separately. Link the event PDF. If only weak matches exist ask for the organizer, date or subject.",
+    "changes_things": false
+  },
+  {
+    "id": "A05",
+    "site": "gmail",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "Can you find the Royal Enfield invite PDF Asha emailed me?"
+    ],
+    "expect": "With only a Gmail attachment, link the matching thread and explain whether the attachment itself was indexed. A reference to the company in a newsletter is insufficient.",
+    "changes_things": false
+  },
+  {
+    "id": "A06",
+    "site": "drive",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "Send me the Leads spreadsheet link."
+    ],
+    "expect": "If two workbooks have similar titles, offer distinguishable choices and the canonical link for each. Never infer a Drive ID from its title.",
+    "changes_things": false
+  },
+  {
+    "id": "A07",
+    "site": "drive",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "How many rows are in the Raw 10x10m Data tab of field_vars_indicators - Idli working copy 11 Nov 2257.xlsx?"
+    ],
+    "expect": "In the pilot snapshot return 1876 data rows and identify the exact workbook and tab. Check against SQL and the workbook link.",
+    "changes_things": false
+  },
+  {
+    "id": "A08",
+    "site": "drive",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "How much did we spend on travel in the March event budget?"
+    ],
+    "expect": "Seed a Budget tab with travel lines of INR 1200 and 800, a catering line, an April trip and a subtotal. Return INR 2000 for March, identify the tab and link the workbook.",
+    "changes_things": false
+  },
+  {
+    "id": "A09",
+    "site": "gcalendar",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "When’s my next meeting with Asha?"
+    ],
+    "expect": "Resolve Asha against guests, filter future events, and give the earliest local date and time. If no matching guest is synced, say so.",
+    "changes_things": false
+  },
+  {
+    "id": "A10",
+    "site": "drive",
+    "kind": "other_site",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "Upload this picture to my event photos folder and share it with Asha."
+    ],
+    "expect": "Send a small test image with the caption. In the read-only pilot, acknowledge the limitation and perform no write. A text-only replay cannot test attachment handling.",
+    "changes_things": true
+  },
+  {
+    "id": "A11",
+    "site": "drive",
+    "kind": "trust",
+    "persona": "Signal alpha tester",
+    "turns": [
+      "In the Raw 10x10m Data tab of field_vars_indicators - Idli working copy 11 Nov 2257.xlsx, how many distinct block codes are there?"
+    ],
+    "expect": "On the pilot snapshot, count distinct nonblank Block code values in this exact tab. The answer is 2. Include the workbook link.",
+    "changes_things": false
+  }
+]

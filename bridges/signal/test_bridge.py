@@ -51,3 +51,10 @@ class DirectQuestionTest(unittest.TestCase):
         self.assertIsNone(direct_question({'envelope': envelope}, 'stranger'))
         data['groupInfo'] = {}
         self.assertIsNone(direct_question({'envelope': envelope}, 'owner'))
+
+    def test_paired_attachment_only(self):
+        from bridges.signal.bridge import direct_question
+        data = {'timestamp': 42, 'attachments': [{'contentType': 'image/png'}]}
+        event = {'envelope': {'sourceUuid': 'owner', 'dataMessage': data}}
+        self.assertEqual(direct_question(event, 'owner'), (42, ''))
+        self.assertIsNone(direct_question(event, 'other'))

@@ -56,3 +56,5 @@ Run the same Python entry point as above. The bot transport uses
 with its private device keys in `/device`. A numberless bot uses its ACI for
 the account selector. A tester's Google account and data must be provisioned
 separately before enabling access. Other senders and groups are ignored.
+
+See [the alpha rollout](../../docs/signal-alpha.md) for onboarding, separate Google accounts and the mobile test cases.

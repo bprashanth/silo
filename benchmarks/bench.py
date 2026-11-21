@@ -15,11 +15,13 @@ def main():
     ap.add_argument('--tasks', required=True)
     ap.add_argument('--mapper', default='remote')
     ap.add_argument('--out', required=True)
+    ap.add_argument('--output', choices=['shell', 'humanize'], default='shell', help='exercise the Signal reply path with humanize')
     ap.add_argument('--only', default='')
     ap.add_argument('--sandbox', default=os.environ.get('IDLI_SANDBOX'))
     ap.add_argument('--judge', default=None, help='clef (default), nine_compressed, nine')
     ap.add_argument('--no-yes', dest='yes', action='store_false', help="don't accept yes cards on the tester's behalf")
     a = ap.parse_args()
+    chat = a.output == 'humanize'
     tasks = json.load(open(a.tasks))
     only = set(filter(None, a.only.split(',')))
     con = rs.connect(a.sandbox)
@@ -30,16 +32,17 @@ def main():
             continue
         hist = []
         for i, q in enumerate(t['turns']):
-            rec = idlicli.ask(con, q, hist, a.mapper, data_dir=a.sandbox)
+            rec = idlicli.ask(con, q, hist, a.mapper, data_dir=a.sandbox, show_commands=not chat, humanize=chat)
             if rec.get('pending') and a.yes:  # 2026-11-21: the yes card. A tester would read it and say yes
                 card = rec['pending']['card']
                 idlicli.CONFIRM = lambda c: True
-                rec = idlicli.ask(con, q, hist, a.mapper, data_dir=a.sandbox, resume=rec['pending'])
+                rec = idlicli.ask(con, q, hist, a.mapper, data_dir=a.sandbox, resume=rec['pending'],
+                                  show_commands=not chat, humanize=chat)
                 idlicli.CONFIRM = None
                 rec['card_shown_and_accepted'] = card
             rec['menu'] = dict(idlicli.MENU_INFO)  # 2026-11-21: the trimmed menu, and whether it caused a miss
             rec['menu_miss'] = idlicli.menu_miss(con, rec)
-            hist.append({k: rec.get(k) for k in ('q', 'commands', 'shown', 'reply')})
+            hist.append({k: rec.get(k) for k in ('q', 'commands', 'shown', 'reply', 'clarify_recipient')})
             rec.update(task=t['id'], turn=i, kind=t['kind'], site=t['site'])
             out.write(json.dumps(rec, default=str) + '\n'); out.flush()
             print(f"{t['id']}.{i} {rec.get('total_s')}s {rec.get('needs') or ''} {rec.get('commands')} {rec.get('errors') or ''}",

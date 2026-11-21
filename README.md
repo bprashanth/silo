@@ -125,3 +125,5 @@ was built and measured in the io repo in November 2026 and moved here; see [docs
 ## Signal
 
 Use [the Note to Self bridge](bridges/signal/README.md) to try `idli ask` from your own Signal account.
+
+For the team bot and personal Google accounts, see the [Signal alpha rollout](docs/signal-alpha.md).

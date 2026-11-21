@@ -901,7 +901,7 @@ def search_sql(con, r, src, search):
         conds = [f"{blob} LIKE '%{like(w.lower())}%' ESCAPE '\\'" for w in words]
         conds += [f"regexp_matches({blob}, '{_phrase_re(p)}')" for p in phrases]
         return ['(' + ' AND '.join(conds) + ')'] if conds else [], '', ''
-    here = "lower(name || ' ' || path)"
+    here = "lower(concat_ws(' ', name, path))"
     card = "(SELECT lower(c.summary || ' ' || c.key_terms) FROM file_cards c WHERE c.file_id = files.id)"
     pages = 'SELECT file_id FROM file_pages'
     conds = []
@@ -941,9 +941,11 @@ def search_sql(con, r, src, search):
     snippet = (f"CASE WHEN {pg} IS NULL THEN 'in the name or card' ELSE 'p.' || {pg} || ': ...' || "
                f"regexp_replace(substr({tx}, {at}, 110), '\\s+', ' ', 'g') || '...' END")
     label = ("'phrase'" if len(rank_words) > 1 else "'mentioned'")
-    found = (f", CASE WHEN {n} > 0 THEN {label} || ' x' || {n} || '; ' ELSE "
+    metadata_hit = f"regexp_matches({here}, '{rx}')"
+    found = (f", CASE WHEN {n} > 0 THEN {label} || ' x' || {n} || '; ' "
+             f"WHEN {metadata_hit} THEN 'matched in name or folder; ' ELSE "
              f"{chr(39) + 'words apart; ' + chr(39) if len(rank_words) > 1 else chr(39) + chr(39)} END || {snippet} AS found")
-    return conds, found, f'{n} DESC, ({words_score}) DESC'
+    return conds, found, f'{n} DESC, {metadata_hit} DESC, ({words_score}) DESC'
 
 
 def _search_text(search):

@@ -20,12 +20,14 @@ Nothing here changes your accounts. docs/goals.md explains the design.
 """
 import argparse
 import datetime as dt
+from email.utils import getaddresses
 import json
 import os
 import re
 import shlex
 import sys
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -43,7 +45,9 @@ def account(role=None):
 
 
 class Result:
-    def __init__(self, cols=None, rows=None, text='', kind='table', sql='', note='', chat=None):
+    def __init__(self, cols=None, rows=None, text='', kind='table', sql='', note='', chat=None, links=None, source=None):
+        self.source = source
+        self.links = links or []
         self.chat = chat
         self.cols, self.rows, self.text, self.kind, self.sql, self.note = cols or [], rows or [], text, kind, sql, note
 
@@ -61,7 +65,28 @@ class Result:
         return (self.note + '\n' if self.note else '') + head + '\n' + '\n'.join(out) + more
 
 
-def chat_result(result):
+def source_link(resource, record_id):
+    if not record_id:
+        return ''
+    key = urllib.parse.quote(str(record_id), safe='')
+    if resource in ('mail', 'threads'):
+        return f'https://mail.google.com/mail/#all/{key}'
+    return f'https://drive.google.com/open?id={key}'
+
+
+def sheet_sources(con, sql):
+    tables = sorted(con.get_table_names(sql))
+    files = con.execute('SELECT DISTINCT name, file_id FROM sheets WHERE tbl IN '
+                        '(SELECT unnest(?::VARCHAR[])) ORDER BY name, file_id', [tables]).fetchall()
+    return '\n'.join(name + '\n' + source_link('sheets', fid) for name, fid in files)
+
+
+def chat_result(result, question=""):
+    text = _chat_body(result, question)
+    return text + '\n' + result.source if result.source else text
+
+
+def _chat_body(result, question):
     if result.chat is not None:
         return result.chat
     if result.kind == 'text':
@@ -71,14 +96,16 @@ def chat_result(result):
     items = []
     if 'found' in result.cols:
         found = result.cols.index('found')
-        together = sum(str(row[found]).startswith(('phrase', 'mentioned')) for row in result.rows)
+        together = sum(str(row[found]).startswith(('phrase', 'mentioned', 'matched in name or folder')) for row in result.rows)
         if together:
             items.append(f'The words occur together in {together} of these files.\n')
+        elif re.search(r'\bthe (?:pdf|document|file|invite|spreadsheet)\b', question, re.I):
+            return 'I couldn’t identify the specific file. Do you remember its filename, the organizer or the date?'
         elif all(str(row[found]).startswith('similar meaning') for row in result.rows):
             items.append('I found related passages, but no exact text match in these results.\n')
         else:
-            items.append('Here are the closest matches I found.\n')
-    for row in result.rows[:6]:
+            items.append('I found the words separately. Do you remember the filename, organizer or date?\n')
+    for index, row in enumerate(result.rows[:6]):
         fields = {col: _fmt(value) for col, value in zip(result.cols, row) if value is not None and value != ''}
         if not fields:
             continue
@@ -86,12 +113,16 @@ def chat_result(result):
         if title and 'found' in fields:
             # The match and its page are the useful evidence in a file search.
             evidence = fields['found'].split(': ...', 1)[0]
+            if evidence.startswith('matched in name or folder'):
+                evidence = 'matching name or folder'
             evidence = re.sub(r'phrase x(\d+)', r'phrase mentioned \1×', evidence)
             evidence = re.sub(r'similar meaning [\d.]+', 'related by meaning', evidence).replace('; p.', ', p. ')
             items.append(f'• {title} — {evidence}')
         else:
             details = ' · '.join(f'{col.replace("_", " ")}: {value}' for col, value in fields.items())
             items.append('• ' + ('\n  '.join(filter(None, [title, details]))))
+        if result.links and result.links[index]:
+            items.append(result.links[index])
     if len(result.rows) > 6:
         items.append(f'{len(result.rows) - 6} more matches.')
     return '\n'.join(items)
@@ -293,7 +324,7 @@ def parser():
 
 # ---- running a command ----
 
-def run_argv(con, argv):
+def run_argv(con, argv, chat=False):
     if argv and argv[0] == 'idli':
         argv = argv[1:]
     # `--label people = 'yes'` arrives as three words: join them
@@ -365,10 +396,29 @@ def run_argv(con, argv):
                             out.append(f'embeddings skipped ({type(e).__name__}); search matches words only')
         return Result(kind='text', text='Synced ' + acct + '. ' + '; '.join(out) + '.')
     if v in ('list', 'count'):
+        resource = rs.resource_name(a.resource)
+        link_key = {'files': 'id', 'folders': 'id', 'photos': 'id', 'sheets': 'file_id',
+                    'mail': 'thread_id', 'threads': 'thread_id'}.get(resource)
+        fields = a.fields
+        with_links = chat and link_key and v == 'list' and not (a.by or a.count) and a.out == 'table'
+        if with_links:
+            if fields:
+                columns = [c.strip() for c in fields.split(',')]
+                fields = ', '.join(c for c in columns if c.lower() not in ('link', 'url', 'webviewlink'))
+            fields = fields or ', '.join(rs.RESOURCES[resource]['show'])
+            # Arbitrary SQL projections can aggregate rows and have no single source.
+            with_links = bool(re.fullmatch(r'\w+(?:\s*,\s*\w+)*', fields))
+            if with_links:
+                fields = link_key + ', ' + fields
         cols, rows, sql = rs.select(con, a.resource, where=a.where, since=a.since, until=a.until, on=a.on,
                                     search=a.search, label=a.label, folder=a.folder, sheet=a.sheet, by=a.by,
-                                    count=(v == 'count' or a.count), fields=a.fields, order=a.order, limit=a.limit,
+                                    count=(v == 'count' or a.count), fields=fields, order=a.order, limit=a.limit,
                                     show_all=a.show_all)
+        source = sheet_sources(con, sql) if chat and resource == 'rows' else None
+        links = []
+        if with_links and cols[0] == link_key:
+            links = [source_link(resource, row[0]) for row in rows]
+            cols, rows = cols[1:], [row[1:] for row in rows]
         if getattr(a, 'out', 'table') == 'json':
             return Result(kind='text', text=json.dumps([dict(zip(cols, map(_fmt, r))) for r in rows], ensure_ascii=False))
         if (v == 'count' or a.count) and not a.by:
@@ -377,13 +427,13 @@ def run_argv(con, argv):
             noun = {'mail': 'emails', 'calendar': 'calendar events'}.get(resource, resource)
             if n == 1:
                 noun = noun.removesuffix('s')
-            return Result(kind='text', text=f'Count: {n} {resource} match.', sql=sql, chat=f'I found {n} {noun}.')
+            return Result(kind='text', text=f'Count: {n} {resource} match.', sql=sql, chat=f'I found {n} {noun}.', source=source)
         if a.search and rs.resource_name(a.resource) == 'files' and rows and cols[-1] == 'found':
-            ph = sum(1 for r in rows if str(r[-1]).startswith(('phrase', 'mentioned')))
+            ph = sum(1 for r in rows if str(r[-1]).startswith(('phrase', 'mentioned', 'matched in name or folder')))
             apart = sum(1 for r in rows if str(r[-1]).startswith('words apart'))
             note = (f'{ph} have the words together; {apart} only have them apart (shown last).' if apart else '')
-            return Result(cols, rows, sql=sql, note=note)
-        return Result(cols, rows, sql=sql)
+            return Result(cols, rows, sql=sql, note=note, links=links)
+        return Result(cols, rows, sql=sql, links=links, source=source)
     if v == 'get':
         a.ref = a.ref or a.ref2
         if not a.ref:
@@ -394,13 +444,14 @@ def run_argv(con, argv):
         if res == 'file' and a.text:
             fid, name = find_file(con, a.ref)
             t = rs.file_text(con, file_account(con, fid), fid)
-            return Result(kind='text', text=f'{name} ({len(t)} characters):\n\n' + t[:a.chars])
+            return Result(kind='text', text=f'{name} ({len(t)} characters):\n\n' + t[:a.chars],
+                          source=source_link('files', fid))
         if res == 'sheet':
-            name, tab, tbl, nrows, tabs = find_sheet(con, a.ref)
+            name, tab, tbl, nrows, tabs, fid = find_sheet(con, a.ref)
             others = f'; other tabs: {", ".join(t for t in tabs if t != tab)}' if len(tabs) > 1 else ''
             if nrows <= 50 and not a.outline:  # small: every row, values in full
                 cur = con.execute(f'SELECT * EXCLUDE (row_no) FROM "{tbl}"')
-                return Result([d[0] for d in cur.description], cur.fetchall(),
+                return Result([d[0] for d in cur.description], cur.fetchall(), source=source_link('sheets', fid),
                               note=f'{name} / {tab} (all {nrows} rows{others})' if len(tabs) > 1 else f'{name} (all {nrows} rows)')
             return describe(con, 'sheet', a.ref)
         return get(con, res, a.ref)
@@ -411,7 +462,8 @@ def run_argv(con, argv):
     if v == 'read':
         fid, name = find_file(con, a.ref)
         t = rs.file_text(con, file_account(con, fid), fid)
-        return Result(kind='text', text=f'{name} ({len(t)} characters):\n\n' + t[:a.chars])
+        return Result(kind='text', text=f'{name} ({len(t)} characters):\n\n' + t[:a.chars],
+                          source=source_link('files', fid))
     if v == 'summarise':
         if a.search:
             return summarise_search(con, a.search, a.folder, a.question)
@@ -436,7 +488,7 @@ def run_argv(con, argv):
                       chat='\n'.join([chat, *labels]))
     if v == 'query':
         cols, rows = rs.query(con, a.sql)
-        return Result(cols, rows, sql=a.sql)
+        return Result(cols, rows, sql=a.sql, source=sheet_sources(con, a.sql) if chat else None)
     if v == 'view':
         rs.query(con, a.sql, limit=1)
         if not re.fullmatch(r'[a-z][a-z0-9_]{1,40}', a.name) or a.name in rs.RESOURCES:
@@ -505,7 +557,7 @@ def get(con, what, ref):
         c = rs.card(con, fid)
         if c:
             out += f'\nsummary: {c[0]}\nkey terms: {", ".join(c[1])}'
-        return Result(kind='text', text=out)
+        return Result(kind='text', text=out, source=source_link('files', fid))
     if what == 'event':
         r = con.execute("SELECT * FROM events WHERE id = ? OR title ILIKE ? ORDER BY start LIMIT 1",
                         [ref, f'%{ref}%']).fetchone()
@@ -521,13 +573,13 @@ def get(con, what, ref):
         rows = con.execute('SELECT date, direction, from_name, from_addr, subject, substr(body_text, 1, 600) FROM mail '
                            'WHERE thread_id = ? ORDER BY date', [tid[0]]).fetchall()
         return Result(kind='text', text='\n\n'.join(f'{_fmt(d)} {"me" if dr == "out" else (n or a)}: {s}\n{b}'
-                                                     for d, dr, n, a, s, b in rows))
+                                                     for d, dr, n, a, s, b in rows), source=source_link('threads', tid[0]))
     r = con.execute("SELECT date, direction, from_name, from_addr, to_addrs, subject, body_text, thread_id FROM mail "
                     "WHERE id = ? OR subject ILIKE ? ORDER BY date DESC LIMIT 1", [ref, f'%{ref}%']).fetchone()
     if not r:
         raise Err(f'No email matching "{ref}". Try `idli list mail --search "{ref}"`.')
     return Result(kind='text', text=f'{_fmt(r[0])} from {r[2]} <{r[3]}> to {r[4]}\nSubject: {r[5]}\nThread: {r[7]}\n\n'
-                                    f'{(r[6] or "")[:3000]}')
+                                    f'{(r[6] or "")[:3000]}', source=source_link('mail', r[7]))
 
 
 def find_sheet(con, ref):
@@ -539,16 +591,16 @@ def find_sheet(con, ref):
     if not r:
         raise Err(f'No sheet matching "{ref}". `idli list sheets` shows them.')
     tabs = [x[0] for x in con.execute('SELECT tab FROM sheets WHERE file_id = ? ORDER BY tab_index', [r[0][4]]).fetchall()]
-    return r[0][0], r[0][1], r[0][2], r[0][3], tabs
+    return r[0][0], r[0][1], r[0][2], r[0][3], tabs, r[0][4]
 
 
 def describe(con, what, ref):
     if what == 'sheet':
-        name, tab, tbl, nrows, tabs = find_sheet(con, ref)
+        name, tab, tbl, nrows, tabs, fid = find_sheet(con, ref)
         head = f'{name}' + (f' / {tab}' if len(tabs) > 1 else '') + f': {nrows} rows'
         if len(tabs) > 1:
             head += f'\nTabs: {", ".join(tabs)} (idli get sheet "{name} / TAB" for another)'
-        return _describe_table(con, tbl, head)
+        return _describe_table(con, tbl, head, fid)
     fid, name = find_file(con, ref)
     f = con.execute('SELECT kind, mime, size, modified, path FROM files WHERE id = ?', [fid]).fetchone()
     head = f'{name} ({f[0]}, {f[2] or "?"} bytes, changed {_fmt(f[3])}, in {f[4] or "My Drive"})'
@@ -556,17 +608,17 @@ def describe(con, what, ref):
         t = con.execute('SELECT tbl, nrows, tab FROM sheets WHERE file_id = ? ORDER BY tab_index', [fid]).fetchall()
         if t:
             tabs = f'\nTabs: {", ".join(x[2] for x in t)}' if len(t) > 1 else ''
-            return _describe_table(con, t[0][0], head + f'\n{t[0][1]} rows' + tabs)
+            return _describe_table(con, t[0][0], head + f'\n{t[0][1]} rows' + tabs, fid)
     if f[0] in ('pdf', 'doc'):
         t = rs.file_text(con, file_account(con, fid), fid)
         pages = con.execute('SELECT pages FROM file_text WHERE file_id = ?', [fid]).fetchone()[0]
         words = len(t.split())
         first = re.sub(r'\s+', ' ', t[:400])
-        return Result(kind='text', text=head + f'\n{pages or "?"} pages, about {words} words read.\nStarts: {first}')
-    return Result(kind='text', text=head)
+        return Result(kind='text', text=head + f'\n{pages or "?"} pages, about {words} words read.\nStarts: {first}', source=source_link('files', fid))
+    return Result(kind='text', text=head, source=source_link('files', fid))
 
 
-def _describe_table(con, tbl, head):
+def _describe_table(con, tbl, head, fid):
     cols = [c for c in rs.columns_of(con, f'"{tbl}"') if c != 'row_no']
     lines = [head, f'{len(cols)} columns:']
     for c in cols[:40]:
@@ -576,7 +628,7 @@ def _describe_table(con, tbl, head):
         lines.append(f'- {c}: {r[1]} filled, {r[0]} different (e.g. {ex})')
     if len(cols) > 40:
         lines.append(f'... and {len(cols) - 40} more columns')
-    return Result(kind='text', text='\n'.join(lines))
+    return Result(kind='text', text='\n'.join(lines), source=source_link('files', fid))
 
 
 def summarise(con, ref, question=''):
@@ -602,7 +654,7 @@ def summarise(con, ref, question=''):
                            '\n\n' + '\n'.join(parts)}], schema, max_tokens=400)['summary']
     else:
         final = parts[0]
-    return Result(kind='text', text=f'{name}: {final}\n(Read {min(len(t), 35000)} of {len(t)} characters.)')
+    return Result(kind='text', text=f'{name}: {final}\n(Read {min(len(t), 35000)} of {len(t)} characters.)', source=source_link('files', fid))
 
 
 def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
@@ -620,6 +672,7 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
     if (not rows and not by_meaning) or not rank:
         return Result(kind='text', chat='I couldn’t find that topic in your documents. Try another name or phrase.', text='No document mentions that. Try other words, or `idli list files --search`.')
     rx = rs._phrase_re(rank)
+    cited_files = {}
     excerpts, used = [], 0
     for fid, name in rows:
         pages = con.execute(f"SELECT page, text, len(regexp_extract_all(lower(text), '{rx}')) n FROM file_pages "
@@ -634,6 +687,7 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
             hit = re.search(rx, text.lower()) or re.search(re.escape(rank[0].lower()), text.lower())
             i = max(0, (hit.start() if hit else 0) - 700)
             piece = re.sub(r'\s+', ' ', text[i:i + 1800])
+            cited_files[fid] = name
             excerpts.append(f'[{name}, page {page}]\n{piece}')
             used += len(piece)
             if used > chars:
@@ -646,6 +700,7 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
         key = f'[{names.get(fid, fid)}, page {page}'
         if key in seen or used > chars:
             continue
+        cited_files[fid] = names.get(fid, fid)
         excerpts.append(f'{key}]\n{text}')
         seen.add(key)
         used += len(text)
@@ -661,7 +716,9 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
                      '\n\n' + '\n\n'.join(excerpts)}], schema, max_tokens=600, timeout=240)['answer']
     srcs = sorted({e.split(']')[0][1:] for e in excerpts})
     return Result(kind='text', text=f'{ans.strip()}\n\nFrom {len(excerpts)} passages in: ' +
-                  '; '.join(sorted({s.rsplit(", page", 1)[0] for s in srcs})))
+                  '; '.join(sorted({s.rsplit(", page", 1)[0] for s in srcs})),
+                  chat=ans.strip(), source='\n'.join(name + '\n' + source_link('files', fid)
+                                                     for fid, name in cited_files.items()))
 
 
 def draft(con, a):
@@ -1081,11 +1138,104 @@ def _held(rec, plan, question, t0):
     return rec
 
 
+def sheet_distinct_count(con, question):
+    """Answer simple distinct counts when the question names a synced workbook and tab."""
+    text = question.strip().rstrip('?.!')
+    match = re.fullmatch(r'in (.+?),\s*how many (?:distinct|unique|different) (.+?) are there', text, re.I)
+    if match:
+        scope, field = match.groups()
+    else:
+        match = re.fullmatch(r'how many (?:distinct|unique|different) (.+?) are (?:there )?in (.+)', text, re.I)
+        if not match:
+            return
+        field, scope = match.groups()
+    scope = scope.casefold()
+    sheets = con.execute('SELECT name, tab, tbl, file_id FROM sheets').fetchall()
+    matches = [(name, tab, table, fid) for name, tab, table, fid in sheets
+               if name.casefold() in scope and tab.casefold() in scope]
+    if len(matches) != 1:
+        return
+    name, tab, table, fid = matches[0]
+    # Constrain the shortcut to an unfiltered count on the named source.
+    remaining = scope.replace(name.casefold(), '').replace(tab.casefold(), '')
+    if re.sub(r"""\b(?:of|the|tab|sheet|workbook|spreadsheet)\b|[\s'"/]+""", '', remaining):
+        return
+    ident = lambda value: '"' + value.replace('"', '""') + '"'
+    cols = rs.columns_of(con, ident(table))
+    fields = [c for c in cols if field.strip(' "`').casefold() in (c.casefold(), c.casefold() + 's')]
+    if len(fields) != 1:
+        return
+    col = ident(fields[0])
+    sql = f"SELECT count(DISTINCT {col}) FROM {ident(table)} WHERE trim(cast({col} AS VARCHAR)) <> ''"
+    count, = con.execute(sql).fetchone()
+    return (f'{tab} has {count} distinct nonblank values for {fields[0]}.\n{name}\n'
+            + source_link('sheets', fid), qjoin(['idli', 'query', sql]))
+
+
+def last_sent_reply(con, question, history):
+    """Resolve a person against the synced mailbox before selecting their latest outgoing message."""
+    match = re.fullmatch(r"(?:show me |what was |what’s |what's )?(?:what I (?:responded|replied) to (.+?) with last|"
+                         r"(?:my |the )?(?:last|latest) (?:email|reply|message) to (.+?)|"
+                         r"what did I last (?:send|say|write) to (.+?))[?.!]?", question.strip(), re.I)
+    if match:
+        person = next(group for group in match.groups() if group).strip()
+        intent = "reply" if re.search(r"\b(?:responded|replied|reply)\b", question, re.I) else "sent"
+    elif history and history[-1].get('clarify_recipient') and re.fullmatch(r'[^\s@]+@[^\s@]+\.[^\s@]+', question.strip()):
+        person = question.strip()
+        intent = history[-1]['clarify_recipient']
+    else:
+        return
+    mailbox = account()
+    sent = con.execute("SELECT to_addrs, date, subject, body_text, thread_id FROM mail "
+                       "WHERE account=? AND direction='out' ORDER BY date DESC NULLS LAST, id DESC", [mailbox]).fetchall()
+    recipients = [getaddresses([row[0] or '']) for row in sent]
+    contacts = con.execute("SELECT DISTINCT from_name, from_addr FROM mail WHERE account=?", [mailbox]).fetchall()
+    for addresses in recipients:
+        contacts.extend(addresses)
+    needle = person.casefold()
+    def matches(name, addr):
+        if '@' in needle:
+            return needle == addr.casefold()
+        return bool(re.search(r'(?<!\w)' + re.escape(needle) + r'(?!\w)',
+                              (name or '').casefold() + ' ' + addr.split('@')[0].casefold()))
+    choices = sorted({addr.casefold() for name, addr in contacts if addr and matches(name, addr)})
+    if len(choices) > 1:
+        return ('Which email address did you mean?\n' + '\n'.join('• ' + a for a in choices[:6]), intent)
+    if not choices and '@' not in needle:
+        return (f'I couldn’t identify {person} in your synced email. What email address should I check?', intent)
+    prior = {}
+    if choices and intent == 'reply':
+        prior = dict(con.execute("SELECT thread_id, min(date) FROM mail WHERE account=? AND direction='in' "
+                                 "AND lower(from_addr)=? GROUP BY thread_id", [mailbox, choices[0]]).fetchall())
+    for row, addresses in zip(sent, recipients):
+        _, date, subject, body, thread = row
+        if not any(addr.casefold() in choices for _, addr in addresses):
+            continue
+        if intent == 'reply' and not (prior.get(thread) and date and prior[thread] <= date):
+            continue
+        label = 'reply' if intent == 'reply' else 'email'
+        return (f'Your latest synced {label} to {choices[0]} was on {_fmt(date)}.\n{subject or "(no subject)"}\n\n'
+                f'{(body or "").strip()[:3000]}\n{source_link("mail", thread)}'.strip(), False)
+    label = 'reply' if intent == 'reply' else 'sent email'
+    return (f'I couldn’t find a {label} to {person} in your synced mail.', False)
+
+
 def ask(con, question, history, mapper='remote', data_dir=None, show_commands=True, resume=None, humanize=False):
     """One turn. Returns a dict with the reply and everything the bench needs. `resume` carries on a plan that
     stopped at a new meaning, after the person said yes."""
     t0 = time.time()
     rec = {'q': question, 'mapper': mapper}
+    if humanize and not resume:
+        metric = sheet_distinct_count(con, question)
+        if metric:
+            reply, command = metric
+            return {**rec, 'reply': reply, 'shown': reply, 'commands': [command],
+                    'total_s': round(time.time() - t0, 2)}
+        latest = last_sent_reply(con, question, history)
+        if latest:
+            reply, clarify = latest
+            return {**rec, 'reply': reply, 'shown': reply, 'commands': [],
+                    'clarify_recipient': clarify, 'total_s': round(time.time() - t0, 2)}
     global SAID
     SAID = ' '.join([h.get('q') or '' for h in history] + [question])
     SEARCHED.clear()
@@ -1112,7 +1262,7 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
         rec.update(reply=why + nxt, shown='', commands=[], needs=needs, total_s=round(time.time() - t0, 2))
         return rec
     chat_results = {} if humanize else None
-    shown_parts, cmds, judge_s, errors = run_plan(con, plan, chat_results)
+    shown_parts, cmds, judge_s, errors = run_plan(con, plan, chat_results, question)
     if plan.get('pending') or plan.get('declined'):
         rec['commands'] = cmds
         return _held(rec, plan, question, t0)
@@ -1122,7 +1272,7 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
             if plan2.get('commands'):
                 rec['repaired'] = plan = plan2
                 made = [c for c in cmds if re.match(r'(idli\s+)?(define|view|judge)\b', c)]  # already done
-                shown_parts, cmds, judge_s2, errors = run_plan(con, plan2, chat_results)
+                shown_parts, cmds, judge_s2, errors = run_plan(con, plan2, chat_results, question)
                 cmds = made + [c for c in cmds if c not in made]
                 judge_s += judge_s2
                 if plan.get('pending') or plan.get('declined'):
@@ -1140,7 +1290,7 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
             break
         if not plan.get('commands'):
             break
-        more_parts, more_cmds, js, errors = run_plan(con, plan, chat_results)
+        more_parts, more_cmds, js, errors = run_plan(con, plan, chat_results, question)
         shown_parts += more_parts; cmds += more_cmds; judge_s += js
         if plan.get('pending') or plan.get('declined'):
             rec['commands'] = cmds
@@ -1177,7 +1327,7 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
             if result is None:
                 pieces.append("I couldn’t complete that lookup.")
             else:
-                pieces.append(chat_result(result))
+                pieces.append(chat_result(result, question))
         body = '\n\n'.join(pieces) or reply or "I couldn’t find an answer."
         if reply and chat_has_rows:
             body = reply + '\n\n' + body
@@ -1270,7 +1420,7 @@ def qjoin(argv):
     return ' '.join(q(a) for a in argv)
 
 
-def run_plan(con, plan, chat_results=None):
+def run_plan(con, plan, chat_results=None, question=None):
     shown_parts, cmds, judge_s, errors = [], [], 0.0, []
     for c in plan['commands'][:6]:
         if PLACEHOLDER.search(c):  # it needs a value from the results so far: stop here and ask for the rest
@@ -1315,11 +1465,16 @@ def run_plan(con, plan, chat_results=None):
                 pa.ask = ans
                 argv = ['define', pa.name, '--on', pa.on, '--ask', ans, '--answers', pa.answers]
                 c = shlex.join(['idli'] + argv)
+        args = argv[1:] if argv[:1] == ['idli'] else argv
+        if (chat_results is not None and args[:2] in (['list', 'calendar'], ['list', 'events'])
+                and re.search(r"\b(?:my|our|the) next (?:meeting|appointment|event)\b", question or '', re.I)):
+            argv.extend(['--where', f"start >= '{rs.local(rs.now()):%Y-%m-%d %H:%M:%S}'", '--order', 'start asc'])
+            c = qjoin(argv)
         cmds.append(c)
         t0 = time.time()
         say(1, f'[step] {c}' + ('   (writes to the store)' if re.match(r'(idli\s+)?(define|judge|view)\b', c) else ''))
         try:
-            r = run_argv(con, argv)
+            r = run_argv(con, argv, chat=chat_results is not None)
             say(1, f'       {round(time.time() - t0, 1)} s')
             say(2, r.render())
         except (Err, ValueError) as e:
@@ -1519,7 +1674,7 @@ def main(argv=None):
             kind, kind_p = kind_f.result() if kind_f else (None, {})
             why = struggle(rec, hist)
             rec.update(kind=kind, kind_probs=kind_p, struggled=why)
-            hist.append({k: rec.get(k) for k in ('q', 'commands', 'shown', 'reply', 'pending')})
+            hist.append({k: rec.get(k) for k in ('q', 'commands', 'shown', 'reply', 'pending', 'clarify_recipient')})
             sp.write_text(json.dumps(hist[-6:], default=str))
             log({'verb': 'ask', 'q': rec['q'], 'mapper': a.mapper, 'wording': rs.NINE, 'judge': rs.JUDGE,
                  'new_conversation': a.new, 'earlier': [h['q'] for h in hist[:-1]], 'store': ctx,

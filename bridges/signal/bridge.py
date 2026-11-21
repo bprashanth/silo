@@ -48,7 +48,7 @@ def direct_question(event, peer):
         return
     body = (data.get("message") or "").strip()
     stamp = data.get("timestamp")
-    if body and isinstance(stamp, int):
+    if (body or data.get("attachments")) and isinstance(stamp, int):
         return stamp, body
 
 
@@ -109,7 +109,10 @@ def serve(account, db, peer=None):
                 event = json.loads(line)
                 item = direct_question(event, peer) if peer else question(event, account, local_device)
                 if item:
-                    db.execute("INSERT OR IGNORE INTO turns(stamp,body) VALUES (?,?)", item)
+                    attachment = peer and (event["envelope"].get("dataMessage") or {}).get("attachments")
+                    reply = ("I can look up files already in your Drive. I can’t upload or share this attachment."
+                             if attachment else None)
+                    db.execute("INSERT OR IGNORE INTO turns(stamp,body,reply) VALUES (?,?,?)", (*item, reply))
 
 
 def main():
