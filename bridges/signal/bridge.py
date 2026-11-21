@@ -2,6 +2,7 @@
 import fcntl
 import json
 import os
+import re
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -12,8 +13,10 @@ CLI = Path(__file__).resolve().parents[2] / "core/idli"
 SIGNAL = ["docker", "exec", "-i", "silo-signal", "signal-cli", "-d", "/device"]
 
 
-def question(event, account):
+def question(event, account, local_device):
     envelope = event.get("envelope") or {}
+    if envelope.get("sourceDevice") in (None, local_device):
+        return
     sent = (envelope.get("syncMessage") or {}).get("sentMessage") or {}
     if sent.get("groupInfo") or sent.get("editMessage"):
         return
@@ -23,10 +26,13 @@ def question(event, account):
         own_uuid and sent.get("destinationUuid") == own_uuid
     ):
         return
-    prefix, _, body = (sent.get("message") or "").strip().partition(" ")
+    body = (sent.get("message") or "").strip()
+    parts = body.split(maxsplit=1)
+    if parts[:1] == ["/idli"] and len(parts) == 2:
+        body = parts[1]
     timestamp = sent.get("timestamp")
-    if prefix == "/idli" and body.strip() and isinstance(timestamp, int):
-        return timestamp, body.strip()
+    if body and isinstance(timestamp, int):
+        return timestamp, body
 
 
 def signal(*args, message=None):
@@ -49,6 +55,11 @@ def ask(body):
 
 
 def serve(account, db):
+    devices = signal("-a", account, "listDevices")
+    match = re.search(r"^- Device (\d+) \(this device\):", devices, re.MULTILINE)
+    if not match:
+        raise RuntimeError("Cannot identify the bridge device")
+    local_device = int(match[1])
     # A process exit mid-ask leaves an ambiguous CLI turn. Never execute it twice.
     with db:
         db.execute("UPDATE turns SET reply=? WHERE started=1 AND reply IS NULL",
@@ -73,7 +84,7 @@ def serve(account, db):
                         "--ignore-stickers", "--ignore-stories")
         with db:
             for line in output.splitlines():
-                item = question(json.loads(line), account)
+                item = question(json.loads(line), account, local_device)
                 if item:
                     db.execute("INSERT OR IGNORE INTO turns(stamp,body) VALUES (?,?)", item)
 

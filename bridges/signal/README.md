@@ -1,10 +1,10 @@
 # Ask Idli from Signal
 
 The DGX runs the existing CLI and a linked Signal device. On your phone open
-**Note to Self** and send `/idli how many emails are in my sandbox?`. Prefix
-follow-ups too, including `/idli yes` to accept a pending card. Replies appear
-in Note to Self. The bridge reads sent-message syncs and processes only prefixed
-self notes. Linking a device grants it account-level Signal access. You can
+**Note to Self** and send `how many emails are in my sandbox?`. Every text
+note you send there from your phone or another linked device becomes an Idli
+turn. Reply `yes` to accept a pending card. The old `/idli` prefix also works.
+Idli replies in Note to Self. Linking a device grants it account-level Signal access. You can
 remove **Idli DGX** in Signal's Linked Devices settings.
 
 ## DGX setup
