@@ -45,7 +45,7 @@ def signal(*args, message=None):
 
 def ask(body):
     try:
-        proc = subprocess.run([CLI, "ask", "--", body], stdin=subprocess.DEVNULL,
+        proc = subprocess.run([CLI, "ask", "--output", "humanize", "--", body], stdin=subprocess.DEVNULL,
                               capture_output=True, text=True, timeout=600)
     except subprocess.TimeoutExpired:
         return "Idli timed out. Check the sandbox log before retrying."
@@ -75,7 +75,7 @@ def serve(account, db):
                 with db:
                     db.execute("UPDATE turns SET reply=? WHERE stamp=?", (reply, stamp))
             signal("-a", account, "send", "--note-to-self", "--message-from-stdin",
-                   message="Idli\n" + reply)
+                   message=reply)
             with db:
                 db.execute("UPDATE turns SET delivered=1, body=NULL, reply='' WHERE stamp=?", (stamp,))
             continue

@@ -43,7 +43,8 @@ def account(role=None):
 
 
 class Result:
-    def __init__(self, cols=None, rows=None, text='', kind='table', sql='', note=''):
+    def __init__(self, cols=None, rows=None, text='', kind='table', sql='', note='', chat=None):
+        self.chat = chat
         self.cols, self.rows, self.text, self.kind, self.sql, self.note = cols or [], rows or [], text, kind, sql, note
 
     def render(self, max_rows=20):
@@ -58,6 +59,42 @@ class Result:
         more = f'\n... and {len(self.rows) - max_rows} more' if len(self.rows) > max_rows else ''
         head = f'{len(self.rows)} row{"s" if len(self.rows) != 1 else ""} ({", ".join(self.cols)})'
         return (self.note + '\n' if self.note else '') + head + '\n' + '\n'.join(out) + more
+
+
+def chat_result(result):
+    if result.chat is not None:
+        return result.chat
+    if result.kind == 'text':
+        return result.text
+    if not result.rows:
+        return 'I couldn’t find a match.'
+    items = []
+    if 'found' in result.cols:
+        found = result.cols.index('found')
+        together = sum(str(row[found]).startswith(('phrase', 'mentioned')) for row in result.rows)
+        if together:
+            items.append(f'The words occur together in {together} of these files.\n')
+        elif all(str(row[found]).startswith('similar meaning') for row in result.rows):
+            items.append('I found related passages, but no exact text match in these results.\n')
+        else:
+            items.append('Here are the closest matches I found.\n')
+    for row in result.rows[:6]:
+        fields = {col: _fmt(value) for col, value in zip(result.cols, row) if value is not None and value != ''}
+        if not fields:
+            continue
+        title = next((fields.pop(col) for col in ('name', 'subject', 'title') if col in fields), '')
+        if title and 'found' in fields:
+            # The match and its page are the useful evidence in a file search.
+            evidence = fields['found'].split(': ...', 1)[0]
+            evidence = re.sub(r'phrase x(\d+)', r'phrase mentioned \1×', evidence)
+            evidence = re.sub(r'similar meaning [\d.]+', 'related by meaning', evidence).replace('; p.', ', p. ')
+            items.append(f'• {title} — {evidence}')
+        else:
+            details = ' · '.join(f'{col.replace("_", " ")}: {value}' for col, value in fields.items())
+            items.append('• ' + ('\n  '.join(filter(None, [title, details]))))
+    if len(result.rows) > 6:
+        items.append(f'{len(result.rows) - 6} more matches.')
+    return '\n'.join(items)
 
 
 def _fmt(v):
@@ -248,6 +285,7 @@ def parser():
                         'nine_compressed: the served 9B (Q5) does both')
     a.add_argument('--judge', choices=JUDGES, help='who labels rows when a judge step runs: clef by default '
                                                    '(hosted, sees real content: test accounts only)')
+    a.add_argument('--output', choices=['shell', 'humanize'], default='shell', help='presentation for this conversation')
     a.add_argument('--new', action='store_true', help='start a new conversation')
     sub.add_parser('size', help="the store's size")
     return p
@@ -335,7 +373,11 @@ def run_argv(con, argv):
             return Result(kind='text', text=json.dumps([dict(zip(cols, map(_fmt, r))) for r in rows], ensure_ascii=False))
         if (v == 'count' or a.count) and not a.by:
             n = rows[0][0] if rows else 0
-            return Result(kind='text', text=f'Count: {n} {rs.resource_name(a.resource)} match.', sql=sql)
+            resource = rs.resource_name(a.resource)
+            noun = {'mail': 'emails', 'calendar': 'calendar events'}.get(resource, resource)
+            if n == 1:
+                noun = noun.removesuffix('s')
+            return Result(kind='text', text=f'Count: {n} {resource} match.', sql=sql, chat=f'I found {n} {noun}.')
         if a.search and rs.resource_name(a.resource) == 'files' and rows and cols[-1] == 'found':
             ph = sum(1 for r in rows if str(r[-1]).startswith(('phrase', 'mentioned')))
             apart = sum(1 for r in rows if str(r[-1]).startswith('words apart'))
@@ -378,7 +420,7 @@ def run_argv(con, argv):
         return summarise(con, a.ref, a.question)
     if v == 'define':
         name, ver = rs.define(con, a.name, a.on, a.ask, a.answers)
-        return Result(kind='text', text=f'Definition "{name}" version {ver}: {a.ask} ({a.answers}). '
+        return Result(kind='text', chat=f'I’ll use “{name}” for this question: {a.ask}', text=f'Definition "{name}" version {ver}: {a.ask} ({a.answers}). '
                                         f'Next: idli judge {"photos" if a.on == "photo" else {"mail": "mail", "event": "events", "file": "files"}[a.on]} --def {name}')
     if v == 'judge':
         res = {'mail': 'mail', 'event': 'events'}.get(a.resource, a.resource)
@@ -386,7 +428,12 @@ def run_argv(con, argv):
                      search=a.search, until=a.until, on=a.on,
                      progress=progress_line, on_item=(lambda n, lab, why: say(2, f'  {n}: {lab or "FAILED"} ({why})'))
                      if VERBOSE >= 2 else None)
-        return Result(kind='text', text=judge_summary(r, a.defn, res), note=json.dumps(r, default=str))
+        labels = [f'• {label}: {count}' for label, count in sorted(r['counts'].items())]
+        chat = f'Here’s what I found for “{a.defn}”.' if labels else 'I couldn’t label any items.'
+        if r.get('failed'):
+            labels.append(f'I couldn’t check {r["failed"]} items.')
+        return Result(kind='text', text=judge_summary(r, a.defn, res), note=json.dumps(r, default=str),
+                      chat='\n'.join([chat, *labels]))
     if v == 'query':
         cols, rows = rs.query(con, a.sql)
         return Result(cols, rows, sql=a.sql)
@@ -396,7 +443,7 @@ def run_argv(con, argv):
             raise Err('A view name is a short lower-case word (leads, from_leads) and not a resource name.')
         con.execute(f'CREATE OR REPLACE VIEW "{a.name}" AS {a.sql}')  # so other commands can use it: IN (SELECT ...)
         con.execute('INSERT OR REPLACE INTO views VALUES (?,?,?,?)', [a.name, a.on, a.sql, a.about])
-        return Result(kind='text', text=f'Saved view "{a.name}". List it with: idli list {a.name}')
+        return Result(kind='text', chat=f'I saved the list “{a.name}”.', text=f'Saved view "{a.name}". List it with: idli list {a.name}')
     if v == 'draft':
         return draft(con, a)
     if v == 'date':
@@ -571,7 +618,7 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
         by_meaning = [h for h in hits if h[3] >= max(rs.SEMANTIC_FLOOR, best - rs.SEMANTIC_BAND)] \
             if best >= rs.SEMANTIC_TOP else []
     if (not rows and not by_meaning) or not rank:
-        return Result(kind='text', text='No document mentions that. Try other words, or `idli list files --search`.')
+        return Result(kind='text', chat='I couldn’t find that topic in your documents. Try another name or phrase.', text='No document mentions that. Try other words, or `idli list files --search`.')
     rx = rs._phrase_re(rank)
     excerpts, used = [], 0
     for fid, name in rows:
@@ -604,7 +651,7 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
         used += len(text)
     topic = ' '.join(rank)
     if not excerpts:
-        return Result(kind='text', text=f'I found files with those words but no passage about "{topic}" to read. '
+        return Result(kind='text', chat=f'I found those words, but no passage explaining “{topic}”. Which file should I look in?', text=f'I found files with those words but no passage about "{topic}" to read. '
                       'Try fewer words, or `idli summarise file NAME` for one file.')
     schema = {'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']}
     ans = rs._nine([{'role': 'system', 'content': 'Explain a topic to the person using only the excerpts from their '
@@ -1034,7 +1081,7 @@ def _held(rec, plan, question, t0):
     return rec
 
 
-def ask(con, question, history, mapper='remote', data_dir=None, show_commands=True, resume=None):
+def ask(con, question, history, mapper='remote', data_dir=None, show_commands=True, resume=None, humanize=False):
     """One turn. Returns a dict with the reply and everything the bench needs. `resume` carries on a plan that
     stopped at a new meaning, after the person said yes."""
     t0 = time.time()
@@ -1064,7 +1111,8 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
         why += '' if not nxt or why.endswith(('.', '!', '?')) else '.'
         rec.update(reply=why + nxt, shown='', commands=[], needs=needs, total_s=round(time.time() - t0, 2))
         return rec
-    shown_parts, cmds, judge_s, errors = run_plan(con, plan)
+    chat_results = {} if humanize else None
+    shown_parts, cmds, judge_s, errors = run_plan(con, plan, chat_results)
     if plan.get('pending') or plan.get('declined'):
         rec['commands'] = cmds
         return _held(rec, plan, question, t0)
@@ -1074,7 +1122,7 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
             if plan2.get('commands'):
                 rec['repaired'] = plan = plan2
                 made = [c for c in cmds if re.match(r'(idli\s+)?(define|view|judge)\b', c)]  # already done
-                shown_parts, cmds, judge_s2, errors = run_plan(con, plan2)
+                shown_parts, cmds, judge_s2, errors = run_plan(con, plan2, chat_results)
                 cmds = made + [c for c in cmds if c not in made]
                 judge_s += judge_s2
                 if plan.get('pending') or plan.get('declined'):
@@ -1092,7 +1140,7 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
             break
         if not plan.get('commands'):
             break
-        more_parts, more_cmds, js, errors = run_plan(con, plan)
+        more_parts, more_cmds, js, errors = run_plan(con, plan, chat_results)
         shown_parts += more_parts; cmds += more_cmds; judge_s += js
         if plan.get('pending') or plan.get('declined'):
             rec['commands'] = cmds
@@ -1100,14 +1148,19 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
     rec['rounds'] = rounds
     shown = '\n\n'.join(shown_parts)
     t1 = time.time()
-    final_rows = shown_parts[-1] if shown_parts else ''
+    display_parts = shown_parts[-1:]
     reads = [(c, p) for c, p in zip(cmds, shown_parts) if not re.match(r'(idli\s+)?(define|judge|view)\b', c)]
     if 1 < len(reads) <= 3 and all(len(p.splitlines()) <= 6 for _, p in reads[:-1]):
         # "how many sheets, and which has the most rows": each part is an answer; show (and word) them all
-        final_rows = '\n\n'.join(p for _, p in reads)
+        display_parts = [p for _, p in reads]
+    final_rows = '\n\n'.join(display_parts)
     earlier = ('Earlier steps (not shown to the person; do not describe their rows): ' + ' ; '.join(cmds[:-1])) \
         if len(cmds) > 1 else ''
-    if cmds and re.match(r'(idli\s+)?(summarise|explain|help)\b', cmds[-1]) and 'failed' not in final_rows[:40]:
+    chat_has_rows = humanize and any(chat_results.get(p) and chat_results[p].rows and 'found' not in chat_results[p].cols
+                                     for p in display_parts)
+    if humanize and not chat_has_rows:
+        reply, why = '', 'chat_result'
+    elif cmds and re.match(r'(idli\s+)?(summarise|explain|help)\b', cmds[-1]) and 'failed' not in final_rows[:40]:
         reply, why = '', 'prose_result'  # the result is already written for the person
     else:
         reply, why = compose(question, final_rows, history, plan_note=earlier)
@@ -1117,6 +1170,17 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
     if final_rows and re.search(r'list files .*--search', cmds[-1] if cmds else '') and 'Nothing matches' not in final_rows:
         body += ('\n\nThese mention it; to check which ones are really about it, ask me to judge them '
                  '(it reads only these files).')
+    if humanize:
+        pieces = []
+        for part in display_parts:
+            result = chat_results.get(part)
+            if result is None:
+                pieces.append("I couldn’t complete that lookup.")
+            else:
+                pieces.append(chat_result(result))
+        body = '\n\n'.join(pieces) or reply or "I couldn’t find an answer."
+        if reply and chat_has_rows:
+            body = reply + '\n\n' + body
     if show_commands:
         body += '\n\n(Ran: ' + ' ; '.join(cmds) + ')'
     rec.update(reply=body.strip(), words=reply, shown=shown, commands=cmds, errors=errors, judge_s=round(judge_s, 1),
@@ -1206,7 +1270,7 @@ def qjoin(argv):
     return ' '.join(q(a) for a in argv)
 
 
-def run_plan(con, plan):
+def run_plan(con, plan, chat_results=None):
     shown_parts, cmds, judge_s, errors = [], [], 0.0, []
     for c in plan['commands'][:6]:
         if PLACEHOLDER.search(c):  # it needs a value from the results so far: stop here and ask for the rest
@@ -1273,10 +1337,10 @@ def run_plan(con, plan):
                 judge_s += json.loads(r.note)['seconds']
             except Exception:
                 pass
-        if argv[1:2] in (['define'], ['judge']) or argv[:1] in (['define'], ['judge']):
-            shown_parts.append(r.render())
-        else:
-            shown_parts.append(r.render())
+        rendered = r.render()
+        shown_parts.append(rendered)
+        if chat_results is not None:
+            chat_results[rendered] = r
     return shown_parts, cmds, judge_s, errors
 
 
@@ -1441,14 +1505,17 @@ def main(argv=None):
                     used.append(1)
                     return wording
             elif m:  # "yes" with no card waiting: nothing to agree to
-                print('There is nothing waiting for a yes. Ask your question again and I will show you the card.')
+                print('There’s nothing waiting for confirmation.' if a.output == 'humanize' else
+                      'There is nothing waiting for a yes. Ask your question again and I will show you the card.')
                 return 0
-            elif sys.stdin.isatty() and sys.stderr.isatty():
+            elif a.output == 'shell' and sys.stdin.isatty() and sys.stderr.isatty():
                 CONFIRM = tty_confirm
             import concurrent.futures as _cf
             _ex = _cf.ThreadPoolExecutor(1)
-            kind_f = _ex.submit(classify, q) if os.environ.get('IDLI_CHIPS', '1') != '0' else None
-            rec = ask(con, q, hist, a.mapper, data_dir=sandbox(), show_commands=False, resume=resume)
+            kind_f = _ex.submit(classify, q) if a.output == 'shell' and os.environ.get('IDLI_CHIPS', '1') != '0' else None
+            rec = ask(con, q, hist, a.mapper, data_dir=sandbox(), show_commands=False, resume=resume, humanize=a.output == 'humanize')
+            if a.output == 'humanize' and rec.get('pending'):
+                rec['reply'] = rec['pending']['card'] + '\n\nReply “yes” to go ahead, or “yes: …” to change the wording.'
             kind, kind_p = kind_f.result() if kind_f else (None, {})
             why = struggle(rec, hist)
             rec.update(kind=kind, kind_probs=kind_p, struggled=why)
@@ -1463,6 +1530,9 @@ def main(argv=None):
                  'kind': rec.get('kind'), 'kind_probs': rec.get('kind_probs'), 'struggled': rec.get('struggled'),
                  'menu_miss': menu_miss(con, rec),
                  'seconds': {k: rec.get(k) for k in ('map_s', 'compose_s', 'judge_s', 'total_s')}})
+            if a.output == 'humanize':
+                print(rec['reply'])
+                return 0
             line = chips(kind, why)
             if line:
                 print(line)
