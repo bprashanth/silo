@@ -31,7 +31,7 @@ from pathlib import Path
 
 from lib import recstore as rs
 
-ACCOUNTS = {'me': '87profligate@gmail.com', 'lead': '88profligate@gmail.com'}
+ACCOUNTS = {'me': os.environ.get('IDLI_GOOGLE_ACCOUNT') or '87profligate@gmail.com', 'lead': '88profligate@gmail.com'}
 
 
 def sandbox():

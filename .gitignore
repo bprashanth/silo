@@ -305,3 +305,4 @@ examples/livelihoods/livestock/call_center_assist/**/sessions/
 log.jsonl
 session.json
 vault/
+/docs/handoff-prompt*.md
