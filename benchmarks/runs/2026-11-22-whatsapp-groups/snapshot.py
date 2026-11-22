@@ -24,7 +24,10 @@ def main():
     ap.add_argument('--out', required=True, type=Path)
     ap.add_argument('--all-active', action='store_true', help='default is the Jam Buns smoke test')
     ap.add_argument('--link-metadata', action='store_true', help='include cached textual previews on link messages')
+    ap.add_argument('--native-search', action='store_true', help='probe native Jam Buns search with positive controls')
     args = ap.parse_args()
+    if args.native_search and (args.all_active or args.link_metadata):
+        ap.error('Native search is a single-group control.')
     os.umask(0o077)
     now = datetime.now(ZoneInfo('Asia/Kolkata'))
     year, month = (now.year, now.month - 1) if now.month > 1 else (now.year - 1, 12)
@@ -50,6 +53,13 @@ def main():
                 if page.evaluate('Boolean(window.WPP?.isReady)'):
                     break
                 time.sleep(0.25)
+            if args.native_search:
+                script = HERE.parent / '2026-11-22-whatsapp-search/native_search.js'
+                counts = page.evaluate(script.read_text())
+                with args.out.open('x') as out:
+                    json.dump(counts, out)
+                print(counts)
+                return
             result = page.evaluate((HERE / 'groups.js').read_text(), dict(
                 since=since.timestamp(), until=now.timestamp(), all=args.all_active, cap=CAP, linkMetadata=args.link_metadata))
         finally:

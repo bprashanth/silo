@@ -57,3 +57,9 @@ export IDLI_SANDBOX="$HOME/.local/share/silo-owner-pilot/search-ZnuqbZKj/nov10"
 core/idli list wa_messages --where "sender ILIKE '%rinj%' AND sent_at >= '2026-11-02' AND sent_at < '2026-11-09'" \
   --search include --fields sent_at,sender,body,ref
 ```
+
+### Routing cues and native search
+
+On a fresh copy of the November 10 store, we varied the prefix on the same meeting question, starting a new shell conversation each time with local mapping and judging. With no cue the mapper chose mail. “Search my chats”, “In my Jam Buns group”, and both cues together each selected wa_messages. None returned either proposed name. This is one controlled example of routing improving independently of retrieval accuracy.
+
+We also tested the linked browser's local `msgFindSearch` through pinned WA-JS, using an explicit group ID and the same offline read path. All seven terms returned zero and end-of-results, including the known positives “meeting” and “include”. The negative birders result from this interface is inconclusive. To replay, pass `--native-search` and a fresh output path to the group snapshot script.
