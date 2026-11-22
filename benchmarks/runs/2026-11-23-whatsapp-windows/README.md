@@ -22,6 +22,38 @@ The two successes in every column were the roster and Nadhi. A plain message emb
 
 For controls, binding Jam Buns by its abbreviated title gave the correct six HTTP(S)-bearing rows. A nonexistent group yielded suggestions rather than a count. The weak similarity suggestions included unrelated groups. Matching “V” across any token produced six sender choices, including surname and interior tokens. Choices still need ranking. September yielded zero captured records, so the IAF question has no coverage in this snapshot. Record the coverage gap, not a negative claim about IAF. For actual Royal Enfield attendance, the reply-aware writer introduced unsupported attendee counts. No final attendance was established. The stock `struggled` signal flagged the sender command failure; it missed the confidently wrong zero count for the unknown group.
 
+## Same linked post, different evidence
+
+For Tejasa and Abhiram we tested a bound group, a unique sender-prefix match within that group, and a nonempty links column. Each DuckDB lookup returned exactly one post. This was an assisted artifact lookup; the stock mapper failed both. With Abhiram’s post as the anchor, ±5 retrieved his preceding decline but missed the earlier DICE invitation. Adding the parent of the neighboring decline returned all three references in 12 rows versus 11. The relationship-aware 9B returned the correct link but its explanation ended mid-sentence. Judging before answering dropped the decline entirely. Preserve the relationship in the result shown to the user.
+
+For Tejasa the source was a Google Doc, while the later Pune link was a spreadsheet shared by the owner. Reading the exact Doc through the configured Google test account returned HTTP 404. The surrounding group messages mention AI use and the organisation’s thematic focus, and say the website question was included. Neither a plausible Pune question nor a citation to the review link verifies a complete Royal Enfield questionnaire. The chronological answer incorrectly listed Pune examples as the requested questions. Explicit relationships helped identify the right link but did not establish the document contents.
+
+## Rewritten retrieval and scope-then-judge
+
+One exploratory arm let the local 9B rewrite the question for content search. It interleaved lexical hits, message embeddings and burst embeddings, expanded nearby and linked records, and passed at most 50 candidates through the local judge in batches of eight. A structured local answer writer received the selected evidence, capped at 16,000 characters. This changed both ranking and reading budget. We cannot attribute the improvement to query rewriting alone. The roster rewrite returned malformed JSON twice and fell back to the original question.
+
+| Case | Full reference evidence in hybrid packet | What the answer got right or wrong |
+|---|---|---|
+| RE session length | Yes | Returned the second session’s hour and omitted the first session’s 30 minutes. A full-group judge found both but also gave a misleading total for the conference. |
+| Tej’s review document | No | Found discussion of sending the questions. The separately bound author/link lookup recovered the exact review document. |
+| Futures roster | Yes | Found the posted list and named Yash as lead. The initial hit-only answer also reproduced the roster. |
+| DICE document | Partial | Recovered the link and decline, but added an unsupported reason for absence. The directed parent control above recovered the missing invitation. |
+| Partner organisations | Yes | Found EFI, Roots and Branches and the SESTA message. The answer blurred SESTA with its Climate Coalition connection. |
+| Nadhi | Yes | Accurately qualified the participant note; the cache does not establish a complete event brief. |
+| Two field crews | Yes | Retrieved Rinju’s Nov 19 post and both destinations. Wording incorrectly made Jency a co-lead. Shiks led Pooja and Jency. |
+| Practice runs | No | Answered 12. A full-group judge retrieved the owner’s “at least 2 rehearsals” and answered correctly. |
+
+**Hybrid retrieval met the complete evidence criterion for 5/8 positives**, against 2/8 initially. These are evidence scores. Six separately scoped local-judge runs (two bound authors and four complete group/date scopes) retained all reference evidence on five cases. Even with all 99 Namma Team rows in scope and the field update retained, the final writer denied there was evidence of anyone working away. The full Royal Enfield scope was 121 rows. These costlier passes were explicit benchmark controls above the proposed automatic budget.
+
+A direct CLI literal control for the owner’s original word “field”, using the resolved group and week, returned exactly the correct source row. Even then the stock writer mentioned only the Pune team and confused “today” in the historical message with the query date. See private `literal-controls.json` for both the field and duration commands, evidence and wording guard output. This isolates a reader failure from a search failure.
+
+## Candidate core extensions
+
+1. Resolve a group or sender to a stable local ID, show the binding and distinguish an unknown entity from zero matching records. Benchmark automatic slot extraction separately from the assisted bindings used here.
+2. Preserve reply-parent references and let existing list/get results expose the source link, sender, posted date and related messages. Offer chronological context for resources with a natural order only after testing another resource. The 12-row DICE control is the argument for preserving explicit relationships.
+3. Evaluate mixed lexical and semantic candidate retrieval behind existing search. Preserve matched records and structural evidence through judging. Measure evidence recall, factual wording, incomplete coverage, latency and abstention separately on fresh questions.
+4. Show a short source excerpt alongside high-risk answers about numbers, lists or commitments. A private screenshot is an optional user-controlled receipt. This benchmark did not test model-selected captures or Signal delivery.
+
 ## Replay and evidence access
 
 Private frozen input and outputs are on the owner’s DGX at `~/.local/share/silo-owner-pilot/windows-xTcFis`. `fresh.json` supplies source records and relations, `sandbox/` holds the imported views, and `stock/log.jsonl` contains the shell audit. `result-*.json` captures all initial packets and actual wording. `rewrite-*.json` and `scope-*.json` preserve later retrieval traces and citations. `shots.json` maps four receipts to exact message refs; the PNGs remain private under `shots/`.

@@ -53,6 +53,7 @@ For repo layout and documentation ownership, see the [placement guide](AGENTS.md
 ```text
 core/          the core: a command-line tool over a DuckDB store per sandbox (core/idli, core/lib/)
 docs/          what the core is and why (goals, commands, decisions, the store, the mapper, models, privacy)
+handoff/       agent continuation notes and links to the current experiment
 proposals/     workflows/ for reusable chains; pilots/ for outcomes to benchmark
 deployment/    alpha/, beta/, ga/ rollout material by stage
 benchmarks/    how we check it: task banks, the grading rubric, the bench script

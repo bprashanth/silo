@@ -1,0 +1,3 @@
+# Better retrieval exposed answer-writing errors
+
+A mix of lexical, message and conversation-burst search retrieved all reference evidence on five of eight positive questions. The initial two-hit variants each reached two. Holding Abhi’s linked message fixed showed exactly when the reply parent helped. Broad judging found the rehearsal count but the answer writer denied the field evidence even after retrieving the correct post. Keep citations and visible source excerpts, prioritize identity and reply fields, and test on fresh questions before adding a CLI flag. [Results, limitations and receipts](../benchmarks/runs/2026-11-23-whatsapp-windows/README.md)
