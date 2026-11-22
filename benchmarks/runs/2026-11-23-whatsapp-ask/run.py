@@ -18,7 +18,11 @@ fixture, trial = map(Path, sys.argv[1:3])
 arm = sys.argv[3]
 os.umask(0o077)
 os.environ.update(IDLI_SANDBOX=str(trial/arm), IDLI_9B_URL='http://127.0.0.1:8291', IDLI_CHIPS='0')
-groups = json.loads((fixture/'fresh.json').read_text())['groups']
+snapshot=(fixture/'fresh.json').read_bytes()
+reference=root/'benchmarks/runs/2026-11-23-whatsapp-windows/reference.json'
+if hashlib.sha256(snapshot).hexdigest()!=json.loads(reference.read_text())['sha256']:
+    raise ValueError('Source IDs and cached vectors require the frozen snapshot')
+groups = json.loads(snapshot)['groups']
 rows, bursts, near, parents = [], [], {}, {}
 for g in groups:
     ordered = sorted(g['rows'],key=lambda r:(r['t'],r['id']))
