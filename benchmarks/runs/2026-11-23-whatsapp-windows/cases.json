@@ -1,0 +1,15 @@
+[
+ ["duration","A","How long is the Royal Enfield session planned for?"],
+ ["form","A","In the Royal Enfield chat, find the list of questions Tej shared for the team to review. What were the questions?"],
+ ["roster","A","Who was on the Insight Out futures group list?"],
+ ["dice","A","Find Abhi's doc on DICE in Jam Buns. He said he couldn't attend."],
+ ["orgs","B","Which organisations did people single out in the Royal Enfield chat?"],
+ ["nadhi","B","What did we discuss about the Nadhi event in Insight Out Crew?"],
+ ["field","B","In Namma Team who was out working away from the office last week, and where did they go?"],
+ ["rehearse","B","How many practice runs did we want ahead of Royal Enfield?"],
+ ["count","C","How many messages in Jam Buns contain an HTTP or HTTPS link?"],
+ ["sender","C","In the active WhatsApp groups, show the last link shared by V."],
+ ["missing","C","How many messages with links are in the Jam Biscuits Review group?"],
+ ["iaf","C","What did I say IAF wanted from Insight Out in September?"],
+ ["attendance","C","How many people actually attended the second Royal Enfield session?"]
+]

@@ -2,6 +2,8 @@
 
 Last updated 2026-11-21. Keep this current: whoever ends a session rewrites the "State" and "Next" sections.
 
+Current experiment: [WhatsApp retrieval handoff](whatsapp-retrieval.md).
+
 ## What this repo is
 
 The Idli core: a command-line tool (`core/idli`) over a DuckDB store per sandbox, that answers questions about a
@@ -10,12 +12,12 @@ Ignore `archive/` and `examples/`: they are the old Telegram version of Silo.
 
 ## Read first
 
-1. [goals.md](goals.md): the core as built and tested, and what isn't built.
-2. [cli.md](cli.md) and `core/idli help` for the commands.
-3. [decisions.md](decisions.md) for design choices.
-4. [The docs index](README.md) for the store, mapper, models and privacy.
+1. [goals.md](../docs/goals.md): the core as built and tested, and what isn't built.
+2. [cli.md](../docs/cli.md) and `core/idli help` for the commands.
+3. [decisions.md](../docs/decisions.md) for design choices.
+4. [The docs index](../docs/README.md) for the store, mapper, models and privacy.
 5. [../todos/README.md](../todos/README.md): what's next; `../todos/core.md`: every bug, its evidence and its fix.
-6. [from-io.md](from-io.md): where the evidence and the history are in io.
+6. [from-io.md](../docs/from-io.md): where the evidence and the history are in io.
 
 ## How we work
 

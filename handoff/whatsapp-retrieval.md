@@ -1,0 +1,7 @@
+# WhatsApp retrieval experiment
+
+Owner wants evidence from real groups, benchmark-only changes, checkpointed chronology and screenshots when useful. Work from the repo root. See the [13 questions](../benchmarks/runs/2026-11-23-whatsapp-windows/cases.json) and [prior 0/7 baseline](../benchmarks/runs/2026-11-22-whatsapp-lookup/README.md). Core baseline is 64396b5.
+
+Private owner-only run on the DGX: `~/.local/share/silo-owner-pilot/windows-xTcFis`. Fresh snapshot `fresh.json` includes captions and group-local reply edges, 26 active groups and 2,783 rows. Never publish raw rows, screenshots or private links. The baseline outputs are in `stock/log.jsonl` and individual text files. Test clock Nov 23 IST, so last week is Nov 16–22.
+
+Checkpoint 00:03 IST. Source inspection and CLI baseline collected. Still to run or verify: evidence ranking, windows, local judge, direct Google Doc access and screenshot receipts. Use the same snapshot for all arms. Freeze evidence references before grading. Continue with the in-tree experiment files and append a dated chronology checkpoint at the next decision.
