@@ -1660,6 +1660,23 @@ def main(argv=None):
     import logging
     logging.getLogger('pypdf').setLevel(logging.WARNING if VERBOSE >= 3 else logging.ERROR)
     rs.TRACE = say
+    if argv[:1] == ['sync']:
+        from lib import google_api
+        acct = account(parser().parse_args(argv).role)
+        try:
+            if not google_api.connected(acct):
+                if not sys.stdin.isatty():
+                    raise ValueError(f'Google consent needed for {acct}. Run this sync in a laptop terminal first.')
+                import webbrowser
+
+                def open_consent(url):
+                    print(f'Authorize {acct} in a browser on this computer:\n{url}', file=sys.stderr, flush=True)
+                    webbrowser.open(url)
+
+                google_api.connect(acct, open_consent)
+        except (ValueError, OSError) as e:
+            print(f'idli: {e}', file=sys.stderr)
+            return 2
     con = rs.connect(sandbox())
     t0 = time.time()
     try:

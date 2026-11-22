@@ -78,3 +78,5 @@ Still accepted but not shown to the mapper: `count` (= `list --count`), `read` (
 The [owner’s CLI outline](cli.md) defines the command shape. Ask whether the proposed operation would be useful in several unrelated tasks. For example, upcoming meetings use `idli list calendar` with date and RSVP filters; filtering a second resource uses the same flags. Combining calendar results, proposal files and incoming requests into a morning message is the [daily digest workflow](../proposals/workflows/daily-digest.md).
 
 `ask --output humanize` is the presentation used by Signal. It includes source links where available and can request an address to disambiguate a correspondent. It does not install a recurring job.
+
+On a laptop, the first interactive `idli sync` for an account opens Google consent and prints the URL to stderr. After approval the same invocation continues. A background first sync exits with status 2 and asks for interactive setup. [Team installation](../deployment/team/README.md)

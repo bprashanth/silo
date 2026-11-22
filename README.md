@@ -57,12 +57,17 @@ proposals/     workflows/ for reusable chains; pilots/ for outcomes to benchmark
 deployment/    alpha/, beta/, ga/ rollout material by stage
 benchmarks/    how we check it: task banks, the grading rubric, the bench script
 todos/         what's next, and the full running list of bugs and fixes
-chronology/    append-only log, one file per step
+chronology/    timestamped notes on questions, decisions and experiments
+narrative/     short accounts of what we learned, with links to evidence
 archive/v1/    the earlier Telegram bot version of Silo (tg-bridge, wa-bridge, its benchmarks and notes). Old.
 examples/      frozen livestock call-center examples from v1. Old; a service still runs from here, so it stays put.
 ```
 
+For a readable account, start in [narrative](narrative/). To retrace a decision, find its dated entry in [chronology](chronology/) and follow it to the run in [benchmarks](benchmarks/). See [AGENTS.md](AGENTS.md#recording-work) for how to maintain them.
+
 ## Try it
+
+For a team laptop, use the [one-command setup](deployment/team/README.md) with a clone or release tarball. Manual setup follows.
 
 From the repository root, install the CLI and select your own test account. Keep these
 exports in the shell where you run Idli, using a separate sandbox for each account.
@@ -80,11 +85,9 @@ install -d -m 700 "$IDLI_GOOGLE_CONFIG"
 **Google sign-in.** Ask a maintainer for the Google Desktop OAuth client JSON and access
 for your test email. Save it as `$IDLI_GOOGLE_CONFIG/io_oauth_client_gcp.json` with mode
 600. The config directory defaults to `~/.config/idlisseus` if you omit the override.
-On a new device, start consent once from `core/` on a machine with a browser:
-
-```bash
-.venv/bin/python -c 'import os, webbrowser; from lib import google_api as g; g.connect(os.environ["IDLI_GOOGLE_ACCOUNT"], webbrowser.open)'
-```
+On the first interactive `./idli sync gmail`, Idli prints the consent URL, opens the
+local browser and resumes the sync after approval. An unattended sync reports when
+a first interactive login is needed. Local commands such as `help` work before sign-in.
 
 Select the same account and grant the requested scopes. The helper saves the refresh
 token in `$IDLI_GOOGLE_CONFIG/google-tokens/<lowercase-email>.json`. Sync reuses it.

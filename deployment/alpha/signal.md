@@ -50,3 +50,14 @@ core/.venv/bin/python benchmarks/bench.py run --mapper nine_compressed --output 
   --tasks "$PWD/benchmarks/bank/tasks_signal_dev.json" --only A11 \
   --sandbox "$IDLI_SANDBOX" --out "$HOME/signal-a11.jsonl"
 ```
+
+## Proposed first conversation on silo.idli.cc
+
+Use one Signal receiver and one shared image. Start a separate unprivileged worker container and persistent private volume per invited tester. One serialized queue per worker handles sync and CLI turns. Keep inference outside the workers and give them access only to the required model endpoints. This follows the [io remote-workspace experiment](https://github.com/bprashanth/io/blob/main/chronology/2026-09-27T1728-dgx-v1-gateway.md), which tested persistence and isolation between two identities.
+
+1. The tester DMs the bot. The receiver verifies the invited sender ACI, allocates an internal ID and replies with an expiring, single-use HTTPS setup link.
+2. The phone opens the setup page on `silo.idli.cc`. The tester chooses Google and grants the displayed scopes. Register a Web OAuth client with the exact HTTPS callback. Route only the onboarding endpoints to this service and keep model routes behind their existing service authentication.
+3. Bind OAuth state and PKCE to that onboarding session. Show the verified Google address and require confirmation from the original Signal DM before activating the binding or syncing. A forwarded URL alone must never activate a mailbox. Handle cancellation, expired links and replay.
+4. The worker stores that user's token and syncs into their DuckDB. Signal reports source coverage, then accepts questions. Disconnect revokes the grant, stops jobs and offers removal of the user's stored data.
+
+The hosted callback, multi-user provisioning and second-account acceptance run are prerequisites for this journey. The laptop Desktop OAuth flow works independently.
