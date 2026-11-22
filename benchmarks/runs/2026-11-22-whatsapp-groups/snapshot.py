@@ -23,6 +23,7 @@ def main():
     ap.add_argument('--wa-js-tgz', required=True, type=Path)
     ap.add_argument('--out', required=True, type=Path)
     ap.add_argument('--all-active', action='store_true', help='default is the Jam Buns smoke test')
+    ap.add_argument('--link-metadata', action='store_true', help='include cached textual previews on link messages')
     args = ap.parse_args()
     os.umask(0o077)
     now = datetime.now(ZoneInfo('Asia/Kolkata'))
@@ -50,7 +51,7 @@ def main():
                     break
                 time.sleep(0.25)
             result = page.evaluate((HERE / 'groups.js').read_text(), dict(
-                since=since.timestamp(), until=now.timestamp(), all=args.all_active, cap=CAP))
+                since=since.timestamp(), until=now.timestamp(), all=args.all_active, cap=CAP, linkMetadata=args.link_metadata))
         finally:
             context.close()
     result.update(since=since.isoformat(), as_of=now.isoformat(), cap=CAP)

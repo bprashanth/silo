@@ -1,4 +1,4 @@
-async ({since, until, all, cap}) => {
+async ({since, until, all, cap, linkMetadata}) => {
     const listed = await WPP.chat.list({onlyGroups: true, ignoreGroupMetadata: true});
     const active = listed.filter(c => c.id.server === 'g.us' && c.t >= since && c.t <= until);
     const title = c => c.name || c.formattedTitle || '';
@@ -65,7 +65,13 @@ async ({since, until, all, cap}) => {
                 const author = m.author || m.id.participant;
                 const contact = author && WPP.whatsapp.ContactStore.get(author);
                 const sender = m.id.fromMe ? 'Me' : (contact?.name || contact?.pushname || m.notifyName || null);
-                result.rows.push({id: key, t: m.t, sender, body: m.body});
+                const row = {id: key, t: m.t, sender, body: m.body};
+                // Text already accompanying a shared link in WhatsApp. Never visit the destination.
+                if (linkMetadata && /https?:\/\//i.test(m.body)) {
+                    row.preview = [m.title, m.description, m.canonicalUrl || m.canonicalURL]
+                        .filter(s => typeof s === 'string' && s.trim()).join(' ').slice(0, 2000);
+                }
+                result.rows.push(row);
             }
             result.includesNewest = !anchor || seen.has(anchor.key);
             result.stage = 'done';

@@ -80,3 +80,5 @@ The [owner’s CLI outline](cli.md) defines the command shape. Ask whether the p
 `ask --output humanize` is the presentation used by Signal. It includes source links where available and can request an address to disambiguate a correspondent. It does not install a recurring job.
 
 On a laptop, the first interactive `idli sync` for an account opens Google consent and prints the URL to stderr. After approval the same invocation continues. A background first sync exits with status 2 and asks for interactive setup. [Team installation](../deployment/team/README.md)
+
+For WhatsApp group pilots, the shell kind classifier sends the question directly to hosted Clef. Use `IDLI_CHIPS=0` and `--judge nine_compressed --mapper nine_compressed` for private local turns. The struggled chip still works. A measured remote-mapper prompt retained chat aliases, a URL and quoted history after masking. [Payload audit and guarded trials](../benchmarks/runs/2026-11-22-whatsapp-search/README.md#shell-chips-and-remote-privacy)
