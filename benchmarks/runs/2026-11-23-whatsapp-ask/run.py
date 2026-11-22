@@ -69,7 +69,7 @@ def prepare(q):
     con.executemany("insert into wa_packet select ?,ref,group_name,sender,body,?,sent_at from wa_messages where ref=?",[(n,relation,rows[i]['ref']) for n,(i,relation) in enumerate(selected.items(),1)])
     con.execute("create or replace view wa_candidates as select * from wa_packet order by rank")
     con.execute("insert or replace into views values ('wa_candidates','message','select * from wa_packet order by rank','WhatsApp messages ranked for this request using words and meaning, including quoted and nearby messages. Read the matches with idli list wa_candidates --order rank --limit 12. Use wa_messages for counts.')")
-    if arm=='guided':
+    if arm in ('guided','preview'):
         # Expose measured source availability and actual binding. Include no expected answers.
         counts = {table:con.execute(f'select count(*) from {table}').fetchone()[0]
                   for table in ('files','mail','events','wa_messages')}
@@ -77,6 +77,9 @@ def prepare(q):
                 + (f" inside group {group!r}" if group else " across the captured groups")
                 + ". Inspect using idli list wa_candidates --fields 'ref, sender, body' --order rank --limit 12"
                 + " before applying any extra filters. Use wa_messages for exhaustive counts.")
+        if arm=='preview':
+            info += " Available ranked refs (use idli query to retrieve the full source rows by ref): "
+            info += " | ".join(f"{rows[i]['ref']} {rows[i]['sender']}: {rows[i]['body'][:100]}" for i in hits[:8])
         con.execute("update views set about=? where name='wa_candidates'",[info])
     con.close()
     return list(selected)
