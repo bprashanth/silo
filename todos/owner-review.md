@@ -1,0 +1,7 @@
+# Owner review queue
+
+Leave each item open until the owner has tried it. Record the date, result and next decision here. Developer checks are evidence for the review.
+
+- [ ] **Organizer experiment.** DM `my plan` and `draft times`. Compare the openings with your primary calendar and the quoted request with the actual email. Try a Gmail link on your laptop with a different Google account active, then switch to the mailbox named in the reply and reopen it. Does the brief surface anything you would otherwise have forgotten? Decide whether to keep the morning push after the pilot and whether to express it as a Mini. [Experiment and controls](../bridges/signal/README.md#organizer-experiment)
+- [ ] **Alpha rollout.** Walk through invitation, phone OAuth, first sync and disconnect with two disposable accounts when onboarding is ready. Give both users similar document names and check that each receives only their own rows, links and confirmations. Today the bot accepts one paired tester. Decide when it is ready for the first external invite. [Rollout and acceptance checks](../docs/signal-alpha.md)
+- [ ] **Baseline testing.** Freeze the commit, mapper/judge settings, clock and sandbox snapshot. Replay the dev banks, then grade a fresh blind held-out set once. Compare command accuracy, grounded answers and clarification quality. Record regressions and the baseline before evaluating the new pilot. [Banks and grading](../benchmarks/README.md)

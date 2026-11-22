@@ -11,3 +11,5 @@ Open, in order:
 6. **A front end:** Signal (planned), on top of `idli ask`.
 
 `core.md` is the full running list from io, with every bug, its evidence and its fix (code or prose).
+
+[Owner review queue](owner-review.md) tracks hands-on tests and pending decisions. [Open-loops pilot direction](../docs/open-loops-pilot.md) records the proposed next experiments.

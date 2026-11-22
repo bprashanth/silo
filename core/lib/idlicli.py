@@ -74,6 +74,33 @@ def source_link(resource, record_id):
     return f'https://drive.google.com/open?id={key}'
 
 
+def gmail_account_hint(con, text):
+    """Label Idli's thread links with the mailbox that supplied each thread."""
+    prefix = 'https://mail.google.com/mail/#all/'
+    links = {line: urllib.parse.unquote(line[len(prefix):]) for line in text.splitlines()
+             if line.startswith(prefix) and line[len(prefix):] and not re.search(r'\s', line)}
+    if not links:
+        return text
+    rows = con.execute("SELECT DISTINCT thread_id, account FROM mail WHERE thread_id IN "
+                       "(SELECT unnest(?::VARCHAR[])) AND account IS NOT NULL ORDER BY account",
+                       [list(links.values())]).fetchall()
+    owners = {}
+    for thread, mailbox in rows:
+        owners.setdefault(thread, []).append(mailbox)
+    if not owners:
+        return text
+    mailboxes = {mailbox for _, mailbox in rows}
+    if len(mailboxes) == 1 and all(thread in owners for thread in links.values()):
+        mailbox = next(iter(mailboxes))
+        return text + f'\n\nIf Gmail opens to your inbox, switch to {mailbox} and open the link again.'
+    lines = []
+    for line in text.splitlines():
+        lines.append(line)
+        if line in links and links[line] in owners:
+            lines.append('Open in Gmail as ' + ' or '.join(owners[links[line]]) + '.')
+    return '\n'.join(lines)
+
+
 def sheet_sources(con, sql):
     tables = sorted(con.get_table_names(sql))
     files = con.execute('SELECT DISTINCT name, file_id FROM sheets WHERE tbl IN '
@@ -1693,7 +1720,7 @@ def main(argv=None):
                  'menu_miss': menu_miss(con, rec),
                  'seconds': {k: rec.get(k) for k in ('map_s', 'compose_s', 'judge_s', 'total_s')}})
             if a.output == 'humanize':
-                print(rec['reply'])
+                print(gmail_account_hint(con, rec['reply']))
                 return 0
             line = chips(kind, why)
             if line:
@@ -1707,6 +1734,8 @@ def main(argv=None):
             return 0
         r = run_argv(con, argv)
         out = r.render(max_rows=50)
+        if argv[:1] == ['agenda']:
+            out = gmail_account_hint(con, out)
         log({'verb': argv[0] if argv else '', 'argv': argv, 'seconds': round(time.time() - t0, 2),
              'output': out[:2000]})
         print(out)

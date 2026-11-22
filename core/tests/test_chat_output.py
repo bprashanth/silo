@@ -81,3 +81,13 @@ class SignalSourceTest(unittest.TestCase):
         self.assertIn('2 distinct nonblank values', reply)
         self.assertIn('open?id=source-id', reply)
         self.assertIsNone(sheet_distinct_count(self.db, 'How many distinct block codes are in Plots.xlsx / Raw for March?'))
+
+    def test_gmail_hint_uses_the_thread_mailbox(self):
+        from lib.idlicli import gmail_account_hint
+        self.db.execute("INSERT INTO mail (id, thread_id, account) VALUES ('m1','t1','alpha@example.org'),"
+                        "('m2','t2','beta@example.org')")
+        one = 'https://mail.google.com/mail/#all/t1'
+        two = 'https://mail.google.com/mail/#all/t2'
+        self.assertIn('switch to alpha@example.org', gmail_account_hint(self.db, one))
+        self.assertIn(two + '\nOpen in Gmail as beta@example.org.', gmail_account_hint(self.db, one + '\n' + two))
+        self.assertEqual(gmail_account_hint(self.db, 'No links'), 'No links')

@@ -16,3 +16,5 @@ For agents: [handoff.md](handoff.md).
 `*.md` files are the owner's; `*.claude.md` files are local, gitignored drafts by Claude for the owner to read and fold in.
 
 For the Signal pilot, see [alpha onboarding and acceptance checks](signal-alpha.md).
+
+[Open-loops pilot direction](open-loops-pilot.md) · [Owner review queue](../todos/owner-review.md)
