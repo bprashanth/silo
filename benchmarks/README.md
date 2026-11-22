@@ -14,6 +14,7 @@ How we check the core. Results that hold real test-account rows stay on the mach
 | [Jam Buns CLI cases](runs/2026-11-22-whatsapp-search/cases.json) | Historical meeting recall, shared links, clarification and shell escalation | [Drive comparison and remote payload audit](runs/2026-11-22-whatsapp-search/README.md) |
 | [Conversational WhatsApp lookups](runs/2026-11-22-whatsapp-lookup/cases.json) | Documents, people, meeting times and source evidence across messages | [9B, menu, masked remote and Clef results](runs/2026-11-22-whatsapp-lookup/README.md) |
 | [WhatsApp evidence windows](runs/2026-11-23-whatsapp-windows/cases.json) | Royal Enfield, field crews, Nadhi, exact links and abstention | [Retrieval, local judging and screenshot receipts](runs/2026-11-23-whatsapp-windows/README.md) |
+| [WhatsApp retrieval through ask](runs/2026-11-23-whatsapp-ask/README.md) | 24 private source-backed questions, 12 repeated | Stock, hybrid view, source binding and mapper previews |
 
 Kinds in the original banks predate search-first: many "own definition" tasks are now answered by search.
 

@@ -32,3 +32,20 @@ for arm in base hybrid guided preview; do
 done
 core/.venv/bin/python "$suite/score.py" "$trial"
 ```
+
+## Results
+
+144 CLI invocations exited successfully, including turns with failed planned commands. The first pass comprised 24 questions across four configurations, followed by 12 fresh-question repeats across all four. The new lookups each require one reference record. The prior set includes multi-record evidence and should be reported separately.
+
+| Source evidence returned by ask | Earlier positives /8 | New lookups /12 | New repeat /12 |
+|---|---:|---:|---:|
+| Stock | 0 | 0 | 0 |
+| Hybrid candidate view | 1 | 2 | 2 |
+| With source counts and binding | 0 | 8 | 7 |
+| With short candidate previews | 2 | 11 | 11 |
+
+The search packet itself contained all required records on 6/8 earlier and 12/12 new cases for all three experimental arms. The preview mapper returned the same eleven new sources on both passes. On the first pass ten appeared in the first displayed result row and one in the third. The remaining case failed in command parsing. Actual commands included both listing the ranked view and querying specific source refs. This supports testing compact local previews for single-record retrieval. It does not establish a reliable chain reader, a safe hosted prompt, or the independent contribution of each ranking signal.
+
+The four controls failed their intended contracts in the preview arm. The correct link count is six; preview encountered a binder error. Guided got the six from an exhaustive query but also aggregated the candidate packet. The ambiguous initial produced no clarification. An unknown group yielded inconsistent counts, and the September request produced no cache-coverage explanation. An empty source, unknown entity and empty search need distinguishable outcomes. A packet of ranked examples is unsuitable for exhaustive counts.
+
+**Decision.** Keep this local benchmark as the reversible prototype. Prioritize bounded, source-referenced previews in local mapper experiments; use the original message ref to open a receipt. Before an alpha release, test deterministically resolved identities, counts restricted to a verified full scope, and retrieval of all supporting records for multi-turn questions. Evaluate on independently supplied questions and a populated cross-source store. Models ran concurrently, so the recorded timings are unsuitable for latency comparisons.

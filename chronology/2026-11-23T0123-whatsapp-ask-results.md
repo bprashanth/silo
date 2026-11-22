@@ -1,0 +1,3 @@
+# Real ask turns recovered eleven new sources with local previews
+
+All 144 ordinary CLI turns completed. On twelve new single-record questions the stock mapper returned zero source messages. Given a hybrid view, source counts, bindings and eight local previews, it returned eleven, and the same eleven again in reverse order. Ten appeared first. Only two of eight prior cases met the full reference criterion. The count, ambiguous sender, unknown group and missing-history controls still failed. Continue to distinguish retrieving a real source from producing a complete conversation answer. [Report and replay](../benchmarks/runs/2026-11-23-whatsapp-ask/README.md)
