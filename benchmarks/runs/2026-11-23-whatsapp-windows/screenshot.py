@@ -42,7 +42,9 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
             group, = [g for g in groups if g['name'] == name and g['id'].endswith('@g.us')]
             row, = [r for r in group['rows'] if hashlib.sha256(r['id'].encode()).hexdigest()[:20] == ref]
             page.evaluate('([g,id]) => WPP.chat.openChatAt(g,id)', [group['id'], row['id']])
-            bubble = page.locator('#main [data-id="' + row['id'] + '"] .copyable-text').last
+            stanza = row['id'].split('_')[2]
+            page.locator('#main header').get_by_text(name, exact=True).first.wait_for(timeout=12000)
+            bubble = page.locator('#main [data-id="' + stanza + '"]')
             bubble.wait_for(timeout=12000)
             if not any(w in bubble.inner_text() for w in row['body'].split() if len(w) >= 4):
                 raise ValueError('Visible bubble differs from snapshot')
