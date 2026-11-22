@@ -46,13 +46,15 @@ email, calendar and Drive. The data stays in a local database and a private mode
 commands and writes short replies.
 
 **Start here:** [docs/README.md](docs/README.md) (what to read, in order), then [docs/goals.md](docs/goals.md).
-If you are an agent picking up work, read [docs/handoff.md](docs/handoff.md) first.
+For repo layout and documentation ownership, see the [placement guide](AGENTS.md). For implementation details, use the [agent companions](docs/README.agent.md).
 
 ## Layout
 
 ```text
 core/          the core: a command-line tool over a DuckDB store per sandbox (core/idli, core/lib/)
 docs/          what the core is and why (goals, commands, decisions, the store, the mapper, models, privacy)
+proposals/     workflows/ for reusable chains; pilots/ for outcomes to benchmark
+deployment/    alpha/, beta/, ga/ rollout material by stage
 benchmarks/    how we check it: task banks, the grading rubric, the bench script
 todos/         what's next, and the full running list of bugs and fixes
 chronology/    append-only log, one file per step
@@ -126,4 +128,4 @@ was built and measured in the io repo in November 2026 and moved here; see [docs
 
 Use [the Note to Self bridge](bridges/signal/README.md) to try `idli ask` from your own Signal account.
 
-For the team bot and personal Google accounts, see the [Signal alpha rollout](docs/signal-alpha.md).
+For the team bot and personal Google accounts, see the [Signal alpha rollout](deployment/alpha/signal.md).

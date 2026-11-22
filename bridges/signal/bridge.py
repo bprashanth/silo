@@ -1,5 +1,4 @@
 """Run core/idli for Note to Self or one explicitly paired DM sandbox."""
-import datetime as dt
 import fcntl
 import json
 import os
@@ -61,41 +60,15 @@ def signal(*args, message=None, transport=SIGNAL):
     return proc.stdout
 
 
-def run_cli(argv):
+def ask(body):
     try:
-        proc = subprocess.run([CLI, *argv], stdin=subprocess.DEVNULL,
+        proc = subprocess.run([CLI, "ask", "--output", "humanize", "--", body], stdin=subprocess.DEVNULL,
                               capture_output=True, text=True, timeout=600)
     except subprocess.TimeoutExpired:
         return "Idli timed out. Check the sandbox log before retrying."
     if proc.returncode or not proc.stdout.strip():
         return "Idli could not complete this turn. Check the DGX sandbox log."
     return proc.stdout.strip()
-
-
-def enqueue_morning(db, now, until):
-    if now.date() > until or now.weekday() >= 5 or not dt.time(8, 30) <= now.time() < dt.time(11):
-        return
-    if db.execute("SELECT paused FROM organizer WHERE id=1").fetchone()[0]:
-        return
-    # Signal timestamps are positive. A negative date key survives reconnects and restarts.
-    with db:
-        db.execute("INSERT OR IGNORE INTO turns(stamp,body) VALUES (?,?)", (-now.date().toordinal(), "my plan"))
-
-
-def respond(body, db, organizer_enabled):
-    command = body.strip().casefold().rstrip('.!?')
-    if organizer_enabled:
-        if command in ('pause briefs', 'resume briefs'):
-            paused = command == 'pause briefs'
-            with db:
-                db.execute("UPDATE organizer SET paused=? WHERE id=1", (paused,))
-            return 'Morning briefs paused.' if paused else 'Morning briefs enabled for the pilot schedule.'
-        if command in ('my plan', 'draft times'):
-            args = ['agenda', '--refresh']
-            if command == 'draft times':
-                args.append('--draft')
-            return run_cli(args)
-    return run_cli(['ask', '--output', 'humanize', '--', body])
 
 
 def serve(account, db, peer=None):
@@ -109,27 +82,18 @@ def serve(account, db, peer=None):
         if not match:
             raise RuntimeError("Cannot identify the bridge device")
         local_device = int(match[1])
-    until = os.environ.get('IDLI_SIGNAL_BRIEF_UNTIL') if peer else None
-    if until:
-        until = dt.date.fromisoformat(until)
-        with db:
-            db.execute("CREATE TABLE IF NOT EXISTS organizer(id INTEGER PRIMARY KEY, paused INTEGER NOT NULL)")
-            db.execute("INSERT OR IGNORE INTO organizer VALUES (1,0)")
     # A process exit mid-ask leaves an ambiguous CLI turn. Never execute it twice.
     with db:
         db.execute("UPDATE turns SET reply=? WHERE started=1 AND reply IS NULL",
                    ("The bridge restarted during this turn. Check the last result before retrying.",))
     while True:
-        if until:
-            now = dt.datetime.now(dt.timezone(dt.timedelta(hours=5, minutes=30)))
-            enqueue_morning(db, now, until)
         row = db.execute("SELECT stamp, body, reply FROM turns WHERE delivered=0 ORDER BY stamp LIMIT 1").fetchone()
         if row:
             stamp, body, reply = row
             if reply is None:
                 with db:
                     db.execute("UPDATE turns SET started=1 WHERE stamp=?", (stamp,))
-                reply = respond(body, db, bool(until))
+                reply = ask(body)
                 with db:
                     db.execute("UPDATE turns SET reply=? WHERE stamp=?", (reply, stamp))
             signal("-a", account, "send", *recipient, "--message-from-stdin",

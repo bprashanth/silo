@@ -9,7 +9,7 @@ How we check the core. Results that hold real test-account rows stay on the mach
 | [tasks_dev.json](bank/tasks_dev.json) | 53 tasks written blind on 2026-11-19 (trust, own definition, own workflow, other site) | while fixing |
 | [tasks_owner_dev.json](bank/tasks_owner_dev.json) | the owner's own questions with answers checked by SQL on the test account | while fixing; add to it |
 | [tasks_heldout.json](bank/tasks_heldout.json) | 27 tasks, frozen (sha256 c81e4cd249e09e62fe3150254f59a3fd5c0e6ddaae715e78776092a394cd4587) | **used up**: run twice already; write a new held-out set before the next claim |
-| [tasks_signal_dev.json](bank/tasks_signal_dev.json) | Short Signal DMs for email, calendar, Drive and sharing | [Alpha setup and live checks](../docs/signal-alpha.md) |
+| [tasks_signal_dev.json](bank/tasks_signal_dev.json) | Short Signal DMs for email, calendar, Drive and sharing | [Alpha setup and live checks](../deployment/alpha/signal.md) |
 
 Kinds in the original banks predate search-first: many "own definition" tasks are now answered by search.
 

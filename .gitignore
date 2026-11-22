@@ -296,9 +296,6 @@ examples/livelihoods/livestock/call_center_assist/**/sessions/
 !/core/lib/**
 /core/lib/**/__pycache__/
 /core/lib/**/*.pyc
-# Claude's drafts next to the owner's docs (docs/*.claude.md): read and folded in by the owner, not committed
-*.claude.md
-*.claude.*
 # Sandboxes and their logs hold real account data; they live outside the repo, but never commit one by mistake
 *.duckdb
 *.duckdb.wal

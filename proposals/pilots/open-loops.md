@@ -1,6 +1,10 @@
 # Signal pilot direction: discover unfinished work
 
-The question for the pilot is whether Idli can catch work a person would otherwise forget. The current organizer surfaces one scheduling request and recent proposal titles. It does not maintain commitment history. A newer email can change what the brief shows without proving the earlier request was resolved.
+The question for the pilot is whether Idli can catch work a person would otherwise forget. The retired digest experiment surfaced one scheduling request and recent proposal titles. A newer email can change what the brief shows without proving the earlier request was resolved.
+
+## Benchmark before implementation
+
+Start with dated fixture snapshots and expected answers in `benchmarks/`. Include an open request, an unrelated upload, delivery, acceptance, a late reply, and a failed sync. Grade state transitions, source IDs, missed actions and duplicate alerts against those fixtures. Compare with the existing core on frozen inputs. Review failures and the blind held-out result before graduating a passing slice into the product. The existing [Signal dev bank](../../benchmarks/bank/tasks_signal_dev.json) covers retrieval; lifecycle and watch benchmarks are still to be written.
 
 ## Three experiences to test with five to ten users for two weeks
 
@@ -14,8 +18,8 @@ Start with one sandbox per person. Keep a source reference, timestamp and reason
 
 ## Fit with the core
 
-Use existing lookup commands and SQL views for retrieval, dates and exact joins. A confirmed definition and judge can label uncertain meanings such as a promise or a request. Persist the supporting records and any correction. A Mini can combine views, a script step and judged labels. Keep timing, retries, notification deduplication and access checks in deterministic code. Preview outgoing actions and require explicit approval. Treat FIND, CATCHUP, TRACK, WATCH, PREPARE, ACT and REMEMBER as jobs to design around; approving new CLI verbs is a separate design decision. [CLI decisions](decisions.md) · [Mini design](minis.md)
+Use existing lookup commands and SQL views for retrieval, dates and exact joins. A confirmed definition and judge can label uncertain meanings such as a promise or a request. Persist the supporting records and any correction. A Mini can combine views, a script step and judged labels. Keep timing, retries, notification deduplication and access checks in deterministic code. Preview outgoing actions and require explicit approval. Treat FIND, CATCHUP, TRACK, WATCH, PREPARE, ACT and REMEMBER as jobs to design around; approving new CLI verbs is a separate design decision. [CLI decisions](../../docs/decisions.md) · [Mini design](../../docs/minis.md)
 
 Meeting preparation, handover, reporting gaps and compliance reminders can build on the same evidence. Examples include a Keystone call with unresolved questions, or missing field reports checked against an explicit roster and reporting period. Institutional recall needs a dated decision or verified correction. Voice-note ingestion, WhatsApp groups and external systems remain future source work. For any WhatsApp pilot, use opt-in, selected work groups with read-only ingestion and assess the unofficial connector before linking an account.
 
-Measure how many surfaced items users confirm as genuine, how many they say they would have missed, and how often they return unprompted. Also record false closures, duplicate alerts and misses. Keep those measures separate from retrieval accuracy on the question banks. [Owner review queue](../todos/owner-review.md)
+Measure how many surfaced items users confirm as genuine, how many they say they would have missed, and how often they return unprompted. Also record false closures, duplicate alerts and misses. Keep those measures separate from retrieval accuracy on the question banks. [Owner review queue](../../todos/owner-review.md)

@@ -2,7 +2,7 @@
 
 An invited tester should be able to DM Idli, connect a Google test account in a browser, then ask “What did I last send to Asha?” or “How much did we spend on travel in March?” The first release should cover finding, reading and counting. A useful answer names the person, document or tab it used and gives the tester a way to open the source.
 
-Today the DGX runs a numberless bot paired with one tester and one copy of a synced DuckDB store. Its Signal account ID (ACI) identifies the bot. A second, verified ACI identifies the allowed sender. Other senders and groups are ignored. See the [bridge setup](../bridges/signal/README.md) and [Google and model setup](../README.md#try-it).
+Today the DGX runs a numberless bot paired with one tester and one copy of a synced DuckDB store. Its Signal account ID (ACI) identifies the bot. A second, verified ACI identifies the allowed sender. Other senders and groups are ignored. See the [bridge setup](../../bridges/signal/README.md) and [Google and model setup](../../README.md#try-it).
 
 ## From one tester to several
 
@@ -39,7 +39,7 @@ Source URLs identify the stored Google objects. Opening them still depends on th
 
 ## How to test an invite
 
-Use the [Signal development cases](../benchmarks/bank/tasks_signal_dev.json) alongside the [original question banks](../benchmarks/README.md). Expected outcomes describe fixture requirements. Use two disposable Google accounts for isolation and write-action tests. Put two contacts named Asha in one mailbox, seed sent and received messages out of order, create similar-looking budget sheets, and place one event PDF only in Gmail and another only in Drive.
+Use the [Signal development cases](../../benchmarks/bank/tasks_signal_dev.json) alongside the [original question banks](../../benchmarks/README.md). Expected outcomes describe fixture requirements. Use two disposable Google accounts for isolation and write-action tests. Put two contacts named Asha in one mailbox, seed sent and received messages out of order, create similar-looking budget sheets, and place one event PDF only in Gmail and another only in Drive.
 
 Send turns from the tester’s Signal account to the bot username. Check the reply on the receiving Signal device. Compare dates, amounts and IDs with the tester’s store, then open links while signed in as that tester. For the photo case, send an image with its caption and check the destination Drive folder and permissions. The JSON bench can replay text; actual Signal DMs exercise sender routing, link rendering and attachments.
 
