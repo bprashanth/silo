@@ -25,9 +25,10 @@ def main():
     ap.add_argument('--all-active', action='store_true', help='default is the Jam Buns smoke test')
     ap.add_argument('--link-metadata', action='store_true', help='include cached textual previews on link messages')
     ap.add_argument('--image-captions', action='store_true', help='also retain cached caption text on group images')
+    ap.add_argument('--message-relations', action='store_true', help='also record group-local reply IDs and document filenames')
     ap.add_argument('--native-search', action='store_true', help='probe native Jam Buns search with positive controls')
     args = ap.parse_args()
-    if args.native_search and (args.all_active or args.link_metadata or args.image_captions):
+    if args.native_search and (args.all_active or args.link_metadata or args.image_captions or args.message_relations):
         ap.error('Native search is a single-group control.')
     os.umask(0o077)
     now = datetime.now(ZoneInfo('Asia/Kolkata'))
@@ -63,7 +64,7 @@ def main():
                 return
             result = page.evaluate((HERE / 'groups.js').read_text(), dict(
                 since=since.timestamp(), until=now.timestamp(), all=args.all_active, cap=CAP, linkMetadata=args.link_metadata,
-                imageCaptions=args.image_captions))
+                imageCaptions=args.image_captions, messageRelations=args.message_relations))
         finally:
             context.close()
     result.update(since=since.isoformat(), as_of=now.isoformat(), cap=CAP)

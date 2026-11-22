@@ -1,4 +1,4 @@
-async ({since, until, all, cap, linkMetadata, imageCaptions}) => {
+async ({since, until, all, cap, linkMetadata, imageCaptions, messageRelations}) => {
     const listed = await WPP.chat.list({onlyGroups: true, ignoreGroupMetadata: true});
     const active = listed.filter(c => c.id.server === 'g.us' && c.t >= since && c.t <= until);
     const title = c => c.name || c.formattedTitle || '';
@@ -56,8 +56,24 @@ async ({since, until, all, cap, linkMetadata, imageCaptions}) => {
             result.stage = 'project';
             result.fetched = messages.length;
             const seen = new Set();
+            const localParents = new Map();
+            if (messageRelations) {
+                result.relations = [];
+                for (const m of messages) {
+                    if (m.id.remote?._serialized !== id) throw new Error('Group mismatch');
+                    localParents.set(m.id.id, m.id._serialized);
+                }
+            }
             for (const m of messages) {
                 if (m.id.remote?._serialized !== id) throw new Error('Group mismatch');
+                if (messageRelations && (m.quotedStanzaID || m.type === 'document')) {
+                    const author = m.author || m.id.participant;
+                    const contact = author && WPP.whatsapp.ContactStore.get(author);
+                    result.relations.push({id: m.id._serialized, t: m.t, type: m.type,
+                        sender: m.id.fromMe ? 'Me' : (contact?.name || contact?.pushname || m.notifyName || null),
+                        parent: localParents.get(m.quotedStanzaID) || null,
+                        filename: m.type === 'document' ? (m.filename || null) : null});
+                }
                 const body = m.type === 'chat' ? m.body : (imageCaptions && m.type === 'image' ? m.caption : null);
                 if (typeof body !== 'string' || !body.trim()) continue;
                 const key = m.id._serialized;
