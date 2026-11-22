@@ -303,3 +303,4 @@ log.jsonl
 session.json
 vault/
 /handoff/handoff-prompt*.md
+/benchmarks/private/
