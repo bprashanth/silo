@@ -1,4 +1,4 @@
-async ({since, until, all, cap, linkMetadata}) => {
+async ({since, until, all, cap, linkMetadata, imageCaptions}) => {
     const listed = await WPP.chat.list({onlyGroups: true, ignoreGroupMetadata: true});
     const active = listed.filter(c => c.id.server === 'g.us' && c.t >= since && c.t <= until);
     const title = c => c.name || c.formattedTitle || '';
@@ -58,16 +58,18 @@ async ({since, until, all, cap, linkMetadata}) => {
             const seen = new Set();
             for (const m of messages) {
                 if (m.id.remote?._serialized !== id) throw new Error('Group mismatch');
-                if (m.type !== 'chat' || typeof m.body !== 'string' || !m.body.trim()) continue;
+                const body = m.type === 'chat' ? m.body : (imageCaptions && m.type === 'image' ? m.caption : null);
+                if (typeof body !== 'string' || !body.trim()) continue;
                 const key = m.id._serialized;
                 if (!key || seen.has(key)) continue;
                 seen.add(key);
                 const author = m.author || m.id.participant;
                 const contact = author && WPP.whatsapp.ContactStore.get(author);
                 const sender = m.id.fromMe ? 'Me' : (contact?.name || contact?.pushname || m.notifyName || null);
-                const row = {id: key, t: m.t, sender, body: m.body};
+                const row = {id: key, t: m.t, sender, body};
+                if (m.type === 'image') row.source_type = 'image_caption';
                 // Text already accompanying a shared link in WhatsApp. Never visit the destination.
-                if (linkMetadata && /https?:\/\//i.test(m.body)) {
+                if (linkMetadata && /https?:\/\//i.test(body)) {
                     row.preview = [m.title, m.description, m.canonicalUrl || m.canonicalURL]
                         .filter(s => typeof s === 'string' && s.trim()).join(' ').slice(0, 2000);
                 }
