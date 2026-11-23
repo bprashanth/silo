@@ -426,7 +426,15 @@ func main() {
 	if err := os.MkdirAll(*stateDir, 0o700); err != nil {
 		log.Fatalf("mkdir state: %v", err)
 	}
-	token := randomToken(16)
+	token := ""
+	if existingURL, err := os.ReadFile(filepath.Join(*stateDir, "url")); err == nil {
+		if idx := strings.LastIndex(strings.TrimSpace(string(existingURL)), "/pair/"); idx >= 0 {
+			token = strings.TrimSpace(string(existingURL))[idx+len("/pair/"):]
+		}
+	}
+	if token == "" {
+		token = randomToken(16)
+	}
 	urlStr := strings.TrimRight(*publicBase, "/") + "/pair/" + token
 	_ = os.WriteFile(filepath.Join(*stateDir, "url"), []byte(urlStr+"\n"), 0o600)
 
@@ -581,40 +589,75 @@ func main() {
 		}
 	}()
 
-	// Connect WhatsApp (if unpaired, stream QR events).
-	if client.Store.ID == nil {
-		qrChan, err := client.GetQRChannel(ctx)
-		if err != nil {
-			log.Fatalf("get qr channel: %v", err)
+	// Helper to ensure an active pairing session (auto-restarts on QR timeout).
+	var pairLoopMu sync.Mutex
+	pairLoopRunning := false
+	startPairing := func() {
+		pairLoopMu.Lock()
+		if pairLoopRunning || client.Store.ID != nil {
+			pairLoopMu.Unlock()
+			return
 		}
-		if err := client.Connect(); err != nil {
-			log.Fatalf("connect: %v", err)
-		}
+		pairLoopRunning = true
+		pairLoopMu.Unlock()
 		go func() {
-			for evt := range qrChan {
-				switch evt.Event {
-				case "code":
-					png, err := qrcode.Encode(evt.Code, qrcode.Medium, 280)
-					if err == nil {
+			defer func() {
+				pairLoopMu.Lock()
+				pairLoopRunning = false
+				pairLoopMu.Unlock()
+			}()
+			for ctx.Err() == nil && client.Store.ID == nil {
+				if client.IsConnected() {
+					client.Disconnect()
+					time.Sleep(500 * time.Millisecond)
+				}
+				qrChan, err := client.GetQRChannel(ctx)
+				if err != nil {
+					log.Printf("get qr channel: %v", err)
+					time.Sleep(3 * time.Second)
+					continue
+				}
+				if err := client.Connect(); err != nil {
+					log.Printf("connect: %v", err)
+					time.Sleep(3 * time.Second)
+					continue
+				}
+				done := false
+				for evt := range qrChan {
+					switch evt.Event {
+					case "code":
+						png, err := qrcode.Encode(evt.Code, qrcode.Medium, 280)
+						if err == nil {
+							st.mu.Lock()
+							st.status = "awaiting_pair"
+							st.qrPNGDataURI = "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
+							st.qrUpdatedAt = time.Now()
+							st.mu.Unlock()
+						}
+					case "success":
 						st.mu.Lock()
-						st.status = "awaiting_pair"
-						st.qrPNGDataURI = "data:image/png;base64," + base64.StdEncoding.EncodeToString(png)
-						st.qrUpdatedAt = time.Now()
+						st.status = "paired_syncing"
+						st.qrPNGDataURI = ""
+						st.mu.Unlock()
+						done = true
+					case "timeout":
+						st.mu.Lock()
+						st.status = "refreshing_qr"
+						st.qrPNGDataURI = ""
 						st.mu.Unlock()
 					}
-				case "success":
-					st.mu.Lock()
-					st.status = "paired_syncing"
-					st.qrPNGDataURI = ""
-					st.mu.Unlock()
-				case "timeout":
-					st.mu.Lock()
-					st.status = "qr_timeout"
-					st.qrPNGDataURI = ""
-					st.mu.Unlock()
 				}
+				if done || client.Store.ID != nil {
+					return
+				}
+				time.Sleep(2 * time.Second)
 			}
 		}()
+	}
+
+	// Connect WhatsApp (if unpaired, stream QR events with auto-refresh).
+	if client.Store.ID == nil {
+		startPairing()
 	} else {
 		st.mu.Lock()
 		st.pairedJID = client.Store.ID.User
@@ -721,6 +764,12 @@ setInterval(poll, 2000);
 			st.mu.Unlock()
 			w.WriteHeader(http.StatusBadRequest)
 			return
+		}
+		if !client.IsConnected() {
+			startPairing()
+			for i := 0; i < 20 && !client.IsConnected(); i++ {
+				time.Sleep(250 * time.Millisecond)
+			}
 		}
 		code, err := client.PairPhone(ctx, digits, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
 		st.mu.Lock()
