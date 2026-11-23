@@ -9,7 +9,7 @@ For the owner to read and copy what holds into `cli.md`. It describes `core/` in
 |---|---|---|
 | sandbox | a folder for one area of work; holds the store, the log and the session | `export IDLI_SANDBOX=~/idli-sbx/t1` |
 | store | one DuckDB file in the sandbox, `store.duckdb` | |
-| resource | a kind of record you can list | `mail`, `threads`, `calendar`, `files`, `folders`, `photos`, `sheets`, `rows`, `labels`, `definitions`, or a view |
+| resource | a kind of record you can list | `mail`, `threads`, `calendar`, `files`, `folders`, `photos`, `sheets`, `rows`, `chats`, `messages`, `labels`, `definitions`, or a view |
 | record | one row: one email, one event, one file | |
 | field | a column of a resource, copied from the site or set by a connector rule | `my_response` (Google's RSVP), `is_bulk` (rule: unsubscribe header or noreply sender) |
 | page | one page of a document's text (PDFs keep their pages; others are cut into parts of about 3,000 characters) | `file_pages` |
@@ -31,18 +31,18 @@ One shape: `idli VERB RESOURCE [REF] [flags]`. The same flags mean the same thin
 
 | Command | What it does | Example |
 |---|---|---|
-| `sync [gmail\|gcalendar\|drive\|all]` | copy the account into the store, read only. `drive` also reads every sheet tab and every document's text, makes cards and embeddings; unchanged files are skipped; `--no-cards`, `--no-embed` | `idli sync drive -v` |
-| `list RESOURCE` | rows that match the flags | `idli list mail --since yesterday --where "direction = 'in'"` |
-| `list ... --count` | how many | `idli list files --count --in Power` |
+| `sync [gmail\|gcalendar\|drive\|whatsapp\|all]` | copy the account or chat snapshot into the store, read only. `drive` reads sheets/text/cards/embeddings; `whatsapp` ingests a snapshot (`--from-snapshot PATH`, optional `--days N`), builds contextual conversation episodes, DuckDB FTS BM25 indexes and episode embeddings | `idli sync whatsapp --from-snapshot snapshot.json -v` |
+| `list RESOURCE` | rows that match the flags (`--in FOLDER\|CHAT` resolves Drive folders or chat names fuzzily, reporting cached coverage) | `idli list messages --in "Jam Buns" --on "last week"` |
+| `list ... --count` | how many (always runs on the full filtered table, never a search packet) | `idli list messages --count --in "Jam Buns" --where "links <> ''"` |
 | `list ... --group-by F` | how many per value | `idli list files --group-by kind` |
-| `list ... --search WORDS` | `"in quotes"`: the exact phrase only. Without quotes: the words that matter must appear, ranked by mentions and merged with a ranking by meaning (embeddings); a file found only by meaning says "similar meaning". On files: names, folders, every page (every sheet tab) and the cards, with a "how it matched" column | `idli list files --search '"border effects"'` |
+| `list ... --search WORDS` | `"in quotes"`: exact phrase only. Unquoted: hybrid lexical (BM25 + stemming/fuzzy) and semantic embeddings, merged via RRF and optionally reranked by a local cross-encoder (`IDLI_RERANK_URL`, default `:8294`). On `messages`: includes quoted parents and immediate follow-ups with stable refs | `idli list messages --in "Jam Buns" --search "birding"` |
 | `list ... --label NAME[=VALUE]` | rows a definition labelled; give it twice for both | `idli list files --label trade=yes` |
-| `get RESOURCE REF` | one record in full; a file shows its card | `idli get file wincoop` |
+| `get RESOURCE REF` | one record in full; `get message REF` returns the message plus its quoted parent chain, direct replies and ±3 neighbors; `get chat REF` shows coverage and recent activity | `idli get message a9f3c210` |
 | `get file REF --text` / `--outline` | a file's text / its pages and card, or a sheet's columns | `idli get sheet "Leads (test)"` |
 | `summarise file REF` | the 9B's summary of one file | `idli summarise file wincoop` |
-| `summarise --search WORDS` | what your documents say about a topic, from the pages that mention it most, with sources | `idli summarise --search '"border effects"'` |
-| `help [RESOURCE]` | the manual page: fields, their meanings and examples | `idli help files` |
-| `define NAME --on KIND --ask Q --answers A,B` | make a definition | `idli define urgent --on mail --ask "..." --answers yes,no` |
+| `summarise [files\|messages] --search WORDS` | what your documents or chats say about a topic, from top ranked passages/episodes, with sources and refs | `idli summarise messages --search "session" --in "Royal Enfield"` |
+| `help [RESOURCE]` | the manual page: fields, their meanings and examples | `idli help messages` |
+| `define NAME --on KIND --ask Q --answers A,B` | make a definition (`mail`, `event`, `file`, `photo`, `message`) | `idli define urgent --on mail --ask "..." --answers yes,no` |
 | `judge RESOURCE --def NAME` | label rows with a definition; narrow with `--search`, `--in`, `--where`, `--since`, `--until`, `--on` (the same flags as `list`); `--judge clef\|nine_compressed\|nine` | `idli judge files --def trade --search '"trade policy"'` |
 | `query "SELECT ..."` | read-only SQL, for joins | `idli query "SELECT count(*) FROM mail"` |
 | `view NAME --sql "..."` | save a rule as a resource | `idli view declined_with --sql "..."` |

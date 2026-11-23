@@ -1,6 +1,6 @@
 # Architecture: First-Class Chat & WhatsApp Search in Idli Core
 
-Status: **Proposed** (2026-11-23) · Links: [CLI principles](../../docs/cli.md) · [Design decisions](../../docs/decisions.md) · [WhatsApp retrieval handoff](../../handoff/whatsapp-retrieval.md) · [Chronology](../../chronology/2026-11-23T1735-wa-search-redesign.md)
+Status: **Implemented** (`345e74d`, 2026-11-24) · Links: [CLI principles](../../docs/cli.md) · [Design decisions](../../docs/decisions.md) · [Narrative](../../narrative/whatsapp-search.md) · [Benchmark report](../../benchmarks/runs/2026-11-24-whatsapp-core/README.md) · [Chronology](../../chronology/2026-11-24T0140-whatsapp-core-results.md)
 
 ## Problem
 

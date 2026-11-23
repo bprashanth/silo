@@ -1,5 +1,7 @@
 # WhatsApp retrieval handoff
 
+> **Superseded 24 November 2026:** First-class `chats`/`messages` hybrid search (DuckDB FTS BM25 + contextual episode embeddings + local `bge-reranker-v2-m3` cross-encoder + deterministic chat/sender/coverage resolvers) and a read-only `whatsmeow` sidecar (`bridges/whatsapp/`) have now been implemented in `core/` (`345e74d`) and verified on both the dev bank (`5/8` prior, `12/12` new, `12/12` repeat) and a 20-case blind held-out bank (`13/16` evidence, `12/20` correct + `3/20` partial). See [narrative/whatsapp-search.md](../narrative/whatsapp-search.md) and [benchmarks/runs/2026-11-24-whatsapp-core/README.md](../benchmarks/runs/2026-11-24-whatsapp-core/README.md).
+
 Completed 23 November 2026 on the owner’s DGX. The source was a read-only capture of 2,783 cached messages and captions from 26 active WhatsApp groups. The fixture’s Google sources were empty. The experimental views and ranking code live in the benchmark. The production CLI and bridges were unchanged.
 
 ## What ran and what was scored

@@ -27,6 +27,10 @@ and every `ask` turn), `session.json` (the last 6 turns) and `vault/` (the maski
 | `definitions` | version of a definition (name, kind of record, question, answers) | `define`, after a yes card |
 | `labels` | answer for one record, one definition version | `judge` |
 | `views` (and a real view per name) | saved rule | `view`, after a yes card |
+| `chats` | chat or group (`provider`, coverage `earliest_at`/`latest_at`, `msg_count`) | `sync whatsapp` |
+| `messages` | chat message, image/video caption or document (`id` = stable 20-char ref, `parent_id`, `links`, `link_preview`, `reply_count`) | `sync whatsapp` |
+| `chat_members` | observed sender per chat (`chat_id`, `sender_id`, `sender`, `msg_count`) for deterministic sender resolution | `sync whatsapp` |
+| `message_episodes` | stitched conversation episode (reply links ∪ 15-min bursts) with contextual text and 1,024-dim vector | `sync whatsapp` |
 | `sync_log` | sync run | every sync |
 
 ## Rules that keep it honest

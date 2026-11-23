@@ -1,8 +1,8 @@
 # Handoff
 
-Last updated 2026-11-21. Keep this current: whoever ends a session rewrites the "State" and "Next" sections.
+Last updated 2026-11-24. Keep this current: whoever ends a session rewrites the "State" and "Next" sections.
 
-Current experiment: [WhatsApp retrieval handoff](whatsapp-retrieval.md).
+Current architecture & evidence: [WhatsApp search narrative](../narrative/whatsapp-search.md) · [Core WhatsApp benchmark](../benchmarks/runs/2026-11-24-whatsapp-core/README.md) · [Architecture proposal](../proposals/architecture/whatsapp-search.md).
 
 ## What this repo is
 
@@ -36,15 +36,19 @@ Ignore `archive/` and `examples/`: they are the old Telegram version of Silo.
 - Commit as you go; then `bash -ic 'declaude origin/main'` (it rewrites hashes; quote hashes only after it). Don't
   push: the owner reviews and pushes.
 
-## State (2026-11-21)
+## State (2026-11-24)
 
-- Branch `idli-core` (from `merging`). The core runs from `core/` with its own `.venv` (`core/requirements.txt`).
-- The [setup guide](../README.md#try-it) covers Google consent, account selection, DGX access and hosted judging.
-- Test account 87profligate. Sandboxes: `~/idli-sbx/t2` (the owner's), `~/idli-sbx/silo-smoke` (synced from this
-  repo on 2026-11-21).
-- Smoke test from this repo: see `chronology/2026-11-21T2300-core-from-io.md`.
+- Branch `signal_tui_cli`. Core frozen and verified at `345e74d` (`26/26` core unit tests + `10/10` Signal bridge tests passing; prose budget `5243 / 6836 / 1329`, under original baseline).
+- **First-class WhatsApp/chat search shipped in `core/`:** `chats`, `messages`, `chat_members`, `message_episodes` tables + `core/lib/searchkit.py` (DuckDB FTS BM25 + fuzzy fallback + `Qwen3-Embedding-0.6B` episode vectors + optional local `bge-reranker-v2-m3` cross-encoder on `127.0.0.1:8294`, `idli-rerank` container) + deterministic `--in CHAT` / sender / date-coverage resolvers + Signal `--output humanize` message receipts.
+- **Verified results (`345e74d`):**
+  - Dev WhatsApp bank (`ask-LMunvw`): **5/8 prior, 12/12 new, 12/12 repeat, 3/4 controls** (vs stock `0/8, 0/12`; median `5.0s`).
+  - Blind held-out WhatsApp bank (`blind-heldout-2026-11-24`, 20 unseen cases, graded blind by `codex exec`): **13/16 (81%) positive evidence**, **12/20 strict correct + 3/20 partial (0 wrong on multi-message)**, **3/4 controls**.
+  - Google regression (`tasks_owner_dev.json`, 19 turns on `silo-smoke`): **0 errors, 0 WhatsApp routing leaks**. Mixed Google + live `whatsmeow` store routed cleanly under `--output humanize`.
+- **Read-only `whatsmeow` sidecar (`bridges/whatsapp/`):** Built (`silo-wa-sync`), paired live against owner’s WhatsApp at **9.8 MiB RAM** (zero write/send methods), synced 21 groups + 42 DMs (1,874 messages, 14-day window) in ~5s (`silo-wa-smoke` container).
 
 ## Next
 
-See [../todos/README.md](../todos/README.md): a new held-out set, Mini v0, subtables, the menu budget, local Clef,
-a Signal front end.
+1. **Signal + WhatsApp CLI live test:** Pair a mixed sandbox with `bridges/signal/bridge.py` and test natural WhatsApp + Google queries end-to-end over Signal DM (including italic coverage footers & message receipts).
+2. **Multi-user Signal onboarding flow ([deployment/alpha/signal.md](../deployment/alpha/signal.md)):** Build the invite-link web service on `silo.idli.cc` combining Google Web OAuth (PKCE) + per-user containerized `whatsmeow` pairing (QR + 8-digit phone code), bound to the Signal sender ACI with isolated per-user sandboxes.
+3. **Two targeted core follow-ups:** (a) make ambiguous single-letter sender queries (`V`, `S`) reliably trigger `resolve_sender` instead of `--search`; (b) tighten reader/wording grounding so `compose()` preserves caveats from retrieved messages.
+4. See [../todos/README.md](../todos/README.md) for Mini v0, subtables, and local Clef.
