@@ -50,6 +50,17 @@ CREATE TABLE IF NOT EXISTS labels (kind TEXT, record_id TEXT, definition TEXT, v
   detail TEXT, judged_at TIMESTAMP, PRIMARY KEY (kind, record_id, definition, version));
 CREATE TABLE IF NOT EXISTS views (name TEXT PRIMARY KEY, on_kind TEXT, sql TEXT, about TEXT);
 CREATE TABLE IF NOT EXISTS sync_log (what TEXT, account TEXT, rows INTEGER, seconds DOUBLE, at_time TIMESTAMP);
+CREATE TABLE IF NOT EXISTS chats (id TEXT PRIMARY KEY, provider TEXT, name TEXT, is_group BOOLEAN,
+  active_at TIMESTAMP, earliest_at TIMESTAMP, latest_at TIMESTAMP, msg_count INTEGER,
+  partial_history BOOLEAN, fetched_at TIMESTAMP);
+CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, raw_id TEXT, provider TEXT, chat_id TEXT,
+  chat_name TEXT, sent_at TIMESTAMP, sender_id TEXT, sender TEXT, is_from_me BOOLEAN,
+  source_type TEXT, body TEXT, links TEXT, link_preview TEXT, filename TEXT, parent_id TEXT,
+  reply_count INTEGER, fetched_at TIMESTAMP);
+CREATE TABLE IF NOT EXISTS chat_members (chat_id TEXT, sender_id TEXT, sender TEXT, msg_count INTEGER,
+  last_seen TIMESTAMP, PRIMARY KEY (chat_id, sender_id));
+CREATE TABLE IF NOT EXISTS message_episodes (episode_id TEXT PRIMARY KEY, chat_id TEXT, chat_name TEXT,
+  start_at TIMESTAMP, end_at TIMESTAMP, message_ids TEXT, speakers TEXT, context_text TEXT, vec FLOAT[1024]);
 """
 
 # what each resource is, for `list`, `explain` and the mapper's menu
@@ -72,12 +83,19 @@ RESOURCES = {
     'sheets': {'table': 'sheets', 'date': None, 'kind': 'sheet', 'id': 'file_id', 'text': ['name', 'tab', 'columns'],
                'show': ['name', 'tab', 'columns', 'nrows'],
                'about': 'one row per tab of each spreadsheet; its rows are `rows --sheet NAME` (or "NAME / TAB")'},
+    'chats': {'table': 'chats', 'date': 'active_at', 'kind': 'chat', 'id': 'id', 'text': ['name', 'provider'],
+              'show': ['name', 'provider', 'msg_count', 'earliest_at', 'latest_at'],
+              'about': 'one row per chat or group (WhatsApp, etc.) with cached date coverage'},
+    'messages': {'table': 'messages', 'date': 'sent_at', 'kind': 'message', 'id': 'id',
+                 'text': ['chat_name', 'sender', 'body', 'link_preview', 'filename', 'links'],
+                 'show': ['id', 'sent_at', 'chat_name', 'sender', 'body', 'links'],
+                 'about': 'one row per chat message or image caption (use --in CHAT to filter to a chat)'},
     'labels': {'table': 'labels', 'date': 'judged_at', 'kind': 'label', 'id': 'record_id', 'text': ['label', 'detail'],
                'show': ['kind', 'record_id', 'definition', 'label', 'detail'], 'about': 'what judge decided'},
     'definitions': {'table': 'definitions', 'date': 'created', 'kind': 'definition', 'id': 'name', 'text': ['ask'],
                     'show': ['name', 'version', 'on_kind', 'ask', 'answers'], 'about': 'your own categories'},
 }
-KIND_TABLE = {'mail': ('mail', 'id'), 'event': ('events', 'id'), 'file': ('files', 'id')}
+KIND_TABLE = {'mail': ('mail', 'id'), 'event': ('events', 'id'), 'file': ('files', 'id'), 'message': ('messages', 'id')}
 # What a field means, where it isn't obvious from its name: written by whoever writes the connector. The menu and
 # `explain` show these, so the mapper uses a field instead of inventing a category for it.
 FIELD_NOTES = {
@@ -92,8 +110,17 @@ FIELD_NOTES = {
     'files': {'kind': 'pdf, doc, sheet, slides, image, video, folder, form, other', 'path': 'the folder path',
               'owner': "the owner's email address; 'me' means the account's own address",
               'shared': 'shared with me or by me'},
+    'chats': {'provider': 'whatsapp (or another connected chat app)',
+              'earliest_at': 'earliest cached message date in IST'},
+    'messages': {'id': 'stable message ref (open full thread + neighbors with `get message REF`)',
+                 'chat_name': 'group or chat name (prefer `--in CHAT` for fuzzy matching)',
+                 'sender': 'display name of sender (or Me)',
+                 'links': 'HTTP/HTTPS URLs in the message (empty string if none)',
+                 'parent_id': 'ref of the quoted parent message, if any'},
 }
-ALIASES = {'events': 'calendar', 'event': 'calendar'}  # older names still work; the menu shows the new ones
+ALIASES = {'events': 'calendar', 'event': 'calendar', 'chat': 'chats', 'message': 'messages',
+           'wa_messages': 'messages', 'wa_groups': 'chats'}  # older names still work; the menu shows the new ones
+LAST_SELECT_NOTE = ''
 
 
 def resource_name(r):
@@ -816,7 +843,7 @@ def columns(con, resource):
 LABEL_REF = re.compile(r'label\.([a-z0-9_]+)\s*(!=|=|<>)\s*\'([^\']*)\'', re.I)
 
 
-def compile_where(con, resource, where):
+def compile_where(con, resource, where, chat_id=None, notes=None):
     """A filter over the resource's fields. label.NAME = 'yes' reads judge's labels; field ~ 'x' means contains."""
     if not where:
         return ''
@@ -840,6 +867,9 @@ def compile_where(con, resource, where):
                f"AND label = '{val}'")
         return f"{idcol} {'NOT ' if op != '=' else ''}IN ({sub})"
     w = LABEL_REF.sub(lab, where)
+    if resource == 'messages':
+        # Older benchmark prompts occasionally write group_name instead of chat_name.
+        w = re.sub(r'\bgroup_name\b', 'chat_name', w, flags=re.I)
     cols = {c.lower() for c in columns(con, resource)}
     # kind = slides: a bare word compared with a text field is a value (unless it is a column, a number or SQL)
     sqlw = {'true', 'false', 'null', 'and', 'or', 'not', 'is', 'in', 'like', 'ilike', 'between'}
@@ -853,6 +883,32 @@ def compile_where(con, resource, where):
                        lambda m: f"{m.group(1)}'{me}'", w, flags=re.I)
     # "declined" in double quotes is a column name in SQL; models often mean the value. Quote values as values.
     w = re.sub(r'"([^"]*)"', lambda m: m.group(0) if m.group(1).lower() in cols else "'" + m.group(1).replace("'", "''") + "'", w)
+    if resource == 'messages':
+        from lib import searchkit as sk
+        bound_cid = chat_id
+
+        def _resolve_chat_expr(m):
+            nonlocal bound_cid
+            raw_val = m.group(1).strip('% ')
+            chat_row = sk.resolve_chat(con, raw_val)
+            bound_cid = chat_row[0]
+            if notes is not None:
+                notes.append(sk.chat_coverage_note(chat_row))
+            return f"chat_id = '{chat_row[0].replace(chr(39), chr(39)*2)}'"
+
+        w = re.sub(r"\bchat_name\s*(?:=|~|ILIKE|LIKE)\s*'([^']+)'", _resolve_chat_expr, w, flags=re.I)
+
+        def _resolve_sender_expr(m):
+            raw_val = m.group(1).strip('% ')
+            if raw_val.casefold() in ('me', 'myself'):
+                return 'is_from_me = TRUE'
+            sname, sids = sk.resolve_sender(con, raw_val, chat_id=bound_cid)
+            if notes is not None:
+                notes.append(f'Sender resolved: {sname}')
+            quoted = ','.join("'" + s.replace("'", "''") + "'" for s in sids)
+            return f'sender_id IN ({quoted})'
+
+        w = re.sub(r"\bsender\s*(?:=|~|ILIKE|LIKE)\s*'([^']+)'", _resolve_sender_expr, w, flags=re.I)
     w = re.sub(r'([A-Za-z_][A-Za-z0-9_]*)\s*~\s*\'([^\']*)\'', lambda m: f"{m.group(1)} ILIKE '%{m.group(2)}%'", w)
     return w
 
@@ -986,16 +1042,64 @@ def fused_files(con, search, limit=50, fields=None, **kw):
         f'fused: {len(lit_rank)} literal, {len(sem_rank)} by meaning'
 
 
+def sync_whatsapp(con, snapshot_path=None, days=None, with_embed=True, progress=None, on_item=None):
+    from lib import searchkit as sk
+    return sk.sync_whatsapp(con, snapshot_path=snapshot_path, days=days,
+                            embed_fn=embed if with_embed else None, progress=progress, on_item=on_item)
+
+
+def fused_messages(con, search, limit=12, fields=None, **kw):
+    """--search on messages without a quoted phrase: DuckDB FTS BM25 + contextual episode embeddings
+    + optional local cross-encoder reranker, strictly inside the resolved scope."""
+    from lib import searchkit as sk
+    global LAST_SELECT_NOTE
+    _, base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw)
+    scope_note = LAST_SELECT_NOTE
+    base_ids = [r[0] for r in base]
+    if not base_ids:
+        LAST_SELECT_NOTE = scope_note
+        show = fields or ', '.join(RESOURCES['messages']['show'])
+        return [c.strip() for c in show.split(',')] + ['found'], [], 'fused_messages: empty scope'
+    chat_hint = kw.get('folder')
+    hits = sk.search_messages(con, _search_text(search), base_ids, chat_name_hint=chat_hint,
+                              embed_fn=embed, limit=min(int(limit), 30))
+    if not hits:
+        LAST_SELECT_NOTE = scope_note
+        show = fields or ', '.join(RESOURCES['messages']['show'])
+        return [c.strip() for c in show.split(',')] + ['found'], [], 'fused_messages: nothing'
+    order = [mid for mid, _ in hits]
+    found_map = dict(hits)
+    show = fields or ', '.join(RESOURCES['messages']['show'])
+    known = {c.lower() for c in columns(con, 'messages')}
+    sel_expr = ', '.join(f'"{f.strip()}"' if f.strip().lower() in known else f.strip() for f in show.split(','))
+    rows = {r[0]: r[1:] for r in con.execute(
+        f"SELECT id, {sel_expr} FROM messages WHERE id IN ({','.join(repr(i) for i in order)})"
+    ).fetchall()}
+    cols = [c.strip() for c in show.split(',')] + ['found']
+    LAST_SELECT_NOTE = scope_note
+    tel = sk.LAST_TELEMETRY
+    sql_note = (f"hybrid_messages: bm25={tel.get('bm25_msg_hits', 0)}+{tel.get('bm25_ep_hits', 0)}, "
+                f"sem={tel.get('sem_ep_hits', 0)}, rerank={tel.get('reranker_used', False)}")
+    return cols, [tuple(rows[mid]) + (found_map[mid],) for mid in order if mid in rows], sql_note
+
+
 def select(con, resource, where=None, since=None, until=None, on=None, search=None, label=None, folder=None,
            sheet=None, by=None, count=False, fields=None, order=None, limit=50, show_all=False, plain=False):
     """Build and run the query for `list`. Returns (columns, rows, sql). Empty files are left out unless show_all."""
+    global LAST_SELECT_NOTE
+    LAST_SELECT_NOTE = ''
     resource = resource_name(resource)
+    raw_search = _search_text(search) + ''.join(search if isinstance(search, list) else [search]) if search else ''
     if (not plain and search and resource == 'files' and not by and not count and not order
-            and '"' not in _search_text(search) + ''.join(search if isinstance(search, list) else [search])
-            and embeddings_ready(con)):
+            and '"' not in raw_search and embeddings_ready(con)):
         # unquoted words: literal and meaning, merged. Quoted phrases stay literal only.
         return fused_files(con, search, limit=limit, fields=fields, where=where, since=since, until=until, on=on,
                            label=label, folder=folder, show_all=show_all)
+    if (not plain and search and resource == 'messages' and not by and not count and not order
+            and '"' not in raw_search):
+        return fused_messages(con, search, limit=min(int(limit), 15) if limit == 50 else limit, fields=fields,
+                              where=where, since=since, until=until, on=on, label=label, folder=folder,
+                              show_all=show_all)
     if isinstance(where, list):  # --where given more than once: all of them
         where = ' AND '.join(f'({w})' for w in where if w) or None
     if resource == 'rows':
@@ -1018,28 +1122,52 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
         r = {'table': None, 'date': None, 'kind': v[0], 'text': None, 'show': None, 'sql': v[1]}
     src = f'({r["sql"]})' if r.get('sql') else f'"{r["table"]}"'
     conds = [r['filter']] if r.get('filter') else []
+    notes = []
+    bound_chat_id = None
     if resource == 'files' and not show_all:
         conds.append(f'NOT {EMPTY_SQL}')
+    if folder:
+        if resource == 'messages':
+            from lib import searchkit as sk
+            chat_row = sk.resolve_chat(con, folder)
+            bound_chat_id = chat_row[0]
+            conds.append(f"chat_id = '{bound_chat_id.replace(chr(39), chr(39)*2)}'")
+            notes.append(sk.chat_coverage_note(chat_row))
+        else:
+            conds.append(f"(path ILIKE '%{folder.replace(chr(39), '')}%')")
     if where:
-        conds.append(compile_where(con, resource if resource in RESOURCES else 'files', where))
+        cw = compile_where(con, resource if resource in RESOURCES else 'files', where,
+                           chat_id=bound_chat_id, notes=notes)
+        conds.append(cw)
+        if resource == 'messages' and not bound_chat_id:
+            m_cid = re.search(r"chat_id\s*=\s*'([^']+)'", cw)
+            if m_cid:
+                bound_chat_id = m_cid.group(1)
     dcol = r.get('date')
+    req_start, req_end = None, None
     if on:
         a, b = day_range(on)
+        req_start, req_end = a, b
         conds.append(f"{dcol} >= TIMESTAMP '{a} 00:00:00' AND {dcol} < TIMESTAMP '{b} 00:00:00'")
     if since:
         a, _ = day_range(since)
+        req_start = max(req_start, a) if req_start else a
         conds.append(f"{dcol} >= TIMESTAMP '{a} 00:00:00'")
     if until:
         a, b = day_range(until)
+        req_end = min(req_end, b) if req_end else b
         conds.append(f"{dcol} < TIMESTAMP '{b} 00:00:00'")
     if (on or since or until) and not dcol:
         raise ValueError(f'{resource} has no date to filter on.')
+    if resource == 'messages' and (req_start or req_end):
+        from lib import searchkit as sk
+        _, cov_note = sk.check_date_coverage(con, bound_chat_id, req_start, req_end)
+        if cov_note:
+            notes.append(cov_note)
     found, rank = '', ''
     if search:
         conds_s, found, rank = search_sql(con, r, src, search)
         conds += conds_s
-    if folder:
-        conds.append(f"(path ILIKE '%{folder.replace(chr(39), '')}%')")
     for label in (label if isinstance(label, list) else [label] if label else []):  # each one must match
         m = re.match(r"\s*(?:label\.)?([A-Za-z0-9_]+)\s*(?:=\s*'?([^']*)'?)?\s*$", label)
         if not m:
@@ -1064,6 +1192,7 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
         ordr = order or ', '.join(x for x in (rank, f'{dcol} DESC' if dcol else '1') if x)
         sql = f'SELECT {cols} FROM {src}{wh} ORDER BY {ordr} LIMIT {int(limit)}'
     cur = con.execute(sql)
+    LAST_SELECT_NOTE = '\n'.join(dict.fromkeys(notes))
     return [d[0] for d in cur.description], cur.fetchall(), sql
 
 
@@ -1084,8 +1213,8 @@ def query(con, sql, limit=200):
 
 def define(con, name, on_kind, ask, answers, examples=None):
     name = re.sub(r'[^a-z0-9_]+', '_', name.lower()).strip('_')
-    if on_kind not in ('mail', 'event', 'file', 'photo'):
-        raise ValueError('A definition is on mail, event, file or photo.')
+    if on_kind not in ('mail', 'event', 'file', 'photo', 'message'):
+        raise ValueError('A definition is on mail, event, file, photo or message.')
     answers = [a.strip() for a in (answers if isinstance(answers, list) else str(answers).split(',')) if a.strip()]
     if 'unsure' not in answers:
         answers.append('unsure')
@@ -1210,6 +1339,33 @@ def _item_text(con, kind, rid, account, with_text=True):
         r = con.execute('SELECT start, title, location, guests, my_response, description FROM events WHERE id = ?',
                         [rid]).fetchone()
         return f'When: {r[0]:%Y-%m-%d %H:%M}\nTitle: {r[1]}\nWhere: {r[2]}\nGuests: {r[3]}\nMy response: {r[4]}\n{r[5][:800]}'
+    if kind == 'message':
+        r = con.execute('SELECT chat_id, chat_name, sent_at, sender, body, link_preview, filename, parent_id '
+                        'FROM messages WHERE id = ?', [rid]).fetchone()
+        if not r:
+            return None
+        cid, cname, ts, sender, body, preview, fname, pid = r
+        lines = [f'Chat: {cname}', f'When: {ts:%Y-%m-%d %H:%M}' if ts else 'When: unknown', f'Sender: {sender}']
+        if pid:
+            p = con.execute('SELECT sent_at, sender, body FROM messages WHERE id = ?', [pid]).fetchone()
+            if p:
+                lines.append(f'Quoting {p[1]} ({p[0]:%d %b %H:%M}): {(p[2] or "")[:300]}')
+        lines.append('\nMessage:\n' + (body or '')[:1500])
+        if preview:
+            lines.append(f'Link preview: {preview[:400]}')
+        if fname:
+            lines.append(f'File: {fname}')
+        if ts:
+            nbs = con.execute(
+                'SELECT sent_at, sender, body FROM messages WHERE chat_id = ? AND id <> ? '
+                'AND abs(epoch(sent_at) - epoch(?::TIMESTAMP)) <= 600 ORDER BY sent_at LIMIT 4',
+                [cid, rid, ts],
+            ).fetchall()
+            if nbs:
+                lines.append('\nNearby in the same chat:')
+                for nt, ns, nb in nbs:
+                    lines.append(f'- {nt:%d %b %H:%M} {ns}: {(nb or "")[:200]}')
+        return '\n'.join(lines)
     r = con.execute('SELECT name, kind, path, mime FROM files WHERE id = ?', [rid]).fetchone()
     out = f'File name: {r[0]}\nKind: {r[1]}\nFolder: {r[2]}'
     if with_text and readable(r[1], r[3], r[0]):
@@ -1258,6 +1414,10 @@ class Stopped(Exception):
 def _names(con, kind, ids):
     if not ids:
         return {}
+    if kind == 'message':
+        return dict(con.execute(
+            f"SELECT id, chat_name || ': ' || substr(body, 1, 70) FROM messages WHERE id IN ({','.join(repr(i) for i in ids)})"
+        ).fetchall())
     tbl, col = {'mail': ('mail', 'subject'), 'event': ('events', 'title'), 'file': ('files', 'name')}[kind]
     return dict(con.execute(f'SELECT id, {col} FROM {tbl} WHERE id IN ({",".join(repr(i) for i in ids)})').fetchall())
 
@@ -1275,10 +1435,10 @@ def judge(con, resource, name, where=None, since=None, limit=300, account=None, 
     resource = resource_name(resource)
     if isinstance(where, list):
         where = ' AND '.join(f'({w})' for w in where if w) or None
-    res = resource if resource in RESOURCES else {'mail': 'mail', 'event': 'calendar', 'file': 'files'}[kind]
+    res = resource if resource in RESOURCES else {'mail': 'mail', 'event': 'calendar', 'file': 'files', 'message': 'messages'}[kind]
     if RESOURCES[res]['kind'] != kind:
         raise ValueError(f'"{name}" is a definition on {on_kind}, so judge it on '
-                         f'{ {"mail": "mail", "event": "calendar", "file": "files or photos"}[kind] }.')
+                         f'{ {"mail": "mail", "event": "calendar", "file": "files or photos", "message": "messages"}[kind] }.')
     scope = where
     if on_kind == 'photo':  # pictures only
         scope = f"({where}) AND kind = 'image'" if where else "kind = 'image'"
@@ -1373,6 +1533,6 @@ def judge(con, resource, name, where=None, since=None, limit=300, account=None, 
 def size_report(sandbox, con):
     p = Path(sandbox) / 'store.duckdb'
     tabs = {}
-    for t in ['mail', 'events', 'files', 'file_text', 'labels', 'sheets']:
+    for t in ['mail', 'events', 'files', 'file_text', 'labels', 'sheets', 'chats', 'messages', 'message_episodes']:
         tabs[t] = con.execute(f'SELECT count(*) FROM {t}').fetchone()[0]
     return {'bytes': p.stat().st_size if p.exists() else 0, 'rows': tabs}

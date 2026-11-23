@@ -58,7 +58,11 @@ class Result:
             return (self.note + '\n' if self.note else '') + 'Nothing matches.'
         out = []
         for i, r in enumerate(self.rows[:max_rows], 1):
-            vals = [_fmt(v) for v in r]
+            vals = []
+            for col, v in zip(self.cols, r):
+                cl = col.lower()
+                lim = 0 if cl == 'links' else (450 if cl in ('body', 'found') else 160)
+                vals.append(_fmt(v, limit=lim))
             out.append(f'{i}. ' + ' | '.join(v for v in vals if v != ''))
         more = f'\n... and {len(self.rows) - max_rows} more' if len(self.rows) > max_rows else ''
         head = f'{len(self.rows)} row{"s" if len(self.rows) != 1 else ""} ({", ".join(self.cols)})'
@@ -155,14 +159,16 @@ def _chat_body(result, question):
     return '\n'.join(items)
 
 
-def _fmt(v):
+def _fmt(v, limit=160):
     if isinstance(v, dt.datetime):
         v = rs.local(v)
         return v.strftime('%a %d %b %Y %H:%M') if (v.hour, v.minute) != (0, 0) else v.strftime('%a %d %b %Y')
     if isinstance(v, float):
         return f'{v:.2f}'.rstrip('0').rstrip('.')
     s = '' if v is None else str(v)
-    return s if len(s) <= 160 else s[:157] + '...'
+    if not limit or len(s) <= limit:
+        return s
+    return s[:limit - 3] + '...'
 
 
 # ---- what the person sees while things run: -v, -vv, -vvv (or -v 1..3), progress, the log ----
@@ -255,12 +261,14 @@ class P(argparse.ArgumentParser):
 def parser():
     p = P(prog='idli', description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter, add_help=True)
     sub = p.add_subparsers(dest='verb', metavar='VERB')
-    s = sub.add_parser('sync', help='copy your Google account into this sandbox (read only)')
-    s.add_argument('what', nargs='?', default='all', choices=['all', 'gmail', 'gcalendar', 'drive', 'mail', 'events', 'files', 'sheets'],
-                   help='gmail, gcalendar, drive (files and sheets, then the text and a card for every document), or all')
+    s = sub.add_parser('sync', help='copy your Google or WhatsApp data into this sandbox (read only)')
+    s.add_argument('what', nargs='?', default='all', choices=['all', 'gmail', 'gcalendar', 'drive', 'whatsapp', 'mail', 'events', 'files', 'sheets'],
+                   help='gmail, gcalendar, drive, whatsapp, or all')
     s.add_argument('--no-read', action='store_true', help='copy the file list only; read the text later')
     s.add_argument('--no-cards', action='store_true', help='read the text but make no summary cards now')
     s.add_argument('--no-embed', action='store_true', help='make no embeddings now (search then matches words only)')
+    s.add_argument('--from-snapshot', dest='from_snapshot', help='WhatsApp JSON snapshot path to ingest')
+    s.add_argument('--days', type=int, default=None, help='rolling window in days for chat sync (e.g. 14)')
     s.add_argument('--as', dest='role', default='me')
     for verb in ('list', 'count'):  # count is list --count; still accepted, not in the menu
         l = sub.add_parser(verb, help='rows of a resource' if verb == 'list' else argparse.SUPPRESS)
@@ -283,7 +291,7 @@ def parser():
         l.add_argument('--limit', type=int, default=50)
         l.add_argument('-o', dest='out', default='table', choices=['table', 'json'])
     g = sub.add_parser('get', help='one item in full')
-    g.add_argument('resource', choices=['mail', 'thread', 'event', 'calendar', 'file', 'sheet'])
+    g.add_argument('resource', choices=['mail', 'thread', 'event', 'calendar', 'file', 'sheet', 'message', 'chat'])
     g.add_argument('ref', nargs='?', help='an id, or words from its name or subject')
     g.add_argument('--sheet', '--name', dest='ref2', help=argparse.SUPPRESS)  # models reach for these; same as REF
     g.add_argument('--text', action='store_true', help="a file's text")
@@ -298,15 +306,18 @@ def parser():
         d.add_argument('ref', help='a name (or words from it) or an id')
         if verb == 'read':
             d.add_argument('--chars', type=int, default=3000)
-    d = sub.add_parser('summarise', help="the 9B's summary of one file, or what your documents say about a topic")
-    d.add_argument('what', nargs='?', choices=['file', 'files'], default='files')
+    d = sub.add_parser('summarise', help="the 9B's summary of one file, or what your documents or chats say about a topic")
+    d.add_argument('what', nargs='?', choices=['file', 'files', 'messages', 'message'], default='files')
     d.add_argument('ref', nargs='?', help='one file: a name (or words from it) or an id')
-    d.add_argument('--search', action='append', help='across documents: the pages that mention this most')
+    d.add_argument('--search', action='append', help='across documents or messages: the passages that discuss this most')
     d.add_argument('--in', '--folder', dest='folder')
+    d.add_argument('--on')
+    d.add_argument('--since')
+    d.add_argument('--until')
     d.add_argument('--question', default='')
     d = sub.add_parser('define', help='your own category, applied by judge')
     d.add_argument('name')
-    d.add_argument('--on', required=True, choices=['mail', 'event', 'file', 'photo'])
+    d.add_argument('--on', required=True, choices=['mail', 'event', 'file', 'photo', 'message'])
     d.add_argument('--ask', required=True, help='the question for each item')
     d.add_argument('--answers', default='yes,no')
     j = sub.add_parser('judge', help='label each row with a definition')
@@ -367,6 +378,15 @@ def run_argv(con, argv, chat=False):
     a = parser().parse_args(argv)
     v = a.verb
     if v == 'sync':
+        if a.what == 'whatsapp':
+            t0 = time.time()
+            say(1, '[sync whatsapp] ingesting chat snapshot ...')
+            rw = rs.sync_whatsapp(con, snapshot_path=a.from_snapshot, days=a.days,
+                                  with_embed=not a.no_embed, progress=progress_line, on_item=item_line('chat'))
+            emb = (f', {rw["embedded"]} episodes embedded' if rw['embedded']
+                   else (f', embeddings skipped ({rw["embed_error"]})' if rw.get('embed_error') else ''))
+            return Result(kind='text', text=f'Synced whatsapp: {rw["chats"]} chats, {rw["messages"]} messages, '
+                                            f'{rw["episodes"]} episodes{emb} in {rw["seconds"]} s.')
         acct, out = account(a.role), []
         whats = {'all': ['mail', 'events', 'files', 'sheets'], 'drive': ['files', 'sheets'], 'gmail': ['mail'],
                  'gcalendar': ['events']}.get(a.what, [a.what])
@@ -441,6 +461,7 @@ def run_argv(con, argv, chat=False):
                                     search=a.search, label=a.label, folder=a.folder, sheet=a.sheet, by=a.by,
                                     count=(v == 'count' or a.count), fields=fields, order=a.order, limit=a.limit,
                                     show_all=a.show_all)
+        sel_note = rs.LAST_SELECT_NOTE
         source = sheet_sources(con, sql) if chat and resource == 'rows' else None
         links = []
         if with_links and cols[0] == link_key:
@@ -454,13 +475,15 @@ def run_argv(con, argv, chat=False):
             noun = {'mail': 'emails', 'calendar': 'calendar events'}.get(resource, resource)
             if n == 1:
                 noun = noun.removesuffix('s')
-            return Result(kind='text', text=f'Count: {n} {resource} match.', sql=sql, chat=f'I found {n} {noun}.', source=source)
+            prefix = (sel_note + '\n') if sel_note else ''
+            return Result(kind='text', text=f'{prefix}Count: {n} {resource} match.', sql=sql,
+                          chat=f'I found {n} {noun}.' + (f'\n_{sel_note}_' if sel_note else ''), source=source)
         if a.search and rs.resource_name(a.resource) == 'files' and rows and cols[-1] == 'found':
             ph = sum(1 for r in rows if str(r[-1]).startswith(('phrase', 'mentioned', 'matched in name or folder')))
             apart = sum(1 for r in rows if str(r[-1]).startswith('words apart'))
             note = (f'{ph} have the words together; {apart} only have them apart (shown last).' if apart else '')
-            return Result(cols, rows, sql=sql, note=note, links=links)
-        return Result(cols, rows, sql=sql, links=links, source=source)
+            return Result(cols, rows, sql=sql, note='\n'.join(filter(None, [sel_note, note])), links=links)
+        return Result(cols, rows, sql=sql, note=sel_note, links=links, source=source)
     if v == 'get':
         a.ref = a.ref or a.ref2
         if not a.ref:
@@ -493,6 +516,12 @@ def run_argv(con, argv, chat=False):
                           source=source_link('files', fid))
     if v == 'summarise':
         if a.search:
+            if a.what in ('messages', 'message'):
+                return summarise_messages(con, a.search, chat=a.folder, on=a.on, since=a.since, until=a.until, question=a.question)
+            n_files = con.execute('SELECT count(*) FROM files').fetchone()[0]
+            n_msgs = con.execute('SELECT count(*) FROM messages').fetchone()[0]
+            if n_files == 0 and n_msgs > 0:
+                return summarise_messages(con, a.search, chat=a.folder, on=a.on, since=a.since, until=a.until, question=a.question)
             return summarise_search(con, a.search, a.folder, a.question)
         if not a.ref:
             raise Err('Say which file (idli summarise file NAME), or a topic (idli summarise --search "border effects")')
@@ -500,7 +529,7 @@ def run_argv(con, argv, chat=False):
     if v == 'define':
         name, ver = rs.define(con, a.name, a.on, a.ask, a.answers)
         return Result(kind='text', chat=f'I’ll use “{name}” for this question: {a.ask}', text=f'Definition "{name}" version {ver}: {a.ask} ({a.answers}). '
-                                        f'Next: idli judge {"photos" if a.on == "photo" else {"mail": "mail", "event": "events", "file": "files"}[a.on]} --def {name}')
+                                        f'Next: idli judge {"photos" if a.on == "photo" else {"mail": "mail", "event": "events", "file": "files", "message": "messages"}[a.on]} --def {name}')
     if v == 'judge':
         res = {'mail': 'mail', 'event': 'events'}.get(a.resource, a.resource)
         r = rs.judge(con, res, a.defn, where=a.where, since=a.since, limit=a.limit, account=account(), folder=a.folder,
@@ -592,6 +621,93 @@ def get(con, what, ref):
             raise Err(f'No event matching "{ref}". Try `idli list calendar --search "{ref}"`.')
         cols = rs.columns(con, 'events')
         return Result(kind='text', text='\n'.join(f'{c}: {_fmt(x)}' for c, x in zip(cols, r) if x not in (None, '')))
+    if what == 'chat':
+        from lib import searchkit as sk
+        crow = sk.resolve_chat(con, ref)
+        cid, cname, provider, earliest, latest, count = crow
+        speakers = con.execute(
+            'SELECT sender, msg_count FROM chat_members WHERE chat_id = ? ORDER BY msg_count DESC LIMIT 8', [cid]
+        ).fetchall()
+        recent = con.execute(
+            'SELECT id, sent_at, sender, body FROM messages WHERE chat_id = ? ORDER BY sent_at DESC LIMIT 8', [cid]
+        ).fetchall()
+        lines = [
+            f'Chat: {cname} ({provider})',
+            sk.chat_coverage_note(crow),
+            'Top speakers: ' + ', '.join(f'{s} ({n})' for s, n in speakers),
+            '', 'Recent messages:',
+        ]
+        for mid, ts, sender, body in reversed(recent):
+            lines.append(f'  [{mid}] {_fmt(ts)} {sender}: {_fmt(body, limit=240)}')
+        return Result(kind='text', text='\n'.join(lines))
+    if what == 'message':
+        from lib import searchkit as sk
+        key = ref.strip()
+        target = con.execute(
+            'SELECT id, chat_id, chat_name, sent_at, sender, body, links, link_preview, filename, parent_id '
+            'FROM messages WHERE id = ?', [key]
+        ).fetchone()
+        if not target and re.fullmatch(r'[0-9a-f]{6,20}', key, re.I):
+            hits = con.execute(
+                'SELECT id, chat_id, chat_name, sent_at, sender, body, links, link_preview, filename, parent_id '
+                'FROM messages WHERE id LIKE ? ORDER BY sent_at DESC LIMIT 5', [key.lower() + '%']
+            ).fetchall()
+            if len(hits) == 1:
+                target = hits[0]
+            elif len(hits) > 1:
+                raise Err(f'Multiple messages start with "{key}": ' + ', '.join(h[0] for h in hits))
+        if not target:
+            target = con.execute(
+                'SELECT id, chat_id, chat_name, sent_at, sender, body, links, link_preview, filename, parent_id '
+                'FROM messages WHERE body ILIKE ? ORDER BY sent_at DESC LIMIT 1', [f'%{key}%']
+            ).fetchone()
+        if not target:
+            raise Err(f'No message matching "{ref}". Try `idli list messages --search "{ref}"`.')
+        tid, cid, cname = target[0], target[1], target[2]
+        # Gather full chat sequence to extract +/-3 neighbors, parent chain (up to 3 hops), and direct replies.
+        seq = con.execute(
+            'SELECT id, sent_at, sender, body, links, link_preview, filename, parent_id '
+            'FROM messages WHERE chat_id = ? ORDER BY sent_at, id', [cid]
+        ).fetchall()
+        by_id = {r[0]: r for r in seq}
+        pos = next((i for i, r in enumerate(seq) if r[0] == tid), None)
+        picked = {}
+        # 1. Parent chain (can be hours or days older)
+        cur_pid = target[9]
+        for _ in range(3):
+            if cur_pid and cur_pid in by_id and cur_pid not in picked:
+                picked[cur_pid] = 'quoted parent'
+                cur_pid = by_id[cur_pid][7]
+            else:
+                break
+        # 2. Target + +/-3 neighbors
+        if pos is not None:
+            for j in range(max(0, pos - 3), min(len(seq), pos + 4)):
+                r = seq[j]
+                picked.setdefault(r[0], 'target' if r[0] == tid else 'nearby')
+                # Also pull the quoted parent of an immediate neighbor if present (DICE pattern).
+                if abs(j - pos) <= 1 and r[7] and r[7] in by_id:
+                    picked.setdefault(r[7], 'quoted parent of neighbor')
+        # 3. Direct replies to target
+        for r in seq:
+            if r[7] == tid:
+                picked.setdefault(r[0], 'reply')
+        ordered = [r for r in seq if r[0] in picked]
+        crow = con.execute('SELECT id, name, provider, earliest_at, latest_at, msg_count FROM chats WHERE id = ?', [cid]).fetchone()
+        lines = [sk.chat_coverage_note(crow) if crow else f'Chat: {cname}', '']
+        for r in ordered:
+            mid, ts, sender, body, links, preview, fname, pid = r
+            role = picked[mid]
+            mark = '>>> ' if mid == tid else '    '
+            rel = f' (replying to {pid[:8]})' if pid and pid in by_id else ''
+            tag = f' [{role}]' if role != 'nearby' else ''
+            extra = ''
+            if preview:
+                extra += f'\n      Link preview: {preview[:300]}'
+            if fname and fname not in (body or ''):
+                extra += f'\n      File: {fname}'
+            lines.append(f'{mark}[{mid}] {_fmt(ts)} {sender}{rel}{tag}:\n      {body}{extra}')
+        return Result(kind='text', text='\n'.join(lines))
     if what == 'thread':
         tid = con.execute('SELECT thread_id FROM mail WHERE thread_id = ? OR id = ? OR subject ILIKE ? '
                           'ORDER BY date DESC LIMIT 1', [ref, ref, f'%{ref}%']).fetchone()
@@ -748,6 +864,51 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
                                                      for fid, name in cited_files.items()))
 
 
+def summarise_messages(con, search, chat=None, on=None, since=None, until=None, question='', limit=5):
+    """What your chat conversations say about a topic: top ranked contextualized episodes read by the 9B,
+    grounded with dates, speakers, message refs and verbatim source receipts."""
+    from lib import searchkit as sk
+    _, base, _ = rs.select(con, 'messages', folder=chat, on=on, since=since, until=until,
+                           fields='id', limit=100000, order='id', plain=True)
+    scope_note = rs.LAST_SELECT_NOTE
+    base_ids = [r[0] for r in base]
+    topic = rs._search_text(search)
+    if not base_ids:
+        msg = (scope_note + '\n' if scope_note else '') + 'No messages in that scope to summarise.'
+        return Result(kind='text', text=msg, chat=msg)
+    eps = sk.search_episodes(con, topic, base_ids, chat_name_hint=chat, embed_fn=rs.embed, limit=limit)
+    if not eps:
+        msg = (scope_note + '\n' if scope_note else '') + f'No chat messages matched "{topic}".'
+        return Result(kind='text', text=msg, chat=msg)
+    excerpts, used, refs = [], 0, []
+    for ep in eps:
+        piece = ep['context_text'][:2200]
+        if used + len(piece) > 9500 and excerpts:
+            break
+        excerpts.append(piece)
+        used += len(piece)
+        refs.extend(ep['message_ids'])
+    schema = {'type': 'object', 'properties': {'answer': {'type': 'string'}}, 'required': ['answer']}
+    today = rs.now().strftime('%A %d %B %Y')
+    ans = rs._nine([
+        {'role': 'system', 'content': (
+            f'Answer the person using ONLY the chat excerpts below. Today is {today} (IST). '
+            'Write 2 to 5 concise sentences. Cite speaker, date and message ref in brackets where relevant. '
+            'Anchor relative words inside old messages ("today", "tomorrow") to that message\'s timestamp, never to today. '
+            'Distinguish proposals or suggestions from confirmed decisions; if confirmation is not shown, say so. '
+            'Include exact URLs, numbers and names from the excerpts; never invent facts.'
+        )},
+        {'role': 'user', 'content': (
+            f'Topic: {topic}' + (f'\nQuestion: {question}' if question else '') +
+            (f'\nScope: {scope_note}' if scope_note else '') + '\n\n' + '\n\n---\n\n'.join(excerpts)
+        )},
+    ], schema, max_tokens=500, timeout=240)['answer'].strip()
+    receipts = '\n\nSources:\n' + '\n\n'.join(excerpts[:3])
+    head = (scope_note + '\n\n' if scope_note else '')
+    return Result(kind='text', text=head + ans + receipts,
+                  chat=ans + (f'\n\n_{scope_note}_' if scope_note else ''))
+
+
 def draft(con, a):
     """A draft, previewed only. --reply-to must match one conversation (all its words in the sender or subject);
     a new email to someone with no conversation needs --to ADDRESS."""
@@ -829,6 +990,12 @@ def explain(con, resource=None):
         'folders': ['idli list folders', "idli list folders --where \"path ~ 'Strategy'\""],
         'photos': ['idli list photos', 'idli define has_people --on photo --ask "Are there people in this photo?"'],
         'sheets': ['idli list sheets', 'idli get sheet "Leads (test)"', 'idli list rows --sheet "Leads (test)"'],
+        'chats': ['idli list chats', 'idli get chat "Jam Buns"'],
+        'messages': ['idli list messages --in "Jam Buns" --on "last week"',
+                     'idli list messages --in "Jam Buns" --search "birding"',
+                     'idli list messages --count --in "Jam Buns" --where "links <> \'\'"',
+                     'idli get message REF',
+                     'idli summarise messages --search "session" --in "Royal Enfield"'],
     }.get(resource, [])
     notes = rs.FIELD_NOTES.get(resource, {})
     return (f'{resource}: {r["about"]}.\nFields: {", ".join(cols)}.\n' +
@@ -839,39 +1006,38 @@ def explain(con, resource=None):
 
 # ---- ask: the left chat. The mapper picks commands; Idli runs them; the 9B words a short reply ----
 
-GRAMMAR_HEAD = """You turn a person's request into `idli` commands that read their own Google data from a local store.
+GRAMMAR_HEAD = """You turn a person's request into `idli` commands that read their synced data from a local store.
 Answer with JSON only: {"commands": ["idli ...", ...]} (add "continue": true to see results before the next
 commands) or {"cannot": "<one sentence>", "needs": "<kind>"}.
 
 Commands (read only unless said):
   idli list RESOURCE [--where COND] [--since D] [--until D] [--on D] [--search WORDS] [--label DEF[=VAL]]
-                     [--in FOLDER] [--sheet NAME] [--group-by FIELDS] [--count] [--fields F] [--order "F desc"] [--limit N]
-  idli get mail|thread|calendar|file|sheet REF [--text] [--outline]   one item in full (REF: id, or words from its
-                                               name/subject); --text: a file's text; --outline: pages, or a sheet's columns
+                     [--in FOLDER|CHAT] [--sheet NAME] [--group-by FIELDS] [--count] [--fields F] [--order "F desc"] [--limit N]
+  idli get mail|thread|calendar|file|sheet|message|chat REF [--text] [--outline]   one item in full (message shows
+                                               quoted parent + replies + neighbors); --text: file text; --outline: pages/columns
   idli summarise file REF [--question Q]       a summary of one file
-  idli summarise --search WORDS [--in FOLDER]  what the person's documents say about a topic, with file and page
-  idli define NAME --on mail|event|file|photo --ask "QUESTION" --answers a,b,c   the person's own category
-  idli judge RESOURCE --def NAME [--where COND] [--search WORDS] [--in FOLDER] [--since D]   label each row (costly)
+  idli summarise [files|messages] --search WORDS [--in FOLDER|CHAT] [--on D]   what documents or chats say about a topic
+  idli define NAME --on mail|event|file|photo|message --ask "QUESTION" --answers a,b,c   the person's own category
+  idli judge RESOURCE --def NAME [--where COND] [--search WORDS] [--in FOLDER|CHAT] [--since D] [--on D]   label rows (costly)
   idli query "SELECT ..."                      read-only SQL for joins and anything else
   idli draft mail --reply-to REF --ask "WHAT TO SAY"   preview only; nothing is saved or sent
   idli date PHRASE                             what "next monday", "last week" mean (for questions about dates)
 Dates D: today, yesterday, tomorrow, 7d, last week, this week, next week, monday, next monday, YYYY-MM-DD.
 COND is SQL over the resource's fields; field ~ 'x' means contains; label.NAME = 'yes' uses a definition.
---search WORDS: every word must appear; words in double quotes are an exact phrase ('"border effects"'). On files
-it covers names, folders, the full text of every page and a short summary card; files with the most mentions come
-first. Give a repeated --search for things that must all appear. `idli help` is the manual page.
+--search WORDS: unquoted searches words and meaning; "in quotes" = exact phrase. On files: names, pages, cards.
+On messages: bodies, captions, link previews, reply threads (use --in CHAT for a group). Repeat --search for AND.
 
 Rules:
-- Use only the resources and fields listed below. Prefer list with flags; use query only for joins.
+- Use only the resources and fields listed below (prefer populated ones over empty ones). Prefer list with flags; query only for joins.
 - A category the person has in mind ("urgent", "about caste", "funder meeting", "photos with people") that is not
   a field: define it (a clear yes/no question), judge the relevant rows (narrow first with --where, --in or
   --since so fewer rows are judged), then list with --label. Reuse an existing definition when it fits; never
   define an existing name again. Word a new definition generally, as the person means the category, not from one
-  document you just saw (no examples copied from a result). The person is shown the wording and decides.
+  document you just saw. The person is shown the wording and decides.
 - A greeting, or "what can you do / what can you see": idli help (it lists what Idli can read).
 - Use the person's own words: never add --search words, --in folders or --where conditions they didn't ask for.
 - A field that already means the thing (newsletters: is_bulk; sent by me: direction = 'out'; declined:
-  my_response = 'declined'): filter on it; don't define a category for it.
+  my_response = 'declined'; links: links <> ''): filter on it; don't define a category for it.
 - A file the person names ("summarise wincoop", "what's in the leads sheet"): idli summarise file NAME, idli get
   sheet NAME, idli get file NAME.
 - A question about a field (who owns, how big, who is invited): show it, e.g. --fields "name, owner".
@@ -879,19 +1045,17 @@ Rules:
   sheet or rule clearly holds them, propose a view the person confirms, then use it: idli view leads --sql
   "SELECT Name, lower(Email) AS email FROM sheet_leads_test" --about "Name and Email from the Leads (test) sheet" ;
   idli list mail --where "from_addr IN (SELECT email FROM leads)". If nothing clearly holds them, cannot,
-  needs "clarify", and say what you would need. Reuse a view that exists.
-- A named thing (a term, a phrase, a person, a place): --search, quoting a phrase of two or more words. "How many":
-  list --count. "By X" or a breakdown: --group-by. "Explain X", "what do my documents say about X":
-  idli summarise --search '"X"'. Search first; define and judge only for a category no words capture ("urgent",
-  "about conservation"), and narrow the judge with --search, --in or --where.
+  needs "clarify". Reuse a view that exists.
+- A named thing (term, phrase, person, place): --search (quote phrases of 2+ words only when exact). "How many":
+  list --count. "By X" or breakdown: --group-by. "Explain X", "what did we discuss about X": summarise --search.
+  Search first; define and judge only for a category no words capture, narrowed with --search, --in or --where.
 - Follow-ups refer to the previous answer (shown below with its rows and ids): use the ids, or narrow the
   previous command.
 - Moving, renaming, sending, booking, posting or deleting are not available: answer cannot, needs "new_write_action".
   Drafting an email reply is available as a preview.
-- WhatsApp, Slack, Mattermost, Canva, LinkedIn, Amazon, funder portals are not connected: cannot, needs
-  "new_connector".
+- Slack, Mattermost, Canva, LinkedIn, Amazon, funder portals are not connected: cannot, needs "new_connector".
 - If the data simply isn't there, cannot, needs "not_in_data". Prefer a reasonable reading of a vague request
-  (and act on it) over asking back; use cannot, needs "clarify", only when no reading makes sense.
+  over asking back; use cannot, needs "clarify", only when no reading makes sense.
 - When a later command needs a value from an earlier result (an id, a name, a thread), don't guess or write a
   placeholder: give only the earlier commands with "continue": true. You'll see their results and give the rest.
 - A period ("yesterday", "last week", "next Monday") is --on PERIOD. --since D means from D until now.
@@ -910,13 +1074,15 @@ Examples (today is {rs.now():%A %Y-%m-%d}):
   "which spreadsheet has the most rows" -> idli list sheets --order "nrows desc" --limit 1
   "docs that discuss border effects" -> idli list files --search '"border effects"'
   "explain border effects to me" -> idli summarise --search '"border effects"'
+  "what did we discuss about Nadhi in Insight Out" -> idli list messages --in "Insight Out" --search "Nadhi"
+  "how many messages with links in Jam Buns" -> idli list messages --count --in "Jam Buns" --where "links <> ''"
   "emails about the school visit" -> idli define school_visit --on mail --ask "Is this email about planning a school
                      visit?" --answers yes,no ; idli judge mail --def school_visit --where "direction = 'in' and not is_bulk" ;
-                     idli list threads --label school_visit   (name and word each category for what the person asked)
+                     idli list threads --label school_visit
   "which of those are really about it" (after a search) -> idli define NAME --on file --ask "..." ;
                      idli judge files --def NAME --search '"the same words"' ; idli list files --label NAME
   "leads who haven't replied" -> idli query "SELECT l.Name, l.Email FROM sheet_leads_x l WHERE lower(l.Email) NOT IN
-                     (SELECT from_addr FROM mail WHERE direction = 'in')"   (use the real sheet table: idli list sheets)
+                     (SELECT from_addr FROM mail WHERE direction = 'in')"
 """
 
 
@@ -967,7 +1133,13 @@ def menu(con, mask=None, question=None, history=()):
         if k in ('labels',):
             continue
         notes = rs.FIELD_NOTES.get(k, {})
-        lines.append(f'- {k}: {r["about"]}. Fields: {", ".join(rs.columns(con, k))}' + _values(con, k) +
+        try:
+            wh = f" WHERE {r['filter']}" if r.get('filter') else ''
+            nrows = con.execute(f'SELECT count(*) FROM "{r["table"]}"{wh}').fetchone()[0]
+        except Exception:
+            nrows = 0
+        cnt_tag = f' ({nrows} rows)' if nrows else ' (empty)'
+        lines.append(f'- {k}{cnt_tag}: {r["about"]}. Fields: {", ".join(rs.columns(con, k))}' + _values(con, k) +
                      ('. Meanings: ' + '; '.join(f'{f} = {n}' for f, n in notes.items()) if notes else ''))
     sheets = con.execute('SELECT name, tab, columns, nrows, tbl, file_id FROM sheets ORDER BY name, tab_index').fetchall()
     ntabs = {}
@@ -978,19 +1150,32 @@ def menu(con, mask=None, question=None, history=()):
         if keep is not None and t not in keep:  # columns only for the sheets this question seems to be about
             return f'{name} ({t}, {nr} rows)'
         return f'{name} (SQL table {t}, {nr} rows; columns: {", ".join(m(c) for c in json.loads(cs)[:8])})'
-    lines.append('- rows --sheet NAME (or "NAME / TAB" for another tab). Sheets (columns shown for the likely ones; '
-                 'idli get sheet NAME --outline shows any): ' + '; '.join(sheet_line(*r) for r in sheets))
+    if sheets:
+        lines.append('- rows --sheet NAME (or "NAME / TAB" for another tab). Sheets (columns shown for the likely ones; '
+                     'idli get sheet NAME --outline shows any): ' + '; '.join(sheet_line(*r) for r in sheets))
     folders = [f[0] for f in con.execute("SELECT path || CASE WHEN path = '' THEN '' ELSE '/' END || name FROM files "
                                          "WHERE kind = 'folder' ORDER BY 1").fetchall()]
-    if len(folders) > MENU_FOLDERS and question:  # many: the ones the question names first, then the rest by name
-        qw = set(re.findall(r'[a-z0-9]{3,}', question.lower()))
-        named = [f for f in folders if qw & set(re.findall(r'[a-z0-9]{3,}', f.lower()))]
-        folders = (named + [f for f in folders if f not in named])[:MENU_FOLDERS]
-        extra = ' (more: idli list folders)'
-    else:
-        extra = ''
-    MENU_INFO['folders_shown'] = len(folders)
-    lines.append('Drive folders: ' + '; '.join(m(f) for f in folders) + extra)
+    if folders:
+        if len(folders) > MENU_FOLDERS and question:  # many: the ones the question names first, then the rest by name
+            qw = set(re.findall(r'[a-z0-9]{3,}', question.lower()))
+            named = [f for f in folders if qw & set(re.findall(r'[a-z0-9]{3,}', f.lower()))]
+            folders = (named + [f for f in folders if f not in named])[:MENU_FOLDERS]
+            extra = ' (more: idli list folders)'
+        else:
+            extra = ''
+        MENU_INFO['folders_shown'] = len(folders)
+        lines.append('Drive folders: ' + '; '.join(m(f) for f in folders) + extra)
+    chats = con.execute('SELECT name, msg_count FROM chats ORDER BY active_at DESC').fetchall()
+    if chats:
+        if len(chats) > MENU_FOLDERS and question:
+            qw = set(re.findall(r'[a-z0-9]{3,}', question.lower()))
+            named = [c for c in chats if qw & set(re.findall(r'[a-z0-9]{3,}', c[0].lower()))]
+            chats = (named + [c for c in chats if c not in named])[:MENU_FOLDERS]
+            cextra = ' (more: idli list chats)'
+        else:
+            cextra = ''
+        MENU_INFO['chats_shown'] = len(chats)
+        lines.append('Synced chats (use --in "CHAT"): ' + '; '.join(f'{m(c[0])} ({c[1]})' for c in chats) + cextra)
     defs = con.execute('SELECT name, max(version), arg_max(on_kind, version), arg_max(ask, version), '
                        'arg_max(answers, version) FROM definitions GROUP BY name').fetchall()
     if defs:
@@ -1120,8 +1305,10 @@ NUM = re.compile(r'(?<![\w.])\d+(?:[.,]\d+)?(?![\w])')
 def compose(question, shown, history, plan_note=''):
     prev = history[-1]['reply'] if history else ''
     schema = {'type': 'object', 'properties': {'reply': {'type': 'string'}}, 'required': ['reply']}
-    msg = (f'Their previous question: {history[-1]["q"]}\nYour previous reply: {prev}\n\n' if history else '') + \
-          f'What they said now: {question}\n{plan_note}\nResult:\n{shown[:4000]}'
+    today = f'Today is {rs.now():%A %d %B %Y} (IST). Anchor words like "today" or "tomorrow" inside older messages to their message date.'
+    msg = (f'{today}\n' +
+           (f'Their previous question: {history[-1]["q"]}\nYour previous reply: {prev}\n\n' if history else '') +
+           f'What they said now: {question}\n{plan_note}\nResult:\n{shown[:6000]}')
     try:
         reply = rs._nine([{'role': 'system', 'content': STYLE}, {'role': 'user', 'content': msg}], schema,
                          max_tokens=220)['reply'].strip()
@@ -1377,6 +1564,7 @@ def meaning_card(con, verb, a):
                 f'  The rule: {a.sql}')
     things = {'mail': ('emails', "SELECT count(*) FROM mail"), 'event': ('events', "SELECT count(*) FROM events"),
               'photo': ('pictures', "SELECT count(*) FROM files WHERE kind = 'image'"),
+              'message': ('messages', "SELECT count(*) FROM messages"),
               'file': ('files', f"SELECT count(*) FROM files WHERE kind IN ('pdf', 'doc', 'sheet', 'other') "
                                 f"AND NOT {rs.EMPTY_SQL}")}[a.on]
     n = con.execute(things[1]).fetchone()[0]
@@ -1505,6 +1693,16 @@ def run_plan(con, plan, chat_results=None, question=None):
             say(1, f'       {round(time.time() - t0, 1)} s')
             say(2, r.render())
         except (Err, ValueError) as e:
+            from lib import searchkit as sk
+            if isinstance(e, sk.EntityError):
+                # Entity not found / ambiguous is a user-facing clarification, not a syntax bug to retry blindly.
+                r = Result(kind='text', text=str(e), chat=str(e))
+                rendered = r.render()
+                shown_parts.append(rendered)
+                if chat_results is not None:
+                    chat_results[rendered] = r
+                say(1, f'       clarify: {e}')
+                continue
             errors.append(f'{c}: {e}')
             shown_parts.append(f'(That step failed: {e})')
             say(1, f'       failed: {e}')
@@ -1569,7 +1767,7 @@ KINDS = {
                  'climate, sounds unhappy, asks for money.',
     'workflow': 'Several steps, joining different sources, or words that mean something particular in this '
                 "person's work (leads, follow up, prep list, needs a reply from my partners).",
-    'elsewhere': 'Needs a site that is not connected (WhatsApp, Slack, LinkedIn) or an action that changes things '
+    'elsewhere': 'Needs a site that is not connected (Slack, LinkedIn) or an action that changes things '
                  '(send, post, book, move, delete).',
 }
 CHIP_MIN = 0.5
@@ -1660,7 +1858,7 @@ def main(argv=None):
     import logging
     logging.getLogger('pypdf').setLevel(logging.WARNING if VERBOSE >= 3 else logging.ERROR)
     rs.TRACE = say
-    if argv[:1] == ['sync']:
+    if argv[:1] == ['sync'] and parser().parse_args(argv).what != 'whatsapp':
         from lib import google_api
         acct = account(parser().parse_args(argv).role)
         try:
@@ -1720,12 +1918,14 @@ def main(argv=None):
             rec.update(kind=kind, kind_probs=kind_p, struggled=why)
             hist.append({k: rec.get(k) for k in ('q', 'commands', 'shown', 'reply', 'pending', 'clarify_recipient')})
             sp.write_text(json.dumps(hist[-6:], default=str))
+            from lib import searchkit as _sk
             log({'verb': 'ask', 'q': rec['q'], 'mapper': a.mapper, 'wording': rs.NINE, 'judge': rs.JUDGE,
                  'new_conversation': a.new, 'earlier': [h['q'] for h in hist[:-1]], 'store': ctx,
                  'mapper_calls': MAPPER_CALLS, 'commands': rec.get('commands'), 'errors': rec.get('errors'),
                  'steps_shown': rec.get('shown'), 'words': rec.get('words'), 'reply': rec['reply'],
                  'wording_dropped': rec.get('compose_fallback'), 'needs': rec.get('needs'),
                  'pending': rec.get('pending'), 'resumed': rec.get('resumed'), 'menu': dict(MENU_INFO),
+                 'search_telemetry': dict(_sk.LAST_TELEMETRY),
                  'kind': rec.get('kind'), 'kind_probs': rec.get('kind_probs'), 'struggled': rec.get('struggled'),
                  'menu_miss': menu_miss(con, rec),
                  'seconds': {k: rec.get(k) for k in ('map_s', 'compose_s', 'judge_s', 'total_s')}})
