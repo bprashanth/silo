@@ -199,9 +199,15 @@ class WhatsAppSearchTest(unittest.TestCase):
             self.assertIn('--in', cmd2)
             self.assertEqual(dropped2, [])
             idlicli.SAID = 'How long is the RE session?'
-            cmd3, dropped3 = idlicli.own_words('idli list messages --in "Royal Enfield" --search "session"')
+            cmd3, dropped3 = idlicli.own_words('idli list messages --in "Royal Enfield" --search "session" --since "today"')
             self.assertIn('--in', cmd3)
-            self.assertEqual(dropped3, [])
+            self.assertNotIn('--since', cmd3)
+            # 4-letter plural stems cleanly ("runs" -> "run") and explicit date cues are kept
+            idlicli.SAID = 'How many practice runs last week?'
+            cmd4, dropped4 = idlicli.own_words('idli list messages --search "practice run" --on "last week"')
+            self.assertIn('--search', cmd4)
+            self.assertIn('--on', cmd4)
+            self.assertEqual(dropped4, [])
         finally:
             idlicli.SAID = prev_said
 

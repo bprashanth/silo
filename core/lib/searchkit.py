@@ -546,7 +546,7 @@ def resolve_chat(con, query):
 def resolve_sender(con, query, chat_id=None):
     """Resolve a sender name/nickname/initial against `chat_members` (scoped to `chat_id` if given).
     Returns (canonical_display_name, [matching_sender_ids]) or raises EntityNotFoundError / EntityAmbiguousError."""
-    q = (query or '').strip()
+    q = (query or '').strip().strip('.,!?;:')
     if not q:
         raise EntityNotFoundError('No sender name given.')
     if chat_id:
@@ -778,9 +778,11 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         if any(m in base_set for m in mids):
             scoped_eps.add(ep_id)
 
-    # Path A1: DuckDB FTS BM25 on messages (explicit search terms + full intent if richer)
+    # Path A1: DuckDB FTS BM25 on messages (filtered to base_set BEFORE LIMIT)
     fts_ok = ensure_fts(con)
     bm25_msg = []
+    base_list = list(base_set)
+    scoped_ep_list = list(scoped_eps)
     if fts_ok and _fts_exists(con, 'messages'):
         msg_scores = {}
         for q_str, w in ((topic, 1.0), (sem_topic, 0.7)):
@@ -789,20 +791,20 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
             try:
                 hits = con.execute(
                     'SELECT id, sc FROM ('
-                    '  SELECT id, fts_main_messages.match_bm25(id, ?, conjunctive := false) AS sc FROM messages'
-                    ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 80',
-                    [q_str],
+                    '  SELECT id, fts_main_messages.match_bm25(id, ?, conjunctive := false) AS sc '
+                    '  FROM messages WHERE id IN (SELECT unnest(?::VARCHAR[]))'
+                    ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 40',
+                    [q_str, base_list],
                 ).fetchall()
                 for mid, sc in hits:
-                    if mid in base_set:
-                        msg_scores[mid] = max(msg_scores.get(mid, 0.0), float(sc) * w)
+                    msg_scores[mid] = max(msg_scores.get(mid, 0.0), float(sc) * w)
             except Exception:
                 pass
         bm25_msg = sorted(msg_scores.items(), key=lambda x: -x[1])[:30]
 
-    # Path A2: DuckDB FTS BM25 on episodes
+    # Path A2: DuckDB FTS BM25 on episodes (filtered to scoped_eps BEFORE LIMIT)
     bm25_ep = []
-    if fts_ok and _fts_exists(con, 'message_episodes'):
+    if fts_ok and _fts_exists(con, 'message_episodes') and scoped_ep_list:
         ep_scores = {}
         for q_str, w in ((topic, 1.0), (sem_topic, 0.7)):
             if not q_str or (w < 1.0 and q_str == topic):
@@ -811,13 +813,12 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
                 hits = con.execute(
                     'SELECT episode_id, sc FROM ('
                     '  SELECT episode_id, fts_main_message_episodes.match_bm25(episode_id, ?, conjunctive := false) AS sc '
-                    '  FROM message_episodes'
-                    ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 40',
-                    [q_str],
+                    '  FROM message_episodes WHERE episode_id IN (SELECT unnest(?::VARCHAR[]))'
+                    ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 25',
+                    [q_str, scoped_ep_list],
                 ).fetchall()
                 for eid, sc in hits:
-                    if eid in scoped_eps:
-                        ep_scores[eid] = max(ep_scores.get(eid, 0.0), float(sc) * w)
+                    ep_scores[eid] = max(ep_scores.get(eid, 0.0), float(sc) * w)
             except Exception:
                 pass
         bm25_ep = sorted(ep_scores.items(), key=lambda x: -x[1])[:20]
@@ -845,20 +846,21 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         fuzzy_msg.sort(key=lambda x: -x[1])
         fuzzy_msg = fuzzy_msg[:20]
 
-    # Path B: Bi-encoder cosine similarity on message_episodes.vec (uses richer intent when available)
+    # Path B: Bi-encoder cosine similarity on message_episodes.vec (filtered to scoped_eps BEFORE LIMIT)
     sem_ep = []
     embed_err = None
-    if embed_fn is not None and scoped_eps:
+    if embed_fn is not None and scoped_ep_list:
         has_vecs = con.execute('SELECT count(*) FROM message_episodes WHERE vec IS NOT NULL').fetchone()[0]
         if has_vecs:
             try:
                 qvec = embed_fn([sem_topic], query=True)[0]
                 hits = con.execute(
                     'SELECT episode_id, array_cosine_similarity(vec, ?::FLOAT[1024]) AS sc '
-                    'FROM message_episodes WHERE vec IS NOT NULL ORDER BY sc DESC LIMIT 60',
-                    [qvec],
+                    'FROM message_episodes WHERE vec IS NOT NULL AND episode_id IN (SELECT unnest(?::VARCHAR[])) '
+                    'ORDER BY sc DESC LIMIT 25',
+                    [qvec, scoped_ep_list],
                 ).fetchall()
-                sem_ep = [(eid, float(sc)) for eid, sc in hits if eid in scoped_eps][:25]
+                sem_ep = [(eid, float(sc)) for eid, sc in hits]
             except Exception as e:
                 embed_err = type(e).__name__
 

@@ -1092,6 +1092,9 @@ def fused_messages(con, search, limit=12, fields=None, intent=None, **kw):
                 hits = g_hits
                 tel = gtel
                 scope_note = (f'No strong match inside "{chat_hint}"; showing matches across all synced chats.')
+            else:
+                sk.LAST_TELEMETRY.clear()
+                sk.LAST_TELEMETRY.update(tel)
     if not hits:
         LAST_SELECT_NOTE = scope_note
         show = fields or ', '.join(RESOURCES['messages']['show'])

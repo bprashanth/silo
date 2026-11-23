@@ -879,6 +879,32 @@ def summarise_messages(con, search, chat=None, on=None, since=None, until=None, 
         return Result(kind='text', text=msg, chat=msg)
     eps = sk.search_episodes(con, topic, base_ids, chat_name_hint=chat, embed_fn=rs.embed, limit=limit,
                              intent_query=question or None)
+    tel = dict(sk.LAST_TELEMETRY)
+    weak_in_chat = (
+        chat and 'outside the cached window' not in scope_note
+        and (
+            (tel.get('reranker_used') and (tel.get('top_prob') or 0.0) < 0.05)
+            or (not tel.get('reranker_used') and tel.get('bm25_msg_hits', 0) == 0 and tel.get('fuzzy_hits', 0) == 0)
+        )
+    )
+    if weak_in_chat:
+        _, all_base, _ = rs.select(con, 'messages', on=on, since=since, until=until,
+                                   fields='id', limit=100000, order='id', plain=True)
+        all_ids = [r[0] for r in all_base]
+        if len(all_ids) > len(base_ids):
+            g_eps = sk.search_episodes(con, topic, all_ids, chat_name_hint=None, embed_fn=rs.embed, limit=limit,
+                                       intent_query=question or None)
+            gtel = dict(sk.LAST_TELEMETRY)
+            strong_global = (
+                (gtel.get('reranker_used') and (gtel.get('top_prob') or 0.0) >= 0.25)
+                or (not gtel.get('reranker_used') and gtel.get('bm25_msg_hits', 0) > 0)
+            )
+            if g_eps and strong_global:
+                eps = g_eps
+                scope_note = f'No strong match inside "{chat}"; showing matches across all synced chats.'
+            else:
+                sk.LAST_TELEMETRY.clear()
+                sk.LAST_TELEMETRY.update(tel)
     if not eps:
         msg = (scope_note + '\n' if scope_note else '') + f'No chat messages matched "{topic}".'
         return Result(kind='text', text=msg, chat=msg)
@@ -1284,10 +1310,10 @@ def map_question(con, question, history, mapper='remote', data_dir=None, failed=
     else:
         msgs = [{'role': 'system', 'content': grammar()}, {'role': 'user', 'content': user}]
         try:
-            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=500, timeout=180, repeat_penalty=1.06)
-        except ValueError:  # cut off or not JSON: once more, asked to be brief with one --search
+            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=500, timeout=180)
+        except ValueError:  # cut off or not JSON: once more, asked to be brief with anti-loop penalty
             msgs[-1] = {'role': 'user', 'content': user + '\n\nAnswer with short JSON: 1 or 2 commands, at most ONE --search flag.'}
-            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=500, timeout=180, repeat_penalty=1.12)
+            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=500, timeout=180, repeat_penalty=1.08)
     kind = 'repair' if failed else ('continue' if so_far else 'first')
     MAPPER_CALLS.append({'kind': kind, 'mapper': mapper, 'sent': user, 'returned': raw, 'seconds': round(time.time() - t0, 2)})
     say(1, f'[mapper {mapper}, {kind}] {round(time.time() - t0, 1)} s')
@@ -1617,20 +1643,30 @@ def _searches(c):
 
 
 IN_FILLER = {'group', 'chat', 'whatsapp', 't4gc', 'the', 'my', 'our', 'active', 'speaking', 'event', 'by', 'for', 'of', 'at', 'in'}
+DATE_CUE_RE = re.compile(
+    r'\b(today|yesterday|tomorrow|week|weeks|month|months|year|years|day|days|morning|tonight|evening|'
+    r'monday|tuesday|wednesday|thursday|friday|saturday|sunday|'
+    r'jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|'
+    r'sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|'
+    r'last|next|past|recent|latest|since|before|after|until|upcoming|earlier|ago|20\d{2}|\d+d)\b',
+    re.I,
+)
 
 
 def own_words(c):
-    """Drop --search values whose words the person never used, and drop --in CHAT/FOLDER values
-    that share zero words (or acronym) with what the person actually said."""
-    if not SAID or ('--search' not in c and '--in' not in c and '--folder' not in c):
+    """Drop --search values whose words the person never used, drop --in CHAT/FOLDER values
+    that share zero words (or acronym) with what the person actually said, and drop
+    hallucinated --since/--until/--on filters when the person gave no date or time cue."""
+    if not SAID or not any(f in c for f in ('--search', '--in', '--folder', '--since', '--until', '--on')):
         return c, []
     try:
         argv = shlex.split(c)
     except ValueError:
         return c, []
     said = set(re.findall(r'[a-z0-9]+', SAID.lower()))
-    stem = lambda w: w[:-1] if len(w) > 4 and w.endswith('s') else w
+    stem = lambda w: w[:-1] if len(w) >= 4 and w.endswith('s') and not w.endswith('ss') else w
     said |= {stem(w) for w in said}
+    has_date_cue = bool(DATE_CUE_RE.search(SAID))
     judging = 'judge' in argv[:2]
     out, dropped, i = [], [], 0
     while i < len(argv):
@@ -1663,6 +1699,14 @@ def own_words(c):
                 dropped.append(f'--in {raw_in}')
                 i += 2
                 continue
+        elif argv[i] in ('--since', '--until', '--on') and not has_date_cue:
+            # Don't drop `--on` for `define --on mail|message`!
+            if argv[i] == '--on' and 'define' in argv[:2]:
+                out.append(argv[i]); i += 1; continue
+            if i + 1 < len(argv):
+                dropped.append(f'{argv[i]} {argv[i + 1]}')
+                i += 2
+                continue
         out.append(argv[i]); i += 1
     return (qjoin(out), dropped) if dropped else (c, [])
 
@@ -1680,6 +1724,11 @@ def run_plan(con, plan, chat_results=None, question=None):
     shown_parts, cmds, judge_s, errors = [], [], 0.0, []
     seen_cmds = set()
     for c in plan['commands'][:6]:
+        if c.strip().lower() in ('continue', 'idli continue'):
+            # The 9B occasionally emits "continue" inside commands[] instead of "continue": true.
+            if not shown_parts:
+                plan['continue'] = True
+            continue
         if PLACEHOLDER.search(c):  # it needs a value from the results so far: stop here and ask for the rest
             plan['continue'] = True
             break
