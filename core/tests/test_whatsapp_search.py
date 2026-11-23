@@ -186,6 +186,34 @@ class WhatsAppSearchTest(unittest.TestCase):
         self.assertIn('DICE invitation', txt)
         self.assertIn('Jam Buns', txt)
 
+    def test_own_words_drops_hallucinated_in_chat(self):
+        prev_said = idlicli.SAID
+        try:
+            idlicli.SAID = 'What did Saahas need to procure?'
+            cmd, dropped = idlicli.own_words('idli list messages --in "Founders Office @ T4GC" --search "Saahas"')
+            self.assertNotIn('--in', cmd)
+            self.assertIn('--in Founders Office @ T4GC', dropped)
+            # Legitimate chat name or acronym in the question is kept
+            idlicli.SAID = 'How many links in Jam Buns?'
+            cmd2, dropped2 = idlicli.own_words('idli list messages --in "Jam Buns @ T4GC" --count')
+            self.assertIn('--in', cmd2)
+            self.assertEqual(dropped2, [])
+            idlicli.SAID = 'How long is the RE session?'
+            cmd3, dropped3 = idlicli.own_words('idli list messages --in "Royal Enfield" --search "session"')
+            self.assertIn('--in', cmd3)
+            self.assertEqual(dropped3, [])
+        finally:
+            idlicli.SAID = prev_said
+
+    def test_weak_scope_rescue_finds_cross_chat_match(self):
+        with mock.patch.object(rs, 'embed', side_effect=RuntimeError('offline')):
+            # "birders" is in Jam Buns, not Royal Enfield; weak-scope rescue finds it and notes the fallback
+            cols, rows, _ = rs.select(self.con, 'messages', folder='Royal Enfield', search='birders',
+                                      intent='Where was Young Birders Month posted?')
+            self.assertTrue(rows)
+            self.assertEqual(rows[0][0], sk.stable_ref('m1'))
+            self.assertIn('No strong match inside', rs.LAST_SELECT_NOTE)
+
 
 if __name__ == '__main__':
     unittest.main()

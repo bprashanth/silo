@@ -1048,9 +1048,11 @@ def sync_whatsapp(con, snapshot_path=None, days=None, with_embed=True, progress=
                             embed_fn=embed if with_embed else None, progress=progress, on_item=on_item)
 
 
-def fused_messages(con, search, limit=12, fields=None, **kw):
+def fused_messages(con, search, limit=12, fields=None, intent=None, **kw):
     """--search on messages without a quoted phrase: DuckDB FTS BM25 + contextual episode embeddings
-    + optional local cross-encoder reranker, strictly inside the resolved scope."""
+    + optional local cross-encoder reranker, strictly inside the resolved scope.
+    If `--in CHAT` yields near-zero relevance (e.g. a topic phrase happened to overlap another group name),
+    also checks globally and surfaces a strong cross-chat match with an explicit note."""
     from lib import searchkit as sk
     global LAST_SELECT_NOTE
     _, base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw)
@@ -1061,8 +1063,35 @@ def fused_messages(con, search, limit=12, fields=None, **kw):
         show = fields or ', '.join(RESOURCES['messages']['show'])
         return [c.strip() for c in show.split(',')] + ['found'], [], 'fused_messages: empty scope'
     chat_hint = kw.get('folder')
+    lim = min(int(limit), 30)
     hits = sk.search_messages(con, _search_text(search), base_ids, chat_name_hint=chat_hint,
-                              embed_fn=embed, limit=min(int(limit), 30))
+                              embed_fn=embed, limit=lim, intent_query=intent)
+    tel = dict(sk.LAST_TELEMETRY)
+    # Weak-scope rescue: only when `--in CHAT` was set and no explicit date coverage gap occurred.
+    weak_in_chat = (
+        chat_hint
+        and 'outside the cached window' not in scope_note
+        and (
+            (tel.get('reranker_used') and (tel.get('top_prob') or 0.0) < 0.05)
+            or (not tel.get('reranker_used') and tel.get('bm25_msg_hits', 0) == 0 and tel.get('fuzzy_hits', 0) == 0)
+        )
+    )
+    if weak_in_chat:
+        kw_all = {**kw, 'folder': None}
+        _, all_base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw_all)
+        all_ids = [r[0] for r in all_base]
+        if len(all_ids) > len(base_ids):
+            g_hits = sk.search_messages(con, _search_text(search), all_ids, chat_name_hint=None,
+                                        embed_fn=embed, limit=lim, intent_query=intent)
+            gtel = dict(sk.LAST_TELEMETRY)
+            strong_global = (
+                (gtel.get('reranker_used') and (gtel.get('top_prob') or 0.0) >= 0.25)
+                or (not gtel.get('reranker_used') and gtel.get('bm25_msg_hits', 0) > 0)
+            )
+            if g_hits and strong_global:
+                hits = g_hits
+                tel = gtel
+                scope_note = (f'No strong match inside "{chat_hint}"; showing matches across all synced chats.')
     if not hits:
         LAST_SELECT_NOTE = scope_note
         show = fields or ', '.join(RESOURCES['messages']['show'])
@@ -1077,14 +1106,14 @@ def fused_messages(con, search, limit=12, fields=None, **kw):
     ).fetchall()}
     cols = [c.strip() for c in show.split(',')] + ['found']
     LAST_SELECT_NOTE = scope_note
-    tel = sk.LAST_TELEMETRY
     sql_note = (f"hybrid_messages: bm25={tel.get('bm25_msg_hits', 0)}+{tel.get('bm25_ep_hits', 0)}, "
                 f"sem={tel.get('sem_ep_hits', 0)}, rerank={tel.get('reranker_used', False)}")
     return cols, [tuple(rows[mid]) + (found_map[mid],) for mid in order if mid in rows], sql_note
 
 
 def select(con, resource, where=None, since=None, until=None, on=None, search=None, label=None, folder=None,
-           sheet=None, by=None, count=False, fields=None, order=None, limit=50, show_all=False, plain=False):
+           sheet=None, by=None, count=False, fields=None, order=None, limit=50, show_all=False, plain=False,
+           intent=None):
     """Build and run the query for `list`. Returns (columns, rows, sql). Empty files are left out unless show_all."""
     global LAST_SELECT_NOTE
     LAST_SELECT_NOTE = ''
@@ -1098,7 +1127,7 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
     if (not plain and search and resource == 'messages' and not by and not count
             and '"' not in raw_search):
         return fused_messages(con, search, limit=min(int(limit), 15) if limit == 50 else limit, fields=fields,
-                              where=where, since=since, until=until, on=on, label=label, folder=folder,
+                              intent=intent, where=where, since=since, until=until, on=on, label=label, folder=folder,
                               show_all=show_all)
     if isinstance(where, list):  # --where given more than once: all of them
         where = ' AND '.join(f'({w})' for w in where if w) or None
@@ -1246,11 +1275,13 @@ def _nine_upstream(variant):
     return stackwall.model_upstream()
 
 
-def _nine(messages, schema, max_tokens=300, timeout=120, variant=None):
+def _nine(messages, schema, max_tokens=300, timeout=120, variant=None, repeat_penalty=None):
     base, headers, model = _nine_upstream(variant or NINE)
     body = {'model': model, 'temperature': 0, 'stream': False, 'max_tokens': max_tokens, 'messages': messages,
             'response_format': {'type': 'json_schema', 'json_schema': {'name': 'answer', 'schema': schema}},
             'chat_template_kwargs': {'enable_thinking': False}}
+    if repeat_penalty is not None:
+        body['repeat_penalty'] = repeat_penalty
     req = urllib.request.Request(base + '/v1/chat/completions', json.dumps(body).encode(),
                                  {**headers, 'Content-Type': 'application/json'})
     t0 = time.time()

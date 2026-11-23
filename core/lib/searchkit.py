@@ -719,15 +719,17 @@ def _message_search_context(row_map, mid, ordered_by_chat):
     return '\n'.join(parts)
 
 
-def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=None, limit=12):
+def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=None, limit=12, intent_query=None):
     """Hybrid search over `messages` + `message_episodes` restricted to `base_ids`:
       1. Path A1: DuckDB FTS BM25 on individual messages (Porter stemming + IDF)
       2. Path A2: DuckDB FTS BM25 on contextualized episodes (cross-message keywords)
-      3. Path A3: Jaro-Winkler fuzzy token fallback when lexical hits are sparse
+      3. Path A3: Jaro-Winkler + stem-lite fuzzy token fallback when lexical hits are sparse
       4. Path B:  Bi-encoder (Qwen3-Embedding-0.6B) cosine similarity on episode vectors
-      5. Merge via RRF -> top ~30 candidates
+      5. Merge via RRF -> top ~35 candidates (or all messages when scope <= 35)
       6. Stage 3: Local Cross-Encoder Reranker (bge-reranker-v2-m3 on :8294, graceful fallback)
       7. Attach direct quoted parents and immediate same-sender follow-ups for top hits.
+    When `intent_query` (the full user question from `ask`) is provided, BM25 runs on both
+    `query_text` and `intent_query`, while Bi-encoder and Cross-encoder use the richer `intent_query`.
     Returns list of (message_id, found_label) ordered best-first, and populates LAST_TELEMETRY."""
     LAST_TELEMETRY.clear()
     if not base_ids:
@@ -735,13 +737,17 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
     base_set = set(base_ids)
     t0 = time.time()
 
-    # Strip bound chat-name words from the topic text so embeddings focus on the subject.
-    topic = query_text.strip()
-    if chat_name_hint:
-        ctoks = set(_tokens(chat_name_hint))
-        trimmed = ' '.join(w for w in topic.split() if w.casefold().strip('?,.:;"\'') not in ctoks)
-        if trimmed:
-            topic = trimmed
+    def _strip_chat(text):
+        s = (text or '').strip()
+        if chat_name_hint and s:
+            ctoks = set(_tokens(chat_name_hint, drop_filler=True))
+            trimmed = ' '.join(w for w in s.split() if w.casefold().strip('?,.:;"\'!') not in ctoks)
+            if trimmed:
+                return trimmed
+        return s
+
+    topic = _strip_chat(query_text)
+    sem_topic = _strip_chat(intent_query) if (intent_query and len(intent_query.strip()) > len(query_text.strip())) else topic
 
     # Load scoped messages (for fast in-memory metadata, fuzzy fallback, and context assembly).
     all_rows = con.execute(
@@ -772,37 +778,51 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         if any(m in base_set for m in mids):
             scoped_eps.add(ep_id)
 
-    # Path A1: DuckDB FTS BM25 on messages (subquery required in DuckDB 2.x for alias filtering)
+    # Path A1: DuckDB FTS BM25 on messages (explicit search terms + full intent if richer)
     fts_ok = ensure_fts(con)
     bm25_msg = []
     if fts_ok and _fts_exists(con, 'messages'):
-        try:
-            hits = con.execute(
-                'SELECT id, sc FROM ('
-                '  SELECT id, fts_main_messages.match_bm25(id, ?, conjunctive := false) AS sc FROM messages'
-                ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 80',
-                [topic],
-            ).fetchall()
-            bm25_msg = [(mid, float(sc)) for mid, sc in hits if mid in base_set][:30]
-        except Exception:
-            bm25_msg = []
+        msg_scores = {}
+        for q_str, w in ((topic, 1.0), (sem_topic, 0.7)):
+            if not q_str or (w < 1.0 and q_str == topic):
+                continue
+            try:
+                hits = con.execute(
+                    'SELECT id, sc FROM ('
+                    '  SELECT id, fts_main_messages.match_bm25(id, ?, conjunctive := false) AS sc FROM messages'
+                    ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 80',
+                    [q_str],
+                ).fetchall()
+                for mid, sc in hits:
+                    if mid in base_set:
+                        msg_scores[mid] = max(msg_scores.get(mid, 0.0), float(sc) * w)
+            except Exception:
+                pass
+        bm25_msg = sorted(msg_scores.items(), key=lambda x: -x[1])[:30]
 
     # Path A2: DuckDB FTS BM25 on episodes
     bm25_ep = []
     if fts_ok and _fts_exists(con, 'message_episodes'):
-        try:
-            hits = con.execute(
-                'SELECT episode_id, sc FROM ('
-                '  SELECT episode_id, fts_main_message_episodes.match_bm25(episode_id, ?, conjunctive := false) AS sc '
-                '  FROM message_episodes'
-                ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 40',
-                [topic],
-            ).fetchall()
-            bm25_ep = [(eid, float(sc)) for eid, sc in hits if eid in scoped_eps][:20]
-        except Exception:
-            bm25_ep = []
+        ep_scores = {}
+        for q_str, w in ((topic, 1.0), (sem_topic, 0.7)):
+            if not q_str or (w < 1.0 and q_str == topic):
+                continue
+            try:
+                hits = con.execute(
+                    'SELECT episode_id, sc FROM ('
+                    '  SELECT episode_id, fts_main_message_episodes.match_bm25(episode_id, ?, conjunctive := false) AS sc '
+                    '  FROM message_episodes'
+                    ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 40',
+                    [q_str],
+                ).fetchall()
+                for eid, sc in hits:
+                    if eid in scoped_eps:
+                        ep_scores[eid] = max(ep_scores.get(eid, 0.0), float(sc) * w)
+            except Exception:
+                pass
+        bm25_ep = sorted(ep_scores.items(), key=lambda x: -x[1])[:20]
 
-    # Path A3: Fuzzy token fallback when lexical hits are sparse (catches typos / spelling variants)
+    # Path A3: Fuzzy + prefix + stem-lite token fallback when lexical hits are sparse
     fuzzy_msg = []
     q_toks = [t for t in _tokens(topic) if len(t) >= 3]
     if len(bm25_msg) < 5 and q_toks:
@@ -825,14 +845,14 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         fuzzy_msg.sort(key=lambda x: -x[1])
         fuzzy_msg = fuzzy_msg[:20]
 
-    # Path B: Bi-encoder cosine similarity on message_episodes.vec
+    # Path B: Bi-encoder cosine similarity on message_episodes.vec (uses richer intent when available)
     sem_ep = []
     embed_err = None
     if embed_fn is not None and scoped_eps:
         has_vecs = con.execute('SELECT count(*) FROM message_episodes WHERE vec IS NOT NULL').fetchone()[0]
         if has_vecs:
             try:
-                qvec = embed_fn([topic], query=True)[0]
+                qvec = embed_fn([sem_topic], query=True)[0]
                 hits = con.execute(
                     'SELECT episode_id, array_cosine_similarity(vec, ?::FLOAT[1024]) AS sc '
                     'FROM message_episodes WHERE vec IS NOT NULL ORDER BY sc DESC LIMIT 60',
@@ -851,14 +871,12 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
     for rank, (mid, _) in enumerate(fuzzy_msg):
         rrf[mid] += 0.9 / (20 + rank + 1)
         sources[mid].add('fuzzy')
-    # Map top episodes (BM25 + semantic) to their constituent in-scope messages
-    q_tok_set = set(_tokens(topic))
-    for ep_list, weight, tag in ((bm25_ep, 0.9, 'ep_bm25'), (sem_ep, 1.1, 'semantic')):
+    q_tok_set = set(_tokens(sem_topic)) | set(_tokens(topic))
+    for ep_list, weight, tag in ((bm25_ep, 0.9, 'ep_bm25'), (sem_ep, 1.15, 'semantic')):
         for rank, (eid, _) in enumerate(ep_list):
             mids = [m for m in ep_msgs.get(eid, []) if m in base_set]
             if not mids:
                 continue
-            # Prefer messages inside the episode that share query words or have links, but credit all.
             for mid in mids:
                 m = row_map.get(mid)
                 mtoks = set(_tokens(f"{m['body']} {m['sender']} {m['link_preview']}")) if m else set()
@@ -866,15 +884,23 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
                 rrf[mid] += (weight * bonus) / (15 + rank + 1)
                 sources[mid].add(tag)
 
-    fused = [mid for mid, _ in rrf.most_common(30)]
+    fused = [mid for mid, _ in rrf.most_common(35)]
+    # When the resolved scope itself is small (<= 35 messages), never drop any message before cross-encoder!
+    if len(base_set) <= 35:
+        seen_f = set(fused)
+        for mid in sorted(base_set, key=lambda x: row_map[x]['sent_at'] or dt.datetime.min, reverse=True):
+            if mid not in seen_f and mid in row_map:
+                fused.append(mid)
+                seen_f.add(mid)
+                sources[mid].add('scope')
 
-    # Stage 3: Optional Local Cross-Encoder Reranker on top ~30 fused candidates
+    # Stage 3: Optional Local Cross-Encoder Reranker on top ~35 fused candidates using full intent
     rerank_t0 = time.time()
     reranked = None
     rerank_scores = {}
     if fused:
         passages = [_message_search_context(row_map, mid, ordered_by_chat) for mid in fused]
-        reranked = rerank(topic, passages)
+        reranked = rerank(sem_topic, passages)
     rerank_ms = round((time.time() - rerank_t0) * 1000, 1)
 
     if reranked:
@@ -914,7 +940,6 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         else:
             label = f"match ({src_tags})"
         add_row(mid, label)
-        # Only attach thread/follow-up neighbors for the top 4 anchors so we don't crowd out other hits.
         if rank_i < 4:
             m = row_map[mid]
             pid = m.get('parent_id')
@@ -934,8 +959,10 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
                             if nb.get('parent_id') and nb['parent_id'] in row_map:
                                 add_row(nb['parent_id'], f"quoted parent of {nb['id'][:8]}")
 
+    top_prob = rerank_scores[ordered_hits[0]][1] if (ordered_hits and ordered_hits[0] in rerank_scores) else None
     LAST_TELEMETRY.update({
         'query': topic,
+        'intent_query': sem_topic if sem_topic != topic else None,
         'scoped_messages': len(base_set),
         'bm25_msg_hits': len(bm25_msg),
         'bm25_ep_hits': len(bm25_ep),
@@ -945,6 +972,7 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         'fused_candidates': len(fused),
         'reranker_used': bool(reranked),
         'reranker_ms': rerank_ms if reranked else 0,
+        'top_prob': top_prob,
         'fallback': fallback,
         'top_scores': [(mid[:8], rerank_scores[mid][1]) for mid in ordered_hits[:5] if mid in rerank_scores],
         'total_ms': round((time.time() - t0) * 1000, 1),
@@ -952,9 +980,10 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
     return final
 
 
-def search_episodes(con, query_text, base_ids, chat_name_hint=None, embed_fn=None, limit=5):
+def search_episodes(con, query_text, base_ids, chat_name_hint=None, embed_fn=None, limit=5, intent_query=None):
     """Return top-K full contextualized episodes (plus their member message rows) for `summarise messages`."""
-    hits = search_messages(con, query_text, base_ids, chat_name_hint=chat_name_hint, embed_fn=embed_fn, limit=20)
+    hits = search_messages(con, query_text, base_ids, chat_name_hint=chat_name_hint, embed_fn=embed_fn,
+                           limit=20, intent_query=intent_query)
     if not hits:
         return []
     hit_ids = [mid for mid, _ in hits]

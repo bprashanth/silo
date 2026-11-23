@@ -362,7 +362,7 @@ def parser():
 
 # ---- running a command ----
 
-def run_argv(con, argv, chat=False):
+def run_argv(con, argv, chat=False, intent=None):
     if argv and argv[0] == 'idli':
         argv = argv[1:]
     # `--label people = 'yes'` arrives as three words: join them
@@ -460,7 +460,7 @@ def run_argv(con, argv, chat=False):
         cols, rows, sql = rs.select(con, a.resource, where=a.where, since=a.since, until=a.until, on=a.on,
                                     search=a.search, label=a.label, folder=a.folder, sheet=a.sheet, by=a.by,
                                     count=(v == 'count' or a.count), fields=fields, order=a.order, limit=a.limit,
-                                    show_all=a.show_all)
+                                    show_all=a.show_all, intent=intent)
         sel_note = rs.LAST_SELECT_NOTE
         source = sheet_sources(con, sql) if chat and resource == 'rows' else None
         links = []
@@ -516,13 +516,14 @@ def run_argv(con, argv, chat=False):
                           source=source_link('files', fid))
     if v == 'summarise':
         if a.search:
+            q_intent = a.question or intent or ''
             if a.what in ('messages', 'message'):
-                return summarise_messages(con, a.search, chat=a.folder, on=a.on, since=a.since, until=a.until, question=a.question)
+                return summarise_messages(con, a.search, chat=a.folder, on=a.on, since=a.since, until=a.until, question=q_intent)
             n_files = con.execute('SELECT count(*) FROM files').fetchone()[0]
             n_msgs = con.execute('SELECT count(*) FROM messages').fetchone()[0]
             if n_files == 0 and n_msgs > 0:
-                return summarise_messages(con, a.search, chat=a.folder, on=a.on, since=a.since, until=a.until, question=a.question)
-            return summarise_search(con, a.search, a.folder, a.question)
+                return summarise_messages(con, a.search, chat=a.folder, on=a.on, since=a.since, until=a.until, question=q_intent)
+            return summarise_search(con, a.search, a.folder, q_intent)
         if not a.ref:
             raise Err('Say which file (idli summarise file NAME), or a topic (idli summarise --search "border effects")')
         return summarise(con, a.ref, a.question)
@@ -876,7 +877,8 @@ def summarise_messages(con, search, chat=None, on=None, since=None, until=None, 
     if not base_ids:
         msg = (scope_note + '\n' if scope_note else '') + 'No messages in that scope to summarise.'
         return Result(kind='text', text=msg, chat=msg)
-    eps = sk.search_episodes(con, topic, base_ids, chat_name_hint=chat, embed_fn=rs.embed, limit=limit)
+    eps = sk.search_episodes(con, topic, base_ids, chat_name_hint=chat, embed_fn=rs.embed, limit=limit,
+                             intent_query=question or None)
     if not eps:
         msg = (scope_note + '\n' if scope_note else '') + f'No chat messages matched "{topic}".'
         return Result(kind='text', text=msg, chat=msg)
@@ -1025,7 +1027,7 @@ Commands (read only unless said):
 Dates D: today, yesterday, tomorrow, 7d, last week, this week, next week, monday, next monday, YYYY-MM-DD.
 COND is SQL over the resource's fields; field ~ 'x' means contains; label.NAME = 'yes' uses a definition.
 --search WORDS: unquoted searches words and meaning; "in quotes" = exact phrase. On files: names, pages, cards.
-On messages: bodies, captions, link previews, reply threads (use --in CHAT for a group). Repeat --search for AND.
+On messages: bodies, captions, link previews, reply threads (use --in CHAT only if named). Use ONE --search flag.
 
 Rules:
 - Use only the resources and fields listed below (prefer populated ones over empty ones). Prefer list with flags; query only for joins.
@@ -1046,9 +1048,10 @@ Rules:
   "SELECT Name, lower(Email) AS email FROM sheet_leads_test" --about "Name and Email from the Leads (test) sheet" ;
   idli list mail --where "from_addr IN (SELECT email FROM leads)". If nothing clearly holds them, cannot,
   needs "clarify". Reuse a view that exists.
-- A named thing (term, phrase, person, place): --search (quote phrases of 2+ words only when exact). "How many":
-  list --count. "By X" or breakdown: --group-by. "Explain X", "what did we discuss about X": summarise --search.
-  Search first; define and judge only for a category no words capture, narrowed with --search, --in or --where.
+- A named thing (term, phrase, person, place): --search (quote phrases of 2+ words only when exact). "How many
+  emails/files/messages": list --count (for a number mentioned inside messages/files, use --search). "By X" or
+  breakdown: --group-by (never for finding names/lists inside messages). "Explain X", "what did we discuss about X":
+  summarise --search. Search first; define/judge only for a category no words capture, narrowed with --search/--in/--where.
 - Follow-ups refer to the previous answer (shown below with its rows and ids): use the ids, or narrow the
   previous command.
 - Moving, renaming, sending, booking, posting or deleting are not available: answer cannot, needs "new_write_action".
@@ -1281,10 +1284,10 @@ def map_question(con, question, history, mapper='remote', data_dir=None, failed=
     else:
         msgs = [{'role': 'system', 'content': grammar()}, {'role': 'user', 'content': user}]
         try:
-            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=1500, timeout=180)
-        except ValueError:  # cut off or not JSON: once more, asked to be brief
-            msgs[-1] = {'role': 'user', 'content': user + '\n\nAnswer with short JSON: at most 4 commands.'}
-            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=1500, timeout=180)
+            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=500, timeout=180, repeat_penalty=1.06)
+        except ValueError:  # cut off or not JSON: once more, asked to be brief with one --search
+            msgs[-1] = {'role': 'user', 'content': user + '\n\nAnswer with short JSON: 1 or 2 commands, at most ONE --search flag.'}
+            raw = plan = rs._nine(msgs, PLAN_SCHEMA, max_tokens=500, timeout=180, repeat_penalty=1.12)
     kind = 'repair' if failed else ('continue' if so_far else 'first')
     MAPPER_CALLS.append({'kind': kind, 'mapper': mapper, 'sent': user, 'returned': raw, 'seconds': round(time.time() - t0, 2)})
     say(1, f'[mapper {mapper}, {kind}] {round(time.time() - t0, 1)} s')
@@ -1613,10 +1616,13 @@ def _searches(c):
     return [argv[i + 1].strip('"\' ').lower() for i, t in enumerate(argv[:-1]) if t == '--search']
 
 
+IN_FILLER = {'group', 'chat', 'whatsapp', 't4gc', 'the', 'my', 'our', 'active', 'speaking', 'event', 'by', 'for', 'of', 'at', 'in'}
+
+
 def own_words(c):
-    """Drop --search values whose words the person never used. Models add their own ("reply" to find emails that
-    need a reply), which narrows a judge to the wrong rows. Returns the command and what was dropped."""
-    if not SAID or '--search' not in c:
+    """Drop --search values whose words the person never used, and drop --in CHAT/FOLDER values
+    that share zero words (or acronym) with what the person actually said."""
+    if not SAID or ('--search' not in c and '--in' not in c and '--folder' not in c):
         return c, []
     try:
         argv = shlex.split(c)
@@ -1638,6 +1644,25 @@ def own_words(c):
             not_shown = judging and argv[i + 1].strip('"\' ').lower() not in SEARCHED  # judge narrows to a shown search
             if not ws or not_said or not_shown:
                 dropped.append(argv[i + 1]); i += 2; continue
+        elif argv[i] in ('--in', '--folder'):
+            if i + 1 >= len(argv) or argv[i + 1].startswith('--'):
+                dropped.append('')
+                i += 1
+                continue
+            raw_in = argv[i + 1]
+            in_toks = [w for w in re.findall(r'[a-z0-9]+', raw_in.lower()) if w not in IN_FILLER]
+            if not in_toks:
+                in_toks = re.findall(r'[a-z0-9]+', raw_in.lower())
+            acro = ''.join(w[0] for w in in_toks) if len(in_toks) >= 2 else ''
+            has_match = (
+                not in_toks
+                or any(w in said or stem(w) in said or (len(w) >= 3 and any(sw.startswith(w[:3]) or w.startswith(sw) for sw in said if len(sw) >= 3)) for w in in_toks)
+                or (acro and acro in said)
+            )
+            if not has_match:
+                dropped.append(f'--in {raw_in}')
+                i += 2
+                continue
         out.append(argv[i]); i += 1
     return (qjoin(out), dropped) if dropped else (c, [])
 
@@ -1653,6 +1678,7 @@ def qjoin(argv):
 
 def run_plan(con, plan, chat_results=None, question=None):
     shown_parts, cmds, judge_s, errors = [], [], 0.0, []
+    seen_cmds = set()
     for c in plan['commands'][:6]:
         if PLACEHOLDER.search(c):  # it needs a value from the results so far: stop here and ask for the rest
             plan['continue'] = True
@@ -1660,10 +1686,13 @@ def run_plan(con, plan, chat_results=None, question=None):
         c2, dropped = own_words(c)
         SEARCHED.update(_searches(c2)) if not re.match(r'(idli\s+)?judge\b', c2) else None
         if dropped:
-            say(1, f'[own words] dropped --search {dropped}: not words the person used')
+            say(1, f'[own words] dropped {dropped}: not words the person used')
             plan.setdefault('dropped_search', []).extend(dropped)
             plan['commands'] = [c2 if x == c else x for x in plan['commands']]
             c = c2
+        if c in seen_cmds:
+            continue
+        seen_cmds.add(c)
         try:
             argv = shlex.split(c)
         except ValueError:
@@ -1705,7 +1734,7 @@ def run_plan(con, plan, chat_results=None, question=None):
         t0 = time.time()
         say(1, f'[step] {c}' + ('   (writes to the store)' if re.match(r'(idli\s+)?(define|judge|view)\b', c) else ''))
         try:
-            r = run_argv(con, argv, chat=chat_results is not None)
+            r = run_argv(con, argv, chat=chat_results is not None, intent=question)
             say(1, f'       {round(time.time() - t0, 1)} s')
             say(2, r.render())
         except (Err, ValueError) as e:
