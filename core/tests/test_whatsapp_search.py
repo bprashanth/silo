@@ -158,6 +158,8 @@ class WhatsAppSearchTest(unittest.TestCase):
     def test_dice_thread_parent_and_followup_expansion(self):
         with mock.patch.object(rs, 'embed', side_effect=RuntimeError('offline')):
             cols, rows, _ = rs.select(self.con, 'messages', folder='Jam Buns', search='DICE Abhiram')
+            self.assertGreater(sk.LAST_TELEMETRY.get('bm25_msg_hits', 0), 0)
+            self.assertGreater(sk.LAST_TELEMETRY.get('bm25_ep_hits', 0), 0)
             returned_ids = {r[0] for r in rows}
             # Should contain the DICE invite (m2), Abhiram's decline quoting m2 (m4), and his 13:13 link (m5)
             self.assertIn(sk.stable_ref('m2'), returned_ids)
@@ -174,7 +176,7 @@ class WhatsAppSearchTest(unittest.TestCase):
     def test_menu_lists_chats_and_empty_tags(self):
         m = idlicli.menu(self.con, question='What did we say in Jam Buns?')
         self.assertIn('messages (10 rows)', m)
-        self.assertIn('mail (empty)', m)
+        self.assertIn('Empty (not synced, 0 rows', m)
         self.assertIn('Jam Buns', m)
 
     def test_define_and_item_text_on_message(self):

@@ -1095,7 +1095,7 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
         # unquoted words: literal and meaning, merged. Quoted phrases stay literal only.
         return fused_files(con, search, limit=limit, fields=fields, where=where, since=since, until=until, on=on,
                            label=label, folder=folder, show_all=show_all)
-    if (not plain and search and resource == 'messages' and not by and not count and not order
+    if (not plain and search and resource == 'messages' and not by and not count
             and '"' not in raw_search):
         return fused_messages(con, search, limit=min(int(limit), 15) if limit == 50 else limit, fields=fields,
                               where=where, since=since, until=until, on=on, label=label, folder=folder,

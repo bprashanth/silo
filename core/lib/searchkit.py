@@ -84,6 +84,8 @@ def _stem_lite(tok):
 def _fuzzy_tok_score(qt, mt):
     if qt == mt:
         return 1.0
+    if len(qt) >= 3 and mt.startswith(qt) and len(mt) <= len(qt) + 5:
+        return 0.92
     if len(qt) >= 4 and len(mt) >= 4 and _stem_lite(qt) == _stem_lite(mt):
         return 0.94
     if abs(len(mt) - len(qt)) <= 3:
@@ -770,14 +772,15 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         if any(m in base_set for m in mids):
             scoped_eps.add(ep_id)
 
-    # Path A1: DuckDB FTS BM25 on messages
+    # Path A1: DuckDB FTS BM25 on messages (subquery required in DuckDB 2.x for alias filtering)
     fts_ok = ensure_fts(con)
     bm25_msg = []
     if fts_ok and _fts_exists(con, 'messages'):
         try:
             hits = con.execute(
-                'SELECT id, fts_main_messages.match_bm25(id, ?, conjunctive := 0) AS sc '
-                'FROM messages WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 80',
+                'SELECT id, sc FROM ('
+                '  SELECT id, fts_main_messages.match_bm25(id, ?, conjunctive := false) AS sc FROM messages'
+                ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 80',
                 [topic],
             ).fetchall()
             bm25_msg = [(mid, float(sc)) for mid, sc in hits if mid in base_set][:30]
@@ -789,8 +792,10 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
     if fts_ok and _fts_exists(con, 'message_episodes'):
         try:
             hits = con.execute(
-                'SELECT episode_id, fts_main_message_episodes.match_bm25(episode_id, ?, conjunctive := 0) AS sc '
-                'FROM message_episodes WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 40',
+                'SELECT episode_id, sc FROM ('
+                '  SELECT episode_id, fts_main_message_episodes.match_bm25(episode_id, ?, conjunctive := false) AS sc '
+                '  FROM message_episodes'
+                ') WHERE sc IS NOT NULL ORDER BY sc DESC LIMIT 40',
                 [topic],
             ).fetchall()
             bm25_ep = [(eid, float(sc)) for eid, sc in hits if eid in scoped_eps][:20]

@@ -1129,18 +1129,30 @@ def menu(con, mask=None, question=None, history=()):
     MENU_INFO.clear()
     MENU_INFO.update(sheets_with_columns=sorted(keep) if keep is not None else 'all')
     lines = ['Resources and fields:']
+    counts_by_res = {}
     for k, r in rs.RESOURCES.items():
         if k in ('labels',):
             continue
-        notes = rs.FIELD_NOTES.get(k, {})
         try:
             wh = f" WHERE {r['filter']}" if r.get('filter') else ''
-            nrows = con.execute(f'SELECT count(*) FROM "{r["table"]}"{wh}').fetchone()[0]
+            counts_by_res[k] = con.execute(f'SELECT count(*) FROM "{r["table"]}"{wh}').fetchone()[0]
         except Exception:
-            nrows = 0
-        cnt_tag = f' ({nrows} rows)' if nrows else ' (empty)'
+            counts_by_res[k] = 0
+    any_populated = any(v > 0 for k, v in counts_by_res.items() if k != 'definitions')
+    empty_res = []
+    for k, r in rs.RESOURCES.items():
+        if k in ('labels',):
+            continue
+        nrows = counts_by_res.get(k, 0)
+        if any_populated and nrows == 0 and k != 'definitions':
+            empty_res.append(k)
+            continue
+        notes = rs.FIELD_NOTES.get(k, {})
+        cnt_tag = f' ({nrows} rows)' if nrows else ''
         lines.append(f'- {k}{cnt_tag}: {r["about"]}. Fields: {", ".join(rs.columns(con, k))}' + _values(con, k) +
                      ('. Meanings: ' + '; '.join(f'{f} = {n}' for f, n in notes.items()) if notes else ''))
+    if empty_res:
+        lines.append('Empty (not synced, 0 rows — do not query): ' + ', '.join(empty_res))
     sheets = con.execute('SELECT name, tab, columns, nrows, tbl, file_id FROM sheets ORDER BY name, tab_index').fetchall()
     ntabs = {}
     for r in sheets:
@@ -1616,11 +1628,15 @@ def own_words(c):
     judging = 'judge' in argv[:2]
     out, dropped, i = [], [], 0
     while i < len(argv):
-        if argv[i] == '--search' and i + 1 < len(argv):
+        if argv[i] == '--search':
+            if i + 1 >= len(argv) or argv[i + 1].startswith('--'):
+                dropped.append('')
+                i += 1
+                continue
             ws = re.findall(r'[a-z0-9]+', argv[i + 1].lower())
             not_said = ws and not all(w in said or stem(w) in said for w in ws)
             not_shown = judging and argv[i + 1].strip('"\' ').lower() not in SEARCHED  # judge narrows to a shown search
-            if not_said or not_shown:
+            if not ws or not_said or not_shown:
                 dropped.append(argv[i + 1]); i += 2; continue
         out.append(argv[i]); i += 1
     return (qjoin(out), dropped) if dropped else (c, [])
