@@ -114,7 +114,7 @@ FIELD_NOTES = {
               'earliest_at': 'earliest cached message date in IST'},
     'messages': {'id': 'stable message ref (open full thread + neighbors with `get message REF`)',
                  'chat_name': 'group or chat name (prefer `--in CHAT` for fuzzy matching)',
-                 'sender': 'display name of sender (or Me)',
+                 'sender': "display name of sender, or Me (filter by person: sender ~ 'NAME')",
                  'links': 'HTTP/HTTPS URLs in the message (empty string if none)',
                  'parent_id': 'ref of the quoted parent message, if any'},
 }
@@ -1127,6 +1127,16 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
         # unquoted words: literal and meaning, merged. Quoted phrases stay literal only.
         return fused_files(con, search, limit=limit, fields=fields, where=where, since=since, until=until, on=on,
                            label=label, folder=folder, show_all=show_all)
+    # Unify `body ~ 'x'` inside --where with `--search` on messages (decisions.md: one way to do each thing)
+    if not plain and resource == 'messages' and not search and not by and not count and where:
+        w_str = ' AND '.join(f'({w})' for w in where if w) if isinstance(where, list) else where
+        body_terms = re.findall(r"\bbody\s*(?:~|ILIKE|LIKE)\s*['\"]%?([^'\"]+?)%?['\"]", w_str, flags=re.I)
+        rem = re.sub(r"\bbody\s*(?:~|ILIKE|LIKE)\s*['\"][^'\"]+['\"]", '', w_str, flags=re.I)
+        rem = re.sub(r'\b(and|or)\b|[()\s]', '', rem, flags=re.I)
+        if body_terms and not rem:
+            search = ' '.join(body_terms)
+            where = None
+            raw_search = search
     if (not plain and search and resource == 'messages' and not by and not count
             and '"' not in raw_search):
         return fused_messages(con, search, limit=min(int(limit), 15) if limit == 50 else limit, fields=fields,

@@ -220,6 +220,23 @@ class WhatsAppSearchTest(unittest.TestCase):
             self.assertEqual(rows[0][0], sk.stable_ref('m1'))
             self.assertIn('No strong match inside', rs.LAST_SELECT_NOTE)
 
+    def test_body_tilde_rewrites_to_hybrid_search(self):
+        with mock.patch.object(rs, 'embed', side_effect=RuntimeError('offline')):
+            cols, rows, sql = rs.select(self.con, 'messages', folder='Jam Buns',
+                                        where="body ~ 'birding'", intent='Find birders signup')
+            self.assertTrue(rows)
+            self.assertEqual(rows[0][0], sk.stable_ref('m1'))
+            self.assertIn('hybrid_messages', sql)
+
+    def test_humanize_chat_output_for_messages(self):
+        with mock.patch.object(rs, 'embed', side_effect=RuntimeError('offline')):
+            r = idlicli.run_argv(self.con, ['list', 'messages', '--in', 'Jam Buns', '--search', 'birding'], chat=True)
+            txt = idlicli.chat_result(r, 'Find birders signup')
+            self.assertIn('Young Birders', txt)
+            self.assertIn('Vidya', txt)
+            self.assertIn('_In chat "Jam Buns', txt)
+            self.assertNotIn('these files', txt)
+
 
 if __name__ == '__main__':
     unittest.main()

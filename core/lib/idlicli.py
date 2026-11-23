@@ -123,8 +123,28 @@ def _chat_body(result, question):
     if result.kind == 'text':
         return result.text
     if not result.rows:
-        return 'I couldn’t find a match.'
+        return (result.note + '\n' if result.note else '') + 'I couldn’t find a match.'
     items = []
+    is_msg = 'body' in result.cols and 'sender' in result.cols
+    if is_msg:
+        for row in result.rows[:5]:
+            rec = {col: value for col, value in zip(result.cols, row)}
+            who = _fmt(rec.get('sender', ''))
+            when = _fmt(rec.get('sent_at', ''))
+            chat_nm = _fmt(rec.get('chat_name', ''))
+            body = _fmt(rec.get('body', ''), limit=320)
+            ref = str(rec.get('id') or '')[:8]
+            links = str(rec.get('links') or '').strip()
+            meta = ' · '.join(filter(None, [who, when, chat_nm, f'ref {ref}' if ref else '']))
+            line = f'• {body}\n  _{meta}_'
+            if links and links not in body:
+                line += f'\n  {links}'
+            items.append(line)
+        if len(result.rows) > 5:
+            items.append(f'{len(result.rows) - 5} more matches.')
+        if result.note:
+            items.append(f'\n_{result.note}_')
+        return '\n'.join(items)
     if 'found' in result.cols:
         found = result.cols.index('found')
         together = sum(str(row[found]).startswith(('phrase', 'mentioned', 'matched in name or folder')) for row in result.rows)
@@ -1561,8 +1581,11 @@ def ask(con, question, history, mapper='remote', data_dir=None, show_commands=Tr
     final_rows = '\n\n'.join(display_parts)
     earlier = ('Earlier steps (not shown to the person; do not describe their rows): ' + ' ; '.join(cmds[:-1])) \
         if len(cmds) > 1 else ''
-    chat_has_rows = humanize and any(chat_results.get(p) and chat_results[p].rows and 'found' not in chat_results[p].cols
-                                     for p in display_parts)
+    chat_has_rows = humanize and any(
+        chat_results.get(p) and chat_results[p].rows
+        and ('found' not in chat_results[p].cols or 'body' in chat_results[p].cols)
+        for p in display_parts
+    )
     if humanize and not chat_has_rows:
         reply, why = '', 'chat_result'
     elif cmds and re.match(r'(idli\s+)?(summarise|explain|help)\b', cmds[-1]) and 'failed' not in final_rows[:40]:
@@ -1664,7 +1687,7 @@ def own_words(c):
     except ValueError:
         return c, []
     said = set(re.findall(r'[a-z0-9]+', SAID.lower()))
-    stem = lambda w: w[:-1] if len(w) >= 4 and w.endswith('s') and not w.endswith('ss') else w
+    stem = lambda w: (w[:-1] if len(w) >= 4 and w.endswith('s') and not w.endswith('ss') else w).replace('z', 's')
     said |= {stem(w) for w in said}
     has_date_cue = bool(DATE_CUE_RE.search(SAID))
     judging = 'judge' in argv[:2]
@@ -1788,6 +1811,25 @@ def run_plan(con, plan, chat_results=None, question=None):
             say(2, r.render())
         except (Err, ValueError) as e:
             from lib import searchkit as sk
+            if isinstance(e, sk.EntityNotFoundError) and '--in' in argv and '--search' in argv and '--count' not in argv:
+                # If the mapper guessed a person/org name as --in CHAT alongside --search (and the user didn't call it a group/chat),
+                # fall back to searching all chats for both terms rather than dead-ending.
+                in_idx = argv.index('--in')
+                missing_in = argv[in_idx + 1] if in_idx + 1 < len(argv) else ''
+                explicit_group = bool(missing_in and re.search(re.escape(missing_in) + r'\s+(?:group|chat)\b', question or '', re.I))
+                if missing_in and not explicit_group:
+                    retry_argv = argv[:in_idx] + argv[in_idx + 2:] + ['--search', missing_in]
+                    try:
+                        r = run_argv(con, retry_argv, chat=chat_results is not None, intent=question)
+                        r.note = '\n'.join(filter(None, [f'No chat named "{missing_in}"; searched all synced chats instead.', r.note]))
+                        rendered = r.render()
+                        shown_parts.append(rendered)
+                        if chat_results is not None:
+                            chat_results[rendered] = r
+                        say(1, f'       fallback without --in "{missing_in}": ok')
+                        continue
+                    except Exception:
+                        pass
             if isinstance(e, sk.EntityError):
                 # Entity not found / ambiguous is a user-facing clarification, not a syntax bug to retry blindly.
                 r = Result(kind='text', text=str(e), chat=str(e))
