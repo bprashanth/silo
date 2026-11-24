@@ -92,10 +92,23 @@ type State struct {
 }
 
 var (
-	urlRe    = regexp.MustCompile(`(?i)https?://[^\s<>"\x{200b}]+`)
-	domainRe = regexp.MustCompile(`(?i)\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:org|com|in|net|io|co|edu|gov|ai|cc|me|app|dev)(?:/[^\s<>"\x{200b}]*)?`)
-	digitsRe = regexp.MustCompile(`\D+`)
+	urlRe     = regexp.MustCompile(`(?i)https?://[^\s<>"\x{200b}]+`)
+	domainRe  = regexp.MustCompile(`(?i)\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+(?:org|com|in|net|io|co|edu|gov|ai|cc|me|app|dev)(?:/[^\s<>"\x{200b}]*)?`)
+	digitsRe  = regexp.MustCompile(`\D+`)
+	mentionRe = regexp.MustCompile(`@([0-9]{10,18})\b`)
 )
+
+func isAllDigits(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
 
 func extractLinks(text string) []string {
 	seen := map[string]bool{}
@@ -204,32 +217,128 @@ func unpackMessage(m *waE2E.Message) (body, sourceType, preview, filename, quote
 	return
 }
 
+func (s *State) canonicalJID(ctx context.Context, jid types.JID) types.JID {
+	j := jid.ToNonAD()
+	if j.Server == types.HiddenUserServer && s.client != nil && s.client.Store != nil && s.client.Store.LIDs != nil {
+		if pn, err := s.client.Store.LIDs.GetPNForLID(ctx, j); err == nil && !pn.IsEmpty() {
+			return pn.ToNonAD()
+		}
+	}
+	return j
+}
+
+func (s *State) lookupContactName(ctx context.Context, jid types.JID) string {
+	if jid.IsEmpty() || s.client == nil || s.client.Store == nil || s.client.Store.Contacts == nil {
+		return ""
+	}
+	if info, err := s.client.Store.Contacts.GetContact(ctx, jid.ToNonAD()); err == nil && info.Found {
+		for _, cand := range []string{info.FullName, info.FirstName, info.PushName, info.BusinessName} {
+			if c := strings.TrimSpace(cand); c != "" && !isAllDigits(c) {
+				return c
+			}
+		}
+	}
+	return ""
+}
+
 func (s *State) resolveSender(ctx context.Context, jid types.JID, pushName string, fromMe bool) (string, string) {
 	if fromMe {
 		return "me", "Me"
 	}
-	id := jid.ToNonAD().String()
-	if name := s.contacts[id]; name != "" {
-		return id, name
+	raw := jid.ToNonAD()
+	canon := s.canonicalJID(ctx, raw)
+	id := canon.String()
+	// Check in-memory cache (canonical first, then raw LID)
+	for _, k := range []string{id, raw.String()} {
+		if name := s.contacts[k]; name != "" && !isAllDigits(name) {
+			return id, name
+		}
 	}
-	if s.client != nil && s.client.Store != nil && s.client.Store.Contacts != nil && !jid.IsEmpty() {
-		if info, err := s.client.Store.Contacts.GetContact(ctx, jid.ToNonAD()); err == nil && info.Found {
-			for _, cand := range []string{info.FullName, info.FirstName, info.PushName, info.BusinessName} {
-				if strings.TrimSpace(cand) != "" {
-					s.contacts[id] = strings.TrimSpace(cand)
-					return id, s.contacts[id]
+	// Query whatsmeow contact store for canonical PN JID first, then raw LID JID
+	for _, candJID := range []types.JID{canon, raw} {
+		if name := s.lookupContactName(ctx, candJID); name != "" {
+			s.contacts[id] = name
+			s.contacts[raw.String()] = name
+			return id, name
+		}
+	}
+	if p := strings.TrimSpace(pushName); p != "" && !isAllDigits(p) {
+		s.contacts[id] = p
+		s.contacts[raw.String()] = p
+		return id, p
+	}
+	if canon.User != "" {
+		return id, canon.User
+	}
+	if raw.User != "" {
+		return id, raw.User
+	}
+	return id, "Unknown"
+}
+
+func (s *State) resolveMentionDigits(ctx context.Context, digits string) string {
+	// Try as LID first, then as phone JID
+	for _, srv := range []string{types.HiddenUserServer, types.DefaultUserServer} {
+		j := types.NewJID(digits, srv)
+		_, name := s.resolveSender(ctx, j, "", false)
+		if name != "" && name != "Unknown" && !isAllDigits(name) {
+			return name
+		}
+	}
+	return ""
+}
+
+func (s *State) resolveMentions(ctx context.Context, body string) string {
+	if !strings.Contains(body, "@") {
+		return body
+	}
+	return mentionRe.ReplaceAllStringFunc(body, func(match string) string {
+		digits := match[1:]
+		if name := s.resolveMentionDigits(ctx, digits); name != "" {
+			return "@" + name
+		}
+		return match
+	})
+}
+
+func (s *State) backfillNames(ctx context.Context) int {
+	updated := 0
+	for key, msg := range s.messages {
+		changed := false
+		if !msg.IsFromMe && (isAllDigits(msg.Sender) || strings.HasSuffix(msg.SenderID, "@lid")) {
+			if j, err := types.ParseJID(msg.SenderID); err == nil {
+				newID, newName := s.resolveSender(ctx, j, "", false)
+				if newID != msg.SenderID || newName != msg.Sender {
+					msg.SenderID = newID
+					msg.Sender = newName
+					changed = true
 				}
 			}
 		}
+		if !msg.IsGroup && (isAllDigits(msg.ChatName) || strings.Contains(msg.ChatName, "@")) {
+			if cj, err := types.ParseJID(msg.ChatID); err == nil {
+				_, cname := s.resolveSender(ctx, cj, "", false)
+				if cname != "" && cname != "Unknown" && !isAllDigits(cname) && cname != msg.ChatName {
+					msg.ChatName = cname
+					s.chatNames[msg.ChatID] = cname
+					changed = true
+				}
+			}
+		}
+		newBody := s.resolveMentions(ctx, msg.Body)
+		if newBody != msg.Body {
+			msg.Body = newBody
+			changed = true
+		}
+		if changed {
+			s.messages[key] = msg
+			updated++
+		}
 	}
-	if strings.TrimSpace(pushName) != "" {
-		s.contacts[id] = strings.TrimSpace(pushName)
-		return id, s.contacts[id]
+	if updated > 0 {
+		s.dirty = true
 	}
-	if jid.User != "" {
-		return id, jid.User
-	}
-	return id, "Unknown"
+	return updated
 }
 
 func (s *State) resolveChatName(ctx context.Context, chatJID types.JID, fallback string) string {
@@ -273,6 +382,7 @@ func (s *State) recordMessage(ctx context.Context, chatJID types.JID, chatNameHi
 	isGroup := chatJID.Server == types.GroupServer
 	chatName := s.resolveChatName(ctx, chatJID, chatNameHint)
 	senderID, sender := s.resolveSender(ctx, senderJID, pushName, fromMe)
+	body = s.resolveMentions(ctx, body)
 	key := chatID + "|" + stanzaID
 	parentID := ""
 	if quotedStanza != "" {
@@ -467,7 +577,8 @@ func main() {
 		messages:   map[string]CapturedMessage{},
 	}
 
-	// Preload any existing snapshot so restarts keep already-captured messages.
+	// Preload any existing snapshot so restarts keep already-captured messages,
+	// and backfill any previously unresolved @lid senders / @mentions from whatsmeow.db.
 	if existing, err := os.ReadFile(filepath.Join(*stateDir, "snapshot.json")); err == nil {
 		var prev Snapshot
 		if json.Unmarshal(existing, &prev) == nil {
@@ -478,6 +589,10 @@ func main() {
 						st.messages[m.ID] = m
 					}
 				}
+			}
+			if n := st.backfillNames(ctx); n > 0 {
+				log.Printf("backfilled %d cached messages with resolved contact names", n)
+				_ = st.flushSnapshot()
 			}
 		}
 	}
@@ -553,6 +668,7 @@ func main() {
 					}
 				}
 			}
+			st.backfillNames(ctx)
 			st.status = "ready"
 			total := len(st.messages)
 			blobs := st.historyBlobs

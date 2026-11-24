@@ -31,7 +31,7 @@ One shape: `idli VERB RESOURCE [REF] [flags]`. The same flags mean the same thin
 
 | Command | What it does | Example |
 |---|---|---|
-| `sync [gmail\|gcalendar\|drive\|whatsapp\|all]` | copy the account or chat snapshot into the store, read only. `drive` reads sheets/text/cards/embeddings; `whatsapp` ingests a snapshot (`--from-snapshot PATH`, optional `--days N`), builds contextual conversation episodes, DuckDB FTS BM25 indexes and episode embeddings | `idli sync whatsapp --from-snapshot snapshot.json -v` |
+| `sync [gmail\|gcalendar\|drive\|whatsapp\|all]` | copy the account or chat snapshot into the store, read only. `drive` reads sheets/text/cards/embeddings; `whatsapp` ingests a snapshot (`--from-snapshot PATH`, optional `--days N`), builds contextual conversation episodes, DuckDB FTS BM25 indexes and episode embeddings. Repeat `--in FOLDER\|CHAT` to scope `sync drive` to specific folders or `sync whatsapp` to specific groups/chats | `idli sync whatsapp --from-snapshot snapshot.json --in "Jam Buns" --in "Acumen" -v` |
 | `list RESOURCE` | rows that match the flags (`--in FOLDER\|CHAT` resolves Drive folders or chat names fuzzily, reporting cached coverage) | `idli list messages --in "Jam Buns" --on "last week"` |
 | `list ... --count` | how many (always runs on the full filtered table, never a search packet) | `idli list messages --count --in "Jam Buns" --where "links <> ''"` |
 | `list ... --group-by F` | how many per value | `idli list files --group-by kind` |

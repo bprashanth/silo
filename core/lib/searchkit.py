@@ -324,10 +324,32 @@ def default_whatsapp_snapshot():
     return None
 
 
-def sync_whatsapp(con, snapshot_path=None, days=None, embed_fn=None, progress=None, on_item=None):
+def _chat_matches_selector(chat_name, selector):
+    q = (selector or '').strip()
+    if not q:
+        return True
+    name_low = (chat_name or '').casefold()
+    q_low = q.casefold()
+    if q_low in name_low:
+        return True
+    q_toks = _tokens(q, drop_filler=True)
+    ctoks = _tokens(chat_name, drop_filler=False)
+    if not q_toks or not ctoks:
+        return False
+    if all(any(ct == qt or (len(qt) >= 3 and ct.startswith(qt)) for ct in ctoks) for qt in q_toks):
+        return True
+    if len(q_toks) == 1 and 2 <= len(q_toks[0]) <= 4:
+        if ''.join(t[0] for t in ctoks).startswith(q_toks[0]):
+            return True
+    return False
+
+
+def sync_whatsapp(con, snapshot_path=None, days=None, only_chats=None, embed_fn=None, progress=None, on_item=None):
     """Ingest a WhatsApp JSON snapshot (WA-JS `fresh.json` or whatsmeow `snapshot.json`)
     into first-class `chats`, `messages`, `chat_members`, and `message_episodes` tables,
-    plus DuckDB FTS and optional embeddings."""
+    plus DuckDB FTS and optional embeddings.
+    `only_chats`: optional list of chat/group name selectors (e.g. ['Jam Buns', 'Royal Enfield'])
+    so testers can scope sync to specific groups only."""
     path = Path(snapshot_path).expanduser() if snapshot_path else default_whatsapp_snapshot()
     if not path or not path.is_file():
         raise ValueError(
@@ -338,6 +360,20 @@ def sync_whatsapp(con, snapshot_path=None, days=None, embed_fn=None, progress=No
     snap = json.loads(path.read_text())
     provider = snap.get('provider') or 'whatsapp'
     raw_chats = list(snap.get('groups') or []) + list(snap.get('dms') or [])
+    selectors = []
+    for item in (only_chats or []):
+        for part in str(item).split(','):
+            if part.strip():
+                selectors.append(part.strip())
+    if selectors:
+        matched_chats = [
+            c for c in raw_chats
+            if any(_chat_matches_selector(str(c.get('name') or c.get('id') or ''), sel) for sel in selectors)
+        ]
+        if not matched_chats:
+            avail = ', '.join(str(c.get('name') or c.get('id')) for c in raw_chats[:10])
+            raise ValueError(f'No chats in snapshot matched --in {selectors}. Sample chats: {avail}')
+        raw_chats = matched_chats
     cutoff = None
     if days is not None and days > 0:
         all_ts = [r['t'] for c in raw_chats for r in (c.get('rows') or []) if r.get('t')]

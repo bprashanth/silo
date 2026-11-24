@@ -237,6 +237,53 @@ class WhatsAppSearchTest(unittest.TestCase):
             self.assertIn('_In chat "Jam Buns', txt)
             self.assertNotIn('these files', txt)
 
+    def test_merge_list_searches_combines_same_scope_commands(self):
+        cmds = [
+            'idli list messages --in "Jam Buns @ T4GC" --search "dice" --limit 20',
+            'idli list messages --in "Jam Buns @ T4GC" --search "Abhi" --limit 20',
+            'idli list messages --in "Jam Buns @ T4GC" --search "doc" --limit 20',
+        ]
+        merged = idlicli._merge_list_searches(cmds)
+        self.assertEqual(len(merged), 1)
+        self.assertIn('--search "dice Abhi doc"', merged[0])
+        # Different --in scopes are NOT merged
+        diff = [
+            'idli list messages --in "Jam Buns" --search "dice"',
+            'idli list messages --in "Royal Enfield" --search "session"',
+        ]
+        self.assertEqual(idlicli._merge_list_searches(diff), diff)
+
+    def test_sync_whatsapp_in_filter_scopes_chats(self):
+        sbx2 = Path(self.tmp.name) / 'sbx_scoped'
+        con2 = rs.connect(sbx2)
+        try:
+            res = rs.sync_whatsapp(con2, snapshot_path=self.snap, only_chats=['Jam Buns'], with_embed=False)
+            self.assertEqual(res['chats'], 1)
+            self.assertEqual(res['messages'], 6)
+            chats = [r[0] for r in con2.execute('SELECT name FROM chats').fetchall()]
+            self.assertEqual(chats, ['Jam Buns 🍞'])
+            # Multiple --in selectors (comma or repeated)
+            res2 = rs.sync_whatsapp(con2, snapshot_path=self.snap, only_chats=['Jam Buns', 'RE'], with_embed=False)
+            self.assertEqual(res2['chats'], 2)
+            self.assertEqual(res2['messages'], 9)
+        finally:
+            con2.close()
+
+    def test_source_type_document_falls_back_to_shared_links(self):
+        # Google Docs links are stored as source_type='text' with links <> '';
+        # querying source_type='document' with a search relaxes cleanly to shared links when no attachment matches.
+        _, rows, _ = rs.select(
+            self.con,
+            'messages',
+            folder='Jam Buns',
+            search='dice',
+            where="source_type = 'document'",
+            limit=10,
+        )
+        joined = '\n'.join(str(r) for r in rows)
+        self.assertIn('docs.google.com', joined)
+        self.assertIn('shared links', rs.LAST_SELECT_NOTE)
+
 
 if __name__ == '__main__':
     unittest.main()

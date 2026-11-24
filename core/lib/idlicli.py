@@ -289,6 +289,8 @@ def parser():
     s.add_argument('--no-embed', action='store_true', help='make no embeddings now (search then matches words only)')
     s.add_argument('--from-snapshot', dest='from_snapshot', help='WhatsApp JSON snapshot path to ingest')
     s.add_argument('--days', type=int, default=None, help='rolling window in days for chat sync (e.g. 14)')
+    s.add_argument('--in', '--folder', dest='in_scopes', action='append',
+                   help='only sync specific Drive folders or WhatsApp chats/groups (repeatable or comma-separated)')
     s.add_argument('--as', dest='role', default='me')
     for verb in ('list', 'count'):  # count is list --count; still accepted, not in the menu
         l = sub.add_parser(verb, help='rows of a resource' if verb == 'list' else argparse.SUPPRESS)
@@ -401,11 +403,12 @@ def run_argv(con, argv, chat=False, intent=None):
         if a.what == 'whatsapp':
             t0 = time.time()
             say(1, '[sync whatsapp] ingesting chat snapshot ...')
-            rw = rs.sync_whatsapp(con, snapshot_path=a.from_snapshot, days=a.days,
+            rw = rs.sync_whatsapp(con, snapshot_path=a.from_snapshot, days=a.days, only_chats=a.in_scopes,
                                   with_embed=not a.no_embed, progress=progress_line, on_item=item_line('chat'))
             emb = (f', {rw["embedded"]} episodes embedded' if rw['embedded']
                    else (f', embeddings skipped ({rw["embed_error"]})' if rw.get('embed_error') else ''))
-            return Result(kind='text', text=f'Synced whatsapp: {rw["chats"]} chats, {rw["messages"]} messages, '
+            scope_s = f' (filtered by --in {", ".join(a.in_scopes)})' if a.in_scopes else ''
+            return Result(kind='text', text=f'Synced whatsapp{scope_s}: {rw["chats"]} chats, {rw["messages"]} messages, '
                                             f'{rw["episodes"]} episodes{emb} in {rw["seconds"]} s.')
         acct, out = account(a.role), []
         whats = {'all': ['mail', 'events', 'files', 'sheets'], 'drive': ['files', 'sheets'], 'gmail': ['mail'],
@@ -421,6 +424,9 @@ def run_argv(con, argv, chat=False, intent=None):
             elif what == 'sheets':
                 n = rs.sync_sheets(con, acct, progress=progress_line, on_item=item_line('sheet'))
                 out.append(f'sheets: {n} read (unchanged ones skipped)')
+            elif what == 'files':
+                n = rs.sync_files(con, acct, only_folders=a.in_scopes)
+                out.append(f'files: {n} listed' + (f' (in {", ".join(a.in_scopes)})' if a.in_scopes else ''))
             else:
                 n = getattr(rs, f'sync_{what}')(con, acct)
                 out.append(f'{what}: {n} listed')
@@ -1743,10 +1749,84 @@ def qjoin(argv):
     return ' '.join(q(a) for a in argv)
 
 
+def _merge_list_searches(cmds):
+    """Merge consecutive `idli list <resource> --search <unquoted>` commands that share the exact same
+    scope flags (--in, --where, --on, --since, --until, --fields) into a single combined --search
+    command so earlier keywords aren't overwritten by the last command."""
+    if len(cmds) < 2:
+        return cmds
+
+    def parse_list_search(c):
+        try:
+            argv = shlex.split(c)
+        except ValueError:
+            return None
+        prefix = ['idli'] if argv[:1] == ['idli'] else []
+        rest = argv[len(prefix):]
+        if len(rest) < 3 or rest[0] != 'list':
+            return None
+        resource = rest[1]
+        terms, scope_tokens, limit_val = [], [], None
+        i = 2
+        while i < len(rest):
+            t = rest[i]
+            if t == '--search' and i + 1 < len(rest):
+                val = rest[i + 1]
+                if '"' in val:  # keep exact quoted phrase searches separate
+                    return None
+                terms.append(val)
+                i += 2
+            elif t == '--limit' and i + 1 < len(rest):
+                try:
+                    limit_val = int(rest[i + 1])
+                except ValueError:
+                    return None
+                i += 2
+            elif t in ('--count', '--group-by', '--by'):
+                return None
+            else:
+                scope_tokens.append(t)
+                i += 1
+        if not terms:
+            return None
+        return prefix, resource, tuple(scope_tokens), terms, limit_val
+
+    out = []
+    i = 0
+    while i < len(cmds):
+        p = parse_list_search(cmds[i])
+        if not p:
+            out.append(cmds[i])
+            i += 1
+            continue
+        prefix, res, scope, all_terms, max_lim = p
+        j = i + 1
+        while j < len(cmds):
+            p2 = parse_list_search(cmds[j])
+            if p2 and p2[1] == res and p2[2] == scope:
+                all_terms.extend(p2[3])
+                if p2[4] is not None:
+                    max_lim = max(max_lim or 0, p2[4])
+                j += 1
+            else:
+                break
+        if j - i > 1:
+            merged_words = ' '.join(dict.fromkeys(w for t in all_terms for w in t.split()))
+            argv = prefix + ['list', res] + list(scope) + ['--search', merged_words]
+            if max_lim is not None:
+                argv += ['--limit', str(max_lim)]
+            out.append(qjoin(argv))
+        else:
+            out.append(cmds[i])
+        i = j
+    return out
+
+
 def run_plan(con, plan, chat_results=None, question=None):
     shown_parts, cmds, judge_s, errors = [], [], 0.0, []
     seen_cmds = set()
-    for c in plan['commands'][:6]:
+    plan_cmds = _merge_list_searches(list(plan['commands'][:6]))
+    for c in plan_cmds:
         if c.strip().lower() in ('continue', 'idli continue'):
             # The 9B occasionally emits "continue" inside commands[] instead of "continue": true.
             if not shown_parts:

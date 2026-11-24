@@ -115,6 +115,7 @@ FIELD_NOTES = {
     'messages': {'id': 'stable message ref (open full thread + neighbors with `get message REF`)',
                  'chat_name': 'group or chat name (prefer `--in CHAT` for fuzzy matching)',
                  'sender': "display name of sender, or Me (filter by person: sender ~ 'NAME')",
+                 'source_type': "'text' (includes messages with Google Docs/URLs), 'image_caption', 'video_caption', or 'document' (uploaded file attachments only)",
                  'links': 'HTTP/HTTPS URLs in the message (empty string if none)',
                  'parent_id': 'ref of the quoted parent message, if any'},
 }
@@ -369,7 +370,7 @@ def _kind(mime):
     return 'other'
 
 
-def sync_files(con, account):
+def sync_files(con, account, only_folders=None):
     g, t0 = _g(), time.time()
     files, page = [], None
     while True:
@@ -391,12 +392,22 @@ def sync_files(con, account):
         if not par:
             return 'Shared with me' if f.get('shared') else 'My Drive'
         return (path(par, depth + 1) + '/' if path(par, depth + 1) else '') + par['name']
+    selectors = []
+    for item in (only_folders or []):
+        for part in str(item).split(','):
+            if part.strip():
+                selectors.append(part.strip().casefold())
     con.execute('DELETE FROM files WHERE account = ?', [account])
     rows = []
     for f in files:
         im = f.get('imageMediaMetadata') or {}
         p = path(f)
-        rows.append([f['id'], account, f['name'], _kind(f.get('mimeType')), f.get('mimeType', ''),
+        kind = _kind(f.get('mimeType'))
+        if selectors:
+            full = (p + '/' + f['name']).casefold() if kind == 'folder' else p.casefold()
+            if not any(sel in full for sel in selectors):
+                continue
+        rows.append([f['id'], account, f['name'], kind, f.get('mimeType', ''),
                      p.split('/')[-1] if p else '', p, int(f.get('size') or 0),
                      local(dt.datetime.fromisoformat(f['modifiedTime'].replace('Z', '+00:00'))),
                      ((f.get('owners') or [{}])[0]).get('emailAddress', ''), bool(f.get('shared')),
@@ -1042,9 +1053,9 @@ def fused_files(con, search, limit=50, fields=None, **kw):
         f'fused: {len(lit_rank)} literal, {len(sem_rank)} by meaning'
 
 
-def sync_whatsapp(con, snapshot_path=None, days=None, with_embed=True, progress=None, on_item=None):
+def sync_whatsapp(con, snapshot_path=None, days=None, only_chats=None, with_embed=True, progress=None, on_item=None):
     from lib import searchkit as sk
-    return sk.sync_whatsapp(con, snapshot_path=snapshot_path, days=days,
+    return sk.sync_whatsapp(con, snapshot_path=snapshot_path, days=days, only_chats=only_chats,
                             embed_fn=embed if with_embed else None, progress=progress, on_item=on_item)
 
 
@@ -1058,15 +1069,45 @@ def fused_messages(con, search, limit=12, fields=None, intent=None, **kw):
     _, base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw)
     scope_note = LAST_SELECT_NOTE
     base_ids = [r[0] for r in base]
+    chat_hint = kw.get('folder')
+    lim = min(int(limit), 30)
+    hits = sk.search_messages(con, _search_text(search), base_ids, chat_name_hint=chat_hint,
+                              embed_fn=embed, limit=lim, intent_query=intent) if base_ids else []
+    tel = dict(sk.LAST_TELEMETRY) if base_ids else {}
+    # WhatsApp stores Google Docs / Drive / Notion URLs as source_type='text' with links <> ''.
+    # If a `source_type = 'document'` filter found no strong attachment match, also check shared links in the same scope.
+    w_raw = kw.get('where')
+    w_text = ' AND '.join(str(x) for x in w_raw if x) if isinstance(w_raw, list) else str(w_raw or '')
+    doc_filter = bool(re.search(r"\bsource_type\s*(?:=|~|ILIKE|LIKE)\s*'[^']*doc[^']*'", w_text, re.I))
+    weak_doc = doc_filter and (
+        not hits
+        or (tel.get('reranker_used') and (tel.get('top_prob') or 0.0) < 0.05)
+        or (not tel.get('reranker_used') and tel.get('bm25_msg_hits', 0) == 0 and tel.get('fuzzy_hits', 0) == 0)
+    )
+    if weak_doc:
+        relaxed_where = re.sub(
+            r"\bsource_type\s*(?:=|~|ILIKE|LIKE)\s*'[^']*doc[^']*'",
+            "(source_type = 'document' OR links <> '')",
+            w_text,
+            flags=re.I,
+        )
+        kw_rel = {**kw, 'where': relaxed_where}
+        _, rel_base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw_rel)
+        rel_ids = [r[0] for r in rel_base]
+        if len(rel_ids) > len(base_ids):
+            rel_hits = sk.search_messages(con, _search_text(search), rel_ids, chat_name_hint=chat_hint,
+                                          embed_fn=embed, limit=lim, intent_query=intent)
+            if rel_hits:
+                base_ids = rel_ids
+                hits = rel_hits
+                tel = dict(sk.LAST_TELEMETRY)
+                kw = kw_rel
+                scope_note = ((scope_note + ' ') if scope_note else '') + \
+                    'No uploaded file attachments matched; searched messages with shared links.'
     if not base_ids:
         LAST_SELECT_NOTE = scope_note
         show = fields or ', '.join(RESOURCES['messages']['show'])
         return [c.strip() for c in show.split(',')] + ['found'], [], 'fused_messages: empty scope'
-    chat_hint = kw.get('folder')
-    lim = min(int(limit), 30)
-    hits = sk.search_messages(con, _search_text(search), base_ids, chat_name_hint=chat_hint,
-                              embed_fn=embed, limit=lim, intent_query=intent)
-    tel = dict(sk.LAST_TELEMETRY)
     # Weak-scope rescue: only when `--in CHAT` was set and no explicit date coverage gap occurred.
     weak_in_chat = (
         chat_hint
