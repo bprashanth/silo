@@ -321,6 +321,50 @@ class WhatsAppSearchTest(unittest.TestCase):
         rendered = res.render()
         self.assertIn('ROYAL_TITLE_END', rendered)
 
+    def test_multi_or_body_tilde_does_not_leave_dangling_or(self):
+        _, rows, _ = rs.select(
+            self.con,
+            'messages',
+            folder='Jam Buns',
+            search='Vidya',
+            where="body ~ 'birders' or body ~ 'budget' or body ~ 'dice'",
+            limit=10,
+        )
+        self.assertTrue(len(rows) >= 1)
+
+    def test_post_latest_date_filter_relaxes_while_past_out_of_window_stays_strict(self):
+        # Future / post-latest date with --search relaxes to find mentions of upcoming dates
+        _, rows_future, _ = rs.select(
+            self.con,
+            'messages',
+            folder='Jam Buns',
+            search='DICE',
+            since='2026-11-25',
+            until='2026-11-25',
+            limit=10,
+        )
+        self.assertTrue(any('DICE' in str(r) for r in rows_future))
+        self.assertIn('searched cached messages for mentions', rs.LAST_SELECT_NOTE)
+        # Past out-of-window date MUST stay strictly empty with coverage note
+        _, rows_past, _ = rs.select(
+            self.con,
+            'messages',
+            folder='Jam Buns',
+            search='DICE',
+            since='2026-07-01',
+            until='2026-07-31',
+            limit=10,
+        )
+        self.assertEqual(rows_past, [])
+        self.assertIn('outside the cached window', rs.LAST_SELECT_NOTE)
+
+    def test_run_plan_normalizes_get_message_with_search_to_list(self):
+        plan = {'commands': ['idli get message --in "Jam Buns" --search "birding" --text']}
+        shown, cmds, _, errs = idlicli.run_plan(self.con, plan, question='birding in Jam Buns')
+        self.assertEqual(errs, [])
+        self.assertTrue(any('list messages' in c for c in cmds))
+        self.assertIn('Birders', '\n'.join(shown))
+
 
 if __name__ == '__main__':
     unittest.main()

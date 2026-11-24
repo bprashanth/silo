@@ -914,6 +914,13 @@ def summarise_messages(con, search, chat=None, on=None, since=None, until=None, 
     scope_note = rs.LAST_SELECT_NOTE
     base_ids = [r[0] for r in base]
     topic = rs._search_text(search)
+    if (not base_ids and any((on, since, until)) and topic
+            and 'outside the cached window' not in scope_note):
+        _, nd_base, _ = rs.select(con, 'messages', folder=chat, fields='id', limit=100000, order='id', plain=True)
+        if nd_base:
+            base_ids = [r[0] for r in nd_base]
+            scope_note = ((rs.LAST_SELECT_NOTE + ' ') if rs.LAST_SELECT_NOTE else '') + \
+                'No messages were sent in that date range; summarising cached messages matching the topic instead.'
     if not base_ids:
         msg = (scope_note + '\n' if scope_note else '') + 'No messages in that scope to summarise.'
         return Result(kind='text', text=msg, chat=msg)
@@ -1890,6 +1897,15 @@ def run_plan(con, plan, chat_results=None, question=None):
                 errors.append(f'{c}: could not read the command')
                 continue
         verb = argv[1] if argv[:1] == ['idli'] and len(argv) > 1 else argv[0]
+        # Normalize malformed `idli get message --search/--in ...` (no REF) -> `idli list messages ...`
+        args_tail = argv[1:] if argv[:1] == ['idli'] else argv
+        if (len(args_tail) >= 3 and args_tail[0] == 'get' and args_tail[1] in ('message', 'messages')
+                and any(f in args_tail[2:] for f in ('--search', '--in', '--where'))
+                and args_tail[2].startswith('-')):
+            cleaned = [t for t in args_tail[2:] if t not in ('--text', '--outline')]
+            argv = (['idli'] if argv[:1] == ['idli'] else []) + ['list', 'messages'] + cleaned
+            c = qjoin(argv)
+            verb = 'list'
         if verb in ('define', 'view'):  # a new meaning: never made or changed without the person's yes
             try:
                 pa = parser().parse_args(argv[1:] if argv[:1] == ['idli'] else argv)
@@ -1937,13 +1953,19 @@ def run_plan(con, plan, chat_results=None, question=None):
                     retry_argv = argv[:in_idx] + argv[in_idx + 2:] + ['--search', missing_in]
                     try:
                         r = run_argv(con, retry_argv, chat=chat_results is not None, intent=question)
-                        r.note = '\n'.join(filter(None, [f'No chat named "{missing_in}"; searched all synced chats instead.', r.note]))
-                        rendered = r.render()
-                        shown_parts.append(rendered)
-                        if chat_results is not None:
-                            chat_results[rendered] = r
-                        say(1, f'       fallback without --in "{missing_in}": ok')
-                        continue
+                        gtel = dict(sk.LAST_TELEMETRY)
+                        strong_fb = (
+                            (gtel.get('reranker_used') and (gtel.get('top_prob') or 0.0) >= 0.25)
+                            or (not gtel.get('reranker_used') and gtel.get('bm25_msg_hits', 0) > 0)
+                        )
+                        if r.rows and strong_fb:
+                            r.note = '\n'.join(filter(None, [f'No chat named "{missing_in}"; searched all synced chats instead.', r.note]))
+                            rendered = r.render()
+                            shown_parts.append(rendered)
+                            if chat_results is not None:
+                                chat_results[rendered] = r
+                            say(1, f'       fallback without --in "{missing_in}": ok')
+                            continue
                     except Exception:
                         pass
             if isinstance(e, sk.EntityError):

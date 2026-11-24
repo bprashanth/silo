@@ -1069,6 +1069,18 @@ def fused_messages(con, search, limit=12, fields=None, intent=None, **kw):
     _, base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw)
     scope_note = LAST_SELECT_NOTE
     base_ids = [r[0] for r in base]
+    # If a date filter (--since/--until/--on) matched 0 messages AND was NOT an out-of-window past date
+    # (e.g. searching for an upcoming event date mentioned inside earlier messages, or --since 7d on a quiet chat),
+    # search the full cached chat history for the topic and explain why.
+    if (not base_ids and any(kw.get(k) for k in ('since', 'until', 'on'))
+            and 'outside the cached window' not in scope_note):
+        kw_nodate = {**kw, 'since': None, 'until': None, 'on': None}
+        _, nd_base, _ = select(con, 'messages', fields='id', limit=100000, order='id', plain=True, **kw_nodate)
+        if nd_base:
+            base_ids = [r[0] for r in nd_base]
+            kw = kw_nodate
+            scope_note = ((LAST_SELECT_NOTE + ' ') if LAST_SELECT_NOTE else '') + \
+                'No messages were sent in that date range; searched cached messages for mentions instead.'
     chat_hint = kw.get('folder')
     lim = min(int(limit), 30)
     hits = sk.search_messages(con, _search_text(search), base_ids, chat_name_hint=chat_hint,
@@ -1181,12 +1193,16 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
                 kept_parts.append(part)
                 continue
             extracted_terms.extend(terms)
-            # Strip body ~ '...' clauses and any dangling AND/OR operators around them
+            # Strip body ~ '...' clauses and any dangling AND/OR/empty-paren shells around them
             rem = body_pat.sub('', part)
-            rem = re.sub(r'\(\s*\)', '', rem)
-            rem = re.sub(r'^\s*(?:AND|OR)\s+|\s+(?:AND|OR)\s*$', '', rem, flags=re.I)
-            rem = re.sub(r'\b(?:AND|OR)\s+(?:AND|OR)\b', 'AND', rem, flags=re.I).strip()
-            if rem and re.search(r'[A-Za-z0-9]', rem):
+            prev_rem = None
+            while rem != prev_rem:
+                prev_rem = rem
+                rem = re.sub(r'\(\s*\)', '', rem)
+                rem = re.sub(r'^\s*(?:AND|OR)\b|\b(?:AND|OR)\s*$', '', rem, flags=re.I)
+                rem = re.sub(r'\b(?:AND|OR)\s+(?:AND|OR)\b', ' ', rem, flags=re.I)
+                rem = rem.strip()
+            if rem and re.sub(r'\b(?:and|or|not)\b|[()\s]', '', rem, flags=re.I):
                 kept_parts.append(rem)
         if extracted_terms:
             prev_s = _search_text(search) if search else ''
