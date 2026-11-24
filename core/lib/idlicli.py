@@ -61,7 +61,7 @@ class Result:
             vals = []
             for col, v in zip(self.cols, r):
                 cl = col.lower()
-                lim = 0 if cl == 'links' else (450 if cl in ('body', 'found') else 160)
+                lim = 0 if cl == 'links' else ((1200 if i <= 5 else 450) if cl == 'body' else (450 if cl == 'found' else 160))
                 vals.append(_fmt(v, limit=lim))
             out.append(f'{i}. ' + ' | '.join(v for v in vals if v != ''))
         more = f'\n... and {len(self.rows) - max_rows} more' if len(self.rows) > max_rows else ''
@@ -891,6 +891,20 @@ def summarise_search(con, search, folder=None, question='', docs=5, chars=9000):
                                                      for fid, name in cited_files.items()))
 
 
+RECENCY_FILLER = {
+    'latest', 'recent', 'recently', 'last', 'newest', 'current', 'new', 'discussion', 'discussions',
+    'update', 'updates', 'conversation', 'conversations', 'chat', 'chats', 'messages', 'message',
+    'summary', 'summarize', 'summarise', 'happened', 'going', 'activity', 'thread', 'threads',
+    'catch', 'catchup', 'up', 'today', 'yesterday', 'this', 'week', 'days', 'day', 'group',
+    'the', 'in', 'of', 'on', 'about', 'all', 'what', 'was', 'is', 'are', 'to', 'from', 'for',
+}
+
+
+def _is_recency_only_topic(topic):
+    toks = re.findall(r'[a-z0-9]+', (topic or '').lower())
+    return (not toks) or all(t in RECENCY_FILLER for t in toks)
+
+
 def summarise_messages(con, search, chat=None, on=None, since=None, until=None, question='', limit=5):
     """What your chat conversations say about a topic: top ranked contextualized episodes read by the 9B,
     grounded with dates, speakers, message refs and verbatim source receipts."""
@@ -903,11 +917,32 @@ def summarise_messages(con, search, chat=None, on=None, since=None, until=None, 
     if not base_ids:
         msg = (scope_note + '\n' if scope_note else '') + 'No messages in that scope to summarise.'
         return Result(kind='text', text=msg, chat=msg)
-    eps = sk.search_episodes(con, topic, base_ids, chat_name_hint=chat, embed_fn=rs.embed, limit=limit,
-                             intent_query=question or None)
-    tel = dict(sk.LAST_TELEMETRY)
+    if _is_recency_only_topic(topic):
+        # "latest discussion" / "recent updates": pull the most recent episodes chronologically instead of
+        # running semantic search on literal filler words like "latest discussion".
+        base_set = set(base_ids)
+        ep_rows = con.execute(
+            'SELECT episode_id, chat_name, start_at, end_at, message_ids, context_text '
+            'FROM message_episodes ORDER BY end_at DESC'
+        ).fetchall()
+        eps = []
+        for ep_id, cname, start_at, end_at, mids_json, ctx_text in ep_rows:
+            mids = json.loads(mids_json or '[]')
+            if any(m in base_set for m in mids):
+                eps.append({
+                    'episode_id': ep_id, 'chat_name': cname, 'start_at': start_at, 'end_at': end_at,
+                    'message_ids': mids, 'context_text': ctx_text,
+                })
+                if len(eps) >= int(limit):
+                    break
+        tel = {}
+    else:
+        eps = sk.search_episodes(con, topic, base_ids, chat_name_hint=chat, embed_fn=rs.embed, limit=limit,
+                                 intent_query=question or None)
+        tel = dict(sk.LAST_TELEMETRY)
     weak_in_chat = (
-        chat and 'outside the cached window' not in scope_note
+        not _is_recency_only_topic(topic)
+        and chat and 'outside the cached window' not in scope_note
         and (
             (tel.get('reranker_used') and (tel.get('top_prob') or 0.0) < 0.05)
             or (not tel.get('reranker_used') and tel.get('bm25_msg_hits', 0) == 0 and tel.get('fuzzy_hits', 0) == 0)
@@ -948,9 +983,10 @@ def summarise_messages(con, search, chat=None, on=None, since=None, until=None, 
         {'role': 'system', 'content': (
             f'Answer the person using ONLY the chat excerpts below. Today is {today} (IST). '
             'Write 2 to 5 concise sentences. Cite speaker, date and message ref in brackets where relevant. '
-            'Anchor relative words inside old messages ("today", "tomorrow") to that message\'s timestamp, never to today. '
+            'Anchor relative words AND weekdays inside older messages ("today", "tomorrow", "Tuesday", "next week") '
+            'strictly to that message\'s own timestamp — never map an older message\'s weekday onto today\'s date. '
             'Distinguish proposals or suggestions from confirmed decisions; if confirmation is not shown, say so. '
-            'Include exact URLs, numbers and names from the excerpts; never invent facts.'
+            'Include exact URLs, numbers, conditions/caveats and names from the excerpts; never invent facts.'
         )},
         {'role': 'user', 'content': (
             f'Topic: {topic}' + (f'\nQuestion: {question}' if question else '') +
@@ -1362,8 +1398,8 @@ using only the result below. Rules:
 - Plain words, no headings, no bullet points, no "As an AI".
 - A draft is only a preview: never say it was saved, sent, or put in a folder.
 - Only state what the rows show. If they ask who owns something, its size or its guests and that field isn't
-  in the rows, say you can't see it here; never guess it from a name. Your previous reply was about an earlier
-  question: don't repeat it."""
+  in the rows, say you can't see it here; never guess it from a name. Include key conditions, caveats or exceptions
+  and full exact names/titles shown. Your previous reply was about an earlier question: don't repeat it."""
 
 
 NUM = re.compile(r'(?<![\w.])\d+(?:[.,]\d+)?(?![\w])')
@@ -1372,10 +1408,10 @@ NUM = re.compile(r'(?<![\w.])\d+(?:[.,]\d+)?(?![\w])')
 def compose(question, shown, history, plan_note=''):
     prev = history[-1]['reply'] if history else ''
     schema = {'type': 'object', 'properties': {'reply': {'type': 'string'}}, 'required': ['reply']}
-    today = f'Today is {rs.now():%A %d %B %Y} (IST). Anchor words like "today" or "tomorrow" inside older messages to their message date.'
+    today = f'Today is {rs.now():%A %d %B %Y} (IST). Anchor words like "today", "tomorrow", or weekdays inside older messages to their message date, never to today.'
     msg = (f'{today}\n' +
            (f'Their previous question: {history[-1]["q"]}\nYour previous reply: {prev}\n\n' if history else '') +
-           f'What they said now: {question}\n{plan_note}\nResult:\n{shown[:6000]}')
+           f'What they said now: {question}\n{plan_note}\nResult:\n{shown[:9000]}')
     try:
         reply = rs._nine([{'role': 'system', 'content': STYLE}, {'role': 'user', 'content': msg}], schema,
                          max_tokens=220)['reply'].strip()

@@ -283,6 +283,43 @@ class WhatsAppSearchTest(unittest.TestCase):
         joined = '\n'.join(str(r) for r in rows)
         self.assertIn('docs.google.com', joined)
         self.assertIn('shared links', rs.LAST_SELECT_NOTE)
+        # Thread context expansion also pulls in the preceding reply + quoted parent even though they have no links!
+        self.assertIn('DICE invitation', joined)
+
+    def test_body_tilde_folds_even_when_search_present(self):
+        _, rows, _ = rs.select(
+            self.con,
+            'messages',
+            folder='Jam Buns',
+            search='Abhiram',
+            where="body ~ 'research'",
+            limit=10,
+        )
+        joined = '\n'.join(str(r) for r in rows)
+        self.assertIn('docs.google.com', joined)
+
+    def test_single_letter_search_triggers_ambiguous_sender_clarification(self):
+        with self.assertRaises(sk.EntityAmbiguousError) as ctx:
+            rs.select(
+                self.con,
+                'messages',
+                folder='Jam Buns',
+                search='V',
+                order='sent_at desc',
+                limit=1,
+                intent='What was the last message from V in Jam Buns?',
+            )
+        self.assertIn('Vidya', str(ctx.exception))
+        self.assertIn('Vikram', str(ctx.exception))
+
+    def test_recency_only_topic_detection_and_long_body_render(self):
+        self.assertTrue(idlicli._is_recency_only_topic('latest discussion'))
+        self.assertTrue(idlicli._is_recency_only_topic('recent updates'))
+        self.assertFalse(idlicli._is_recency_only_topic('latest dice discussion'))
+        long_text = 'A' * 700 + ' ROYAL_TITLE_END'
+        res = idlicli.Result(cols=['id', 'body'], rows=[('m1', long_text)])
+        rendered = res.render()
+        self.assertIn('ROYAL_TITLE_END', rendered)
 
 
 if __name__ == '__main__':

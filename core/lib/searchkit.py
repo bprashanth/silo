@@ -792,6 +792,7 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
     ).fetchall()
     row_map = {}
     ordered_by_chat = defaultdict(list)
+    replies_by_parent = defaultdict(list)
     for r in all_rows:
         m = {
             'id': r[0], 'chat_id': r[1], 'chat_name': r[2], 'sent_at': r[3], 'sender': r[4],
@@ -801,6 +802,8 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         m['_pos'] = len(ordered_by_chat[m['chat_id']])
         ordered_by_chat[m['chat_id']].append(m)
         row_map[m['id']] = m
+        if m['parent_id']:
+            replies_by_parent[m['parent_id']].append(m)
 
     # Load episodes that intersect base_set.
     ep_rows = con.execute(
@@ -973,10 +976,7 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
         if len(final) >= int(limit):
             break
         src_tags = '+'.join(sorted(sources.get(mid, {'match'})))
-        if mid in rerank_scores:
-            label = f"match ({src_tags}, score {rerank_scores[mid][1]:.2f})"
-        else:
-            label = f"match ({src_tags})"
+        label = f"match ({src_tags})"
         add_row(mid, label)
         if rank_i < 4:
             m = row_map[mid]
@@ -990,12 +990,15 @@ def search_messages(con, query_text, base_ids, chat_name_hint=None, embed_fn=Non
                     j = pos + delta
                     if 0 <= j < len(seq):
                         nb = seq[j]
-                        if (nb['id'] in base_set and nb['sender'] == m['sender']
+                        if (nb['chat_id'] == m['chat_id'] and nb['sender'] == m['sender']
                                 and nb['sent_at'] and m['sent_at']
                                 and abs((nb['sent_at'] - m['sent_at']).total_seconds()) <= 180):
                             add_row(nb['id'], f"follow-up to {mid[:8]}" if delta == 1 else f"preceding {mid[:8]}")
                             if nb.get('parent_id') and nb['parent_id'] in row_map:
                                 add_row(nb['parent_id'], f"quoted parent of {nb['id'][:8]}")
+            for rep in replies_by_parent.get(mid, [])[:2]:
+                if rep['chat_id'] == m['chat_id']:
+                    add_row(rep['id'], f"reply to {mid[:8]}")
 
     top_prob = rerank_scores[ordered_hits[0]][1] if (ordered_hits and ordered_hits[0] in rerank_scores) else None
     LAST_TELEMETRY.update({

@@ -1168,16 +1168,60 @@ def select(con, resource, where=None, since=None, until=None, on=None, search=No
         # unquoted words: literal and meaning, merged. Quoted phrases stay literal only.
         return fused_files(con, search, limit=limit, fields=fields, where=where, since=since, until=until, on=on,
                            label=label, folder=folder, show_all=show_all)
-    # Unify `body ~ 'x'` inside --where with `--search` on messages (decisions.md: one way to do each thing)
-    if not plain and resource == 'messages' and not search and not by and not count and where:
-        w_str = ' AND '.join(f'({w})' for w in where if w) if isinstance(where, list) else where
-        body_terms = re.findall(r"\bbody\s*(?:~|ILIKE|LIKE)\s*['\"]%?([^'\"]+?)%?['\"]", w_str, flags=re.I)
-        rem = re.sub(r"\bbody\s*(?:~|ILIKE|LIKE)\s*['\"][^'\"]+['\"]", '', w_str, flags=re.I)
-        rem = re.sub(r'\b(and|or)\b|[()\s]', '', rem, flags=re.I)
-        if body_terms and not rem:
-            search = ' '.join(body_terms)
-            where = None
-            raw_search = search
+    # Unify `body ~ 'x'` inside --where with `--search` on messages (decisions.md: one way to do each thing),
+    # even when --search or other --where filters are already present.
+    if not plain and resource == 'messages' and not by and not count and where:
+        w_parts = [w for w in where if w] if isinstance(where, list) else [where]
+        body_pat = re.compile(r"\bbody\s*(?:~|ILIKE|LIKE)\s*['\"]%?([^'\"]+?)%?['\"]", re.I)
+        extracted_terms = []
+        kept_parts = []
+        for part in w_parts:
+            terms = body_pat.findall(part)
+            if not terms:
+                kept_parts.append(part)
+                continue
+            extracted_terms.extend(terms)
+            # Strip body ~ '...' clauses and any dangling AND/OR operators around them
+            rem = body_pat.sub('', part)
+            rem = re.sub(r'\(\s*\)', '', rem)
+            rem = re.sub(r'^\s*(?:AND|OR)\s+|\s+(?:AND|OR)\s*$', '', rem, flags=re.I)
+            rem = re.sub(r'\b(?:AND|OR)\s+(?:AND|OR)\b', 'AND', rem, flags=re.I).strip()
+            if rem and re.search(r'[A-Za-z0-9]', rem):
+                kept_parts.append(rem)
+        if extracted_terms:
+            prev_s = _search_text(search) if search else ''
+            combined = ' '.join(x for x in [prev_s, *extracted_terms] if x).strip()
+            search = combined
+            raw_search = combined
+            where = kept_parts if kept_parts else None
+    # Single-word sender lookup via --search (e.g. `--search "S" --order "sent_at desc"` or "last message from S"):
+    # resolve via deterministic sender matcher so ambiguous initials ask the user instead of matching random text.
+    if (not plain and search and resource == 'messages' and not by and not count and '"' not in raw_search):
+        s_txt = _search_text(search).strip()
+        w_check = ' '.join(str(x) for x in where) if isinstance(where, list) else str(where or '')
+        if (s_txt and len(s_txt.split()) == 1 and re.fullmatch(r'[A-Za-z][A-Za-z0-9._-]*', s_txt)
+                and not re.search(r'\bsender\b', w_check, re.I)):
+            tok = s_txt
+            esc = re.escape(tok)
+            intent_str = intent or ''
+            sender_cue = bool(
+                len(tok) == 1
+                or re.search(rf'\b(?:from|by|sent\s+by|written\s+by)\s+{esc}\b', intent_str, re.I)
+                or re.search(rf'\b(?:did|has)\s+{esc}\s+(?:send|say|write|post|share|message)\b', intent_str, re.I)
+                or re.search(rf'\b{esc}\s+(?:sent|said|wrote|posted|shared|messaged)\b', intent_str, re.I)
+            )
+            if sender_cue:
+                from lib import searchkit as sk
+                cid = sk.resolve_chat(con, folder)[0] if folder else None
+                try:
+                    sname, _ = sk.resolve_sender(con, tok, chat_id=cid)
+                    if order or len(tok) == 1 or re.search(r'\b(last|latest|most recent|recent|first|all)\b', intent_str, re.I):
+                        sf = f"sender ~ '{sname.replace(chr(39), chr(39) * 2)}'"
+                        where = ([*where, sf] if isinstance(where, list) else ([where, sf] if where else sf))
+                        search = None
+                        raw_search = ''
+                except sk.EntityNotFoundError:
+                    pass
     if (not plain and search and resource == 'messages' and not by and not count
             and '"' not in raw_search):
         return fused_messages(con, search, limit=min(int(limit), 15) if limit == 50 else limit, fields=fields,
