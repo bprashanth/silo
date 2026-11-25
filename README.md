@@ -7,7 +7,7 @@ Silo is the first product prototype to come out of the event [io](https://github
 was built for.
 
 It's a confidential assistant for a small NGO team. People talk to a model that runs
-on a "confidential VM", the model computes over their files in a sandbox.
+in a "clean room" - either a dedicated piece of hardware - or a confidential pod/container/vm. 
 
 ## Goals
 
