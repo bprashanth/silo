@@ -704,11 +704,16 @@ QUERY_PREFIX = 'Instruct: Given a question about a person\'s documents, find the
 
 def embed(texts, query=False, batch=32):
     """Vectors for texts (unit length). A question gets the model's query instruction; passages don't."""
+    from lib import muse
+    base, hdrs = muse.embed_upstream()
     out = []
     for i in range(0, len(texts), batch):
         part = [(QUERY_PREFIX + t if query else t)[:6000] for t in texts[i:i + batch]]
-        req = urllib.request.Request(EMBED_URL + '/v1/embeddings', json.dumps({'input': part}).encode(),
-                                     {'Content-Type': 'application/json'})
+        req = urllib.request.Request(
+            base + '/v1/embeddings',
+            json.dumps({'model': 'idli-embed', 'input': part}).encode(),
+            {**hdrs, 'Content-Type': 'application/json'},
+        )
         with urllib.request.urlopen(req, timeout=120) as r:
             data = sorted(json.load(r)['data'], key=lambda d: d['index'])
         for d in data:

@@ -703,14 +703,16 @@ def _sigmoid(x):
 
 
 def rerank(query, documents, timeout=20):
-    """Call local llama-server /v1/rerank endpoint.
+    """Call llama-server /v1/rerank endpoint (local DGX or via Cloudflare Access muse-access.json).
     Returns list of (doc_index, raw_score, prob) sorted descending, or None if unavailable/disabled."""
     if os.environ.get('IDLI_RERANK', '1') == '0' or not documents or not query:
         return None
-    url = os.environ.get('IDLI_RERANK_URL', RERANK_URL).rstrip('/') + '/v1/rerank'
+    from lib import muse
+    base, hdrs = muse.rerank_upstream()
+    url = base.rstrip('/') + '/v1/rerank'
     body = {'model': RERANK_MODEL, 'query': query, 'documents': [d[:2000] for d in documents]}
     req = urllib.request.Request(
-        url, json.dumps(body).encode(), {'Content-Type': 'application/json'}
+        url, json.dumps(body).encode(), {**hdrs, 'Content-Type': 'application/json'}
     )
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
