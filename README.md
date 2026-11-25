@@ -60,15 +60,6 @@ idli sync drive --in "<Folder Name>" -v
 - **More setup details & maintainer bundles:** [deployment/team/README.md](deployment/team/README.md).
 - **Non-engineer Signal testing:** [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) (DM -> onboarding link -> `--in` folder/group picker -> Signal confirmation).
 
-## Phasing and docs 
-
-| Track | What it covers | Doc |
-|---|---|---|
-| Stage 1: Team CLI | Repo-local laptop setup, scoped `--in` sync, inner CLI loop | [deployment/team/README.md](deployment/team/README.md) |
-| Stage 2: Alpha testing guide | Engineer CLI checklist + non-engineer Signal onboarding & test queries | [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) |
-| Signal alpha rollout | Multi-user isolation, OAuth PKCE, confirmation codes, acceptance checks | [deployment/alpha/signal.md](deployment/alpha/signal.md); [status](deployment/alpha/signal.agent.md) |
-| Connectors & onboarding | Read-only WhatsApp sidecar, Signal bridge, onboarding web UI | [bridges/whatsapp](bridges/whatsapp/README.md); [bridges/signal](bridges/signal/README.md); [bridges/onboard](bridges/onboard/README.md) |
-
 ## Benchmarks and Regression Testing
 
 Masure retrieval claims on a question bank (see [benchmarks/README.md](benchmarks/README.md) for banks, runner, and grading rubric):
@@ -85,7 +76,7 @@ PYTHONPATH=. core/.venv/bin/python -m unittest discover -s deployment/team
 - **WhatsApp retrieval & blind held-out runs:** [2026-11-24 core run](benchmarks/runs/2026-11-24-whatsapp-core/README.md) and [2026-11-25 v2 blind verification](benchmarks/runs/2026-11-25-whatsapp-core-v2/README.md).
 - **Rule of thumb:** iterate on dev banks, never overfit to one question, and validate claims once on frozen code with a blind grader ([docs/decisions.md](docs/decisions.md)).
 
-## Docs & Repo Layout
+## Docs and Layout
 
 - **Core design & usage:** [docs/README.md](docs/README.md) (reading order); [docs/cheatsheet.md](docs/cheatsheet.md); [docs/cli.md](docs/cli.md); [docs/decisions.md](docs/decisions.md); [docs/search.md](docs/search.md); [agent companions](docs/README.agent.md)
 - **Context & evidence:** [narrative/](narrative/) (readable summaries, e.g. [whatsapp-search.md](narrative/whatsapp-search.md)); [chronology/](chronology/) (dated logs); [AGENTS.md](AGENTS.md) (placement & workflow rules)
@@ -104,6 +95,15 @@ todos/         owner review queue and open bug lists
 archive/v1/    earlier Telegram bot prototype (old)
 examples/      frozen livestock call-center examples from v1 (still running a service)
 ```
+
+## Phasing 
+
+| Track | What it covers | Doc |
+|---|---|---|
+| Local CLI | Repo-local laptop setup | [deployment/team/README.md](deployment/team/README.md) |
+| Alpha testing guide | Non-engineer Signal onboarding | [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) |
+| Signal alpha rollout | Multi-user isolation, acceptance checks.. | [deployment/alpha/signal.md](deployment/alpha/signal.md); [status](deployment/alpha/signal.agent.md) |
+| Connectors & onboarding | WhatsApp sidecar, Signal bridge, onboarding web UI | [bridges/whatsapp](bridges/whatsapp/README.md); [bridges/signal](bridges/signal/README.md); [bridges/onboard](bridges/onboard/README.md) |
 
 ## History
 
