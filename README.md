@@ -46,8 +46,7 @@ Prerequisites to run the stack locally:
 2. A maintainer-issued `silo-team-config.tar.gz`
 3. and Docker.
 
-## Quickstart (Team Laptop CLI)
-
+## Quickstart
 
 ```bash
 git clone <repo-url> && cd silo
@@ -61,18 +60,18 @@ idli sync drive --in "<Folder Name>" -v
 - **More setup details & maintainer bundles:** [deployment/team/README.md](deployment/team/README.md).
 - **Non-engineer Signal testing:** [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) (DM -> onboarding link -> `--in` folder/group picker -> Signal confirmation).
 
-## Active Testing & Deployment Plans
+## Phasing and docs 
 
 | Track | What it covers | Doc |
 |---|---|---|
-| Stage 1 — Team CLI | Repo-local laptop setup, scoped `--in` sync, inner CLI loop | [deployment/team/README.md](deployment/team/README.md) |
-| Stage 2 — Alpha testing guide | Engineer CLI checklist + non-engineer Signal onboarding & test queries | [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) |
+| Stage 1: Team CLI | Repo-local laptop setup, scoped `--in` sync, inner CLI loop | [deployment/team/README.md](deployment/team/README.md) |
+| Stage 2: Alpha testing guide | Engineer CLI checklist + non-engineer Signal onboarding & test queries | [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) |
 | Signal alpha rollout | Multi-user isolation, OAuth PKCE, confirmation codes, acceptance checks | [deployment/alpha/signal.md](deployment/alpha/signal.md); [status](deployment/alpha/signal.agent.md) |
 | Connectors & onboarding | Read-only WhatsApp sidecar, Signal bridge, onboarding web UI | [bridges/whatsapp](bridges/whatsapp/README.md); [bridges/signal](bridges/signal/README.md); [bridges/onboard](bridges/onboard/README.md) |
 
-## Benchmarks & Regression Testing
+## Benchmarks and Regression Testing
 
-Masure retrieval claims on a blind held-out bank (see [benchmarks/README.md](benchmarks/README.md) for banks, runner, and grading rubric):
+Masure retrieval claims on a question bank (see [benchmarks/README.md](benchmarks/README.md) for banks, runner, and grading rubric):
 
 ```bash
 # Fast unit + contract checks (prose budget, CLI output, WhatsApp search, Signal, onboarding, installer)
