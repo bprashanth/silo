@@ -52,11 +52,15 @@ Ignore `archive/` and `examples/`: they are the old Telegram version of Silo.
 - **Stage 2 Alpha Signal Onboarding built & Playwright-verified (`bridges/onboard/`, `bridges/signal/bridge.py`, `deployment/alpha/signal.agent.md`):**
   - 4-step mobile & desktop web flow (Connect Google PKCE OAuth / WhatsApp QR+code → `--in` folder/group checkboxes → Role & intended use saved to private `profile.json` → scoped sync + 6-digit Signal DM `confirm <code>`).
   - Verified mixed Google + `--in`-scoped WhatsApp queries over `bridges/signal/bridge.py` and two-tester canary isolation.
+- **Jetson 8GB Quantization & Smaller-Model Shootout completed ([2026-11-26 run](../benchmarks/runs/2026-11-26-jetson-quant-shootout/README.md), 435 blind-graded turns across WA `blind-v3`, Mixed Google+WA, Google `owner_dev`, and Google `heldout`):**
+  - `Qwen3.5-9B-Q4_K_M` (`5.23 GiB` GPU, `-c 8192 -np 1`, no `mmproj`: **`41/26/20`**, `0` mixed leaks, `14/16` WA ev) and `Qwen3.5-9B-IQ4_XS` (`4.75 GiB` GPU: **`44/23/20`**, `0` mixed leaks, `12/16` WA ev) matched the DGX `Q5_K_M` baseline (`8.39 GiB` GPU: `41/25/21`) with `0` context overflows at `8k` ctx (`peak_prompt_chars = 16,841`).
+  - Both 4B models (`Qwen3.5-4B-Q5_K_M`: `24/22/41`, 28 errors; `Gemma-4-E4B-it-Q5_K_M`: `30/22/35`, 27 compose fallbacks) collapsed on CLI mapping and are ruled out.
+  - **Settled edge choice:** `Qwen3.5-9B-Q4_K_M` or `IQ4_XS` (headless 8 GB Jetson, `-c 8192 -np 1`, no `mmproj`, embed/rerank offloaded).
 - **Docs updated:** `README.md` streamlined into Quickstart + index, linked to `docs/cheatsheet.md`, `deployment/team/README.md`, and `narrative/ALPHA_TESTING.md`.
 
 ## Next
 
-1. **Edge hardware / smaller-model feasibility benchmark (Jetson Orin Nano Super 8GB):** Evaluate `Qwen3.5-9B-Q4_K_M` (`5.3 GB`, already on DGX) and smaller `4B` candidates against our combined Google (`tasks_owner_dev` + `tasks_dev`) + WhatsApp (`dev` + fresh `blind-v3`) suite to measure exact accuracy/latency tradeoffs vs `Qwen3.5-9B-Q5_K_M`.
+1. **Multi-message synthesis + cross-app (`Drive ↔ WA`) quality pass:** Now that `Qwen3.5-9B` (`Q5` on DGX, `Q4_K_M`/`IQ4_XS` on 8 GB Jetson) is settled, improve `compose()`/`summarise_messages()` multi-turn attribution and fix the two shared `wa_blind_v3` errors (saved-history count wording & multi-turn synthesis).
 2. **Stage 2 live owner test & public `silo.idli.cc` onboarding route:** Owner tests local `bridges/onboard` preview, then wire `/setup/*` and `/oauth/google/callback` on `silo.idli.cc` with a registered Google Web OAuth client and per-tester container isolation.
 3. **Commit the 6-line `muse_prefix_proxy.py` routing change in the `io` repo** (`/v1/embeddings` + `/v1/rerank`).
 4. **Team feedback triage:** Fold Stage 1 laptop feedback from the team into general fixes or bounded workflows under `proposals/workflows/`.
