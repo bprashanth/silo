@@ -304,3 +304,15 @@ session.json
 vault/
 /handoff/handoff-prompt*.md
 /benchmarks/private/
+
+# Local repo-contained team setup (never commit)
+/.env
+/.silo/
+/bin/
+silo-team-config*.tar.gz
+silo-team-config*.zip
+silo-cli-*.tar.gz
+muse-access.json
+silo-access.json
+silo.json
+io_oauth_client_gcp.json

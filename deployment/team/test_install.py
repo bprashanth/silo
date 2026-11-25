@@ -1,7 +1,8 @@
-"""Tests for deployment/team/install.py and Cloudflare Access routing for embed/rerank."""
+"""Tests for repo-local, idempotent deployment/team/install.py and CF Access routing."""
 import io
 import json
 import os
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -19,10 +20,10 @@ from lib import muse
 GOOGLE_JSON = json.dumps({
     'installed': {'client_id': 'gid-123', 'client_secret': 'gsec-456'}
 }).encode()
-MUSE_JSON = json.dumps({
-    'url': 'https://silo.idli.cc',
-    'client_id': 'cf-id-abc',
+SILO_JSON_NO_URL = json.dumps({
+    'client_id': 'cf-id-abc.access',
     'client_secret': 'cf-sec-xyz',
+    'model': 'idli-9b',
 }).encode()
 
 
@@ -30,6 +31,8 @@ class TeamInstallAndRoutingTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
+        self.fake_repo = self.root / 'repo'
+        (self.fake_repo / 'core').mkdir(parents=True)
         self.old_env = dict(os.environ)
 
     def tearDown(self):
@@ -37,69 +40,89 @@ class TeamInstallAndRoutingTest(unittest.TestCase):
         os.environ.update(self.old_env)
         self.tmp.cleanup()
 
-    def _make_tar_config(self, path: Path, prefix='creds/'):
+    def _make_tar_config(self, path: Path, access_name='silo.json', prefix='creds/'):
         with tarfile.open(path, 'w:gz') as tf:
-            for name, data in (('io_oauth_client_gcp.json', GOOGLE_JSON), ('muse-access.json', MUSE_JSON)):
+            for name, data in (('io_oauth_client_gcp.json', GOOGLE_JSON), (access_name, SILO_JSON_NO_URL)):
                 info = tarfile.TarInfo(name=prefix + name)
                 info.size = len(data)
                 tf.addfile(info, io.BytesIO(data))
 
-    def _make_zip_config(self, path: Path):
-        with zipfile.ZipFile(path, 'w') as zf:
-            zf.writestr('io_oauth_client_gcp.json', GOOGLE_JSON)
-            zf.writestr('muse-access.json', MUSE_JSON)
-
-    def test_install_from_tarball_and_custom_sandbox_path(self):
-        cfg_tar = self.root / 'team-cfg.tar.gz'
+    def test_repo_local_install_idempotent_and_fails_when_account_unset(self):
+        cfg_tar = self.root / 'silo-team-config.tar.gz'
         self._make_tar_config(cfg_tar)
-        sbx = self.root / 'my-custom-sbx'
-        os.environ['XDG_CONFIG_HOME'] = str(self.root / 'xdg-cfg')
-        os.environ['XDG_DATA_HOME'] = str(self.root / 'xdg-data')
 
+        # 1. Install without --account -> writes repo-local .env, bin/idli, .silo/
         launcher = team_install.main([
-            '--account', 'Tester@Example.org',
+            '--root', str(self.fake_repo),
             '--config', str(cfg_tar),
-            '--sandbox_path', str(sbx),
             '--skip-venv',
         ])
-        self.assertTrue(launcher.is_file())
-        text = launcher.read_text()
-        self.assertIn(f'IDLI_SANDBOX=${{IDLI_SANDBOX:-{sbx.resolve()}}}', text)
-        self.assertIn('IDLI_CHIPS=${IDLI_CHIPS:-0}', text)
-        self.assertIn('IDLI_JUDGE=${IDLI_JUDGE:-nine_compressed}', text)
-        self.assertTrue((self.root / 'xdg-cfg/silo/io_oauth_client_gcp.json').is_file())
-        self.assertTrue((self.root / 'xdg-data/silo/config/muse-access.json').is_file())
+        self.assertEqual(launcher, self.fake_repo / 'bin' / 'idli')
+        self.assertTrue((self.fake_repo / '.env').is_file())
+        self.assertTrue((self.fake_repo / '.silo/config/io_oauth_client_gcp.json').is_file())
+        silo_saved = json.loads((self.fake_repo / '.silo/config/silo.json').read_text())
+        self.assertEqual(silo_saved['url'], 'https://silo.idli.cc')
+        self.assertEqual(silo_saved['client_id'], 'cf-id-abc.access')
 
-    def test_install_from_zip_config(self):
-        cfg_zip = self.root / 'team-cfg.zip'
-        self._make_zip_config(cfg_zip)
-        found = team_install.extract_config_bundle(cfg_zip)
-        self.assertEqual(set(found), {'io_oauth_client_gcp.json', 'muse-access.json'})
+        # 2. Running ./bin/idli without IDLI_GOOGLE_ACCOUNT set MUST fail fast with exit code 2
+        clean_env = {k: v for k, v in os.environ.items() if not k.startswith('IDLI_')}
+        proc = subprocess.run([str(launcher), 'size'], env=clean_env, capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 2)
+        self.assertIn('IDLI_GOOGLE_ACCOUNT is not set', proc.stderr)
 
-    def test_rejects_path_traversal_in_config_bundle(self):
+        # 3. Re-running with --account and custom --sandbox_path is idempotent and updates .env cleanly
+        custom_sbx = self.root / 'my-sbx'
+        team_install.main([
+            '--root', str(self.fake_repo),
+            '--account', 'Tester@Example.org',
+            '--sandbox_path', str(custom_sbx),
+            '--skip-venv',
+        ])
+        env_vals = team_install.parse_existing_env(self.fake_repo / '.env')
+        self.assertEqual(env_vals['IDLI_GOOGLE_ACCOUNT'], 'tester@example.org')
+        self.assertEqual(env_vals['IDLI_SANDBOX'], str(custom_sbx.resolve()))
+        self.assertEqual(env_vals['IDLI_CHIPS'], '0')
+        self.assertEqual(env_vals['IDLI_JUDGE'], 'nine_compressed')
+
+        # 4. Re-running again with NO flags preserves existing account & sandbox in .env
+        team_install.main(['--root', str(self.fake_repo), '--skip-venv'])
+        env_vals2 = team_install.parse_existing_env(self.fake_repo / '.env')
+        self.assertEqual(env_vals2['IDLI_GOOGLE_ACCOUNT'], 'tester@example.org')
+        self.assertEqual(env_vals2['IDLI_SANDBOX'], str(custom_sbx.resolve()))
+
+    def test_zip_config_and_path_traversal_rejection(self):
+        good_zip = self.root / 'good.zip'
+        with zipfile.ZipFile(good_zip, 'w') as zf:
+            zf.writestr('io_oauth_client_gcp.json', GOOGLE_JSON)
+            zf.writestr('silo.json', SILO_JSON_NO_URL)
+        g_raw, a_raw, a_name = team_install.extract_config_bundle(good_zip)
+        self.assertEqual(a_name, 'silo.json')
+        self.assertTrue(g_raw and a_raw)
+
         bad_zip = self.root / 'bad.zip'
         with zipfile.ZipFile(bad_zip, 'w') as zf:
             zf.writestr('../io_oauth_client_gcp.json', GOOGLE_JSON)
-            zf.writestr('muse-access.json', MUSE_JSON)
+            zf.writestr('silo.json', SILO_JSON_NO_URL)
         with self.assertRaises(SystemExit):
             team_install.extract_config_bundle(bad_zip)
 
-    def test_embed_and_rerank_use_cf_access_headers_when_muse_access_present(self):
-        idli_home = self.root / 'idli-home'
-        (idli_home / 'config').mkdir(parents=True)
-        (idli_home / 'config/muse-access.json').write_bytes(MUSE_JSON)
-        os.environ['IDLI_HOME'] = str(idli_home)
+    def test_muse_reads_silo_json_without_url_and_sends_cf_headers(self):
+        silo_home = self.root / 'silo-home'
+        (silo_home / 'config').mkdir(parents=True)
+        (silo_home / 'config/silo.json').write_bytes(SILO_JSON_NO_URL)
+        os.environ['IDLI_HOME'] = str(silo_home)
         os.environ.pop('IDLI_EMBED_URL', None)
         os.environ.pop('IDLI_RERANK_URL', None)
+        os.environ.pop('MUSE_URL', None)
 
+        self.assertEqual(muse.base_url(), 'https://silo.idli.cc')
         ebase, ehdrs = muse.embed_upstream()
         rbase, rhdrs = muse.rerank_upstream()
         self.assertEqual(ebase, 'https://silo.idli.cc')
         self.assertEqual(rbase, 'https://silo.idli.cc')
-        self.assertEqual(ehdrs.get('CF-Access-Client-Id'), 'cf-id-abc')
+        self.assertEqual(ehdrs.get('CF-Access-Client-Id'), 'cf-id-abc.access')
         self.assertEqual(rhdrs.get('CF-Access-Client-Secret'), 'cf-sec-xyz')
 
-        # Explicit local override drops CF headers
         os.environ['IDLI_EMBED_URL'] = 'http://127.0.0.1:8293'
         ebase2, ehdrs2 = muse.embed_upstream()
         self.assertEqual(ebase2, 'http://127.0.0.1:8293')

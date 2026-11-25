@@ -1,33 +1,49 @@
-"""Where Muse / Idli's private models are, and the Cloudflare Access headers to reach them.
+"""Where Silo's private models are, and the Cloudflare Access headers to reach them.
 
-With $IDLI_HOME/config/muse-access.json ({"url", "client_id", "client_secret"}: a Cloudflare Access service
-token for the person, optionally plus "embed_url" / "rerank_url") models are reached over HTTPS through
-Cloudflare, e.g. https://silo.idli.cc. Without it, the DGX-local loopback services are used directly.
+With $IDLI_HOME/config/{silo.json,silo-access.json,muse-access.json} ({"client_id", "client_secret",
+optional "url" defaulting to https://silo.idli.cc, optional "embed_url" / "rerank_url"}) models are
+reached over HTTPS through Cloudflare. Without it, the DGX-local loopback services are used directly.
 """
 import json
 import os
 
 IDLI = os.environ.get("IDLI_HOME") or os.path.expanduser("~/idli-insights")
 ACCESS = os.path.join(IDLI, "config", "muse-access.json")
+DEFAULT_URL = "https://silo.idli.cc"
 LOCAL = "http://127.0.0.1:8181"
 LOCAL_EMBED = "http://127.0.0.1:8293"
 LOCAL_RERANK = "http://127.0.0.1:8294"
+ACCESS_FILENAMES = ("silo.json", "silo-access.json", "muse-access.json")
 
 
-def _access_path():
+def _candidate_paths():
+    paths = []
     home = os.environ.get("IDLI_HOME")
     if home:
-        return os.path.join(os.path.expanduser(home), "config", "muse-access.json")
-    return ACCESS
+        cfg_dir = os.path.join(os.path.expanduser(home), "config")
+        paths.extend(os.path.join(cfg_dir, fn) for fn in ACCESS_FILENAMES)
+    gcfg = os.environ.get("IDLI_GOOGLE_CONFIG")
+    if gcfg:
+        gdir = os.path.expanduser(gcfg)
+        paths.extend(os.path.join(gdir, fn) for fn in ACCESS_FILENAMES)
+    if not home:
+        cfg_dir = os.path.dirname(ACCESS)
+        paths.extend(os.path.join(cfg_dir, fn) for fn in ACCESS_FILENAMES)
+    return paths
 
 
 def access():
-    try:
-        with open(_access_path()) as f:
-            a = json.load(f)
-        return a if a.get("url") and a.get("client_id") and a.get("client_secret") else None
-    except (OSError, ValueError):
-        return None
+    for path in _candidate_paths():
+        try:
+            with open(path) as f:
+                a = json.load(f)
+            if isinstance(a, dict) and a.get("client_id") and a.get("client_secret"):
+                out = dict(a)
+                out.setdefault("url", DEFAULT_URL)
+                return out
+        except (OSError, ValueError):
+            continue
+    return None
 
 
 def base_url():
@@ -63,7 +79,7 @@ def _service_headers(url, acc):
 
 def embed_upstream():
     """Return (base_url, headers) for /v1/embeddings.
-    Uses IDLI_EMBED_URL if set; otherwise routes via muse-access.json (Cloudflare Access) when present,
+    Uses IDLI_EMBED_URL if set; otherwise routes via Cloudflare Access token when present,
     falling back to DGX-local 127.0.0.1:8293."""
     acc = access()
     env_url = os.environ.get("IDLI_EMBED_URL")
@@ -78,7 +94,7 @@ def embed_upstream():
 
 def rerank_upstream():
     """Return (base_url, headers) for /v1/rerank.
-    Uses IDLI_RERANK_URL if set; otherwise routes via muse-access.json (Cloudflare Access) when present,
+    Uses IDLI_RERANK_URL if set; otherwise routes via Cloudflare Access token when present,
     falling back to DGX-local 127.0.0.1:8294."""
     acc = access()
     env_url = os.environ.get("IDLI_RERANK_URL")
