@@ -39,13 +39,15 @@ That same power lets it pursue a goal at any cost, even when the cost turns out 
 guarantee privacy. The failproof one is to block network access. That can only be done
 reliably on the server, because the user base's Windows machines vary too much.
 
-## Current State
+## Prerequisites 
 
-Silo is a private, read-only assistant for NGO teams across **Gmail, Google Calendar, Google Drive, and WhatsApp**. Your synced records stay in a local DuckDB sandbox while private models on the DGX (`silo.idli.cc`) translate questions into verifiable CLI commands and short replies.
+Prerequisites to run the stack locally:     
+1. Python 3, [uv](https://docs.astral.sh/uv/)
+2. A maintainer-issued `silo-team-config.tar.gz`
+3. and Docker.
 
 ## Quickstart (Team Laptop CLI)
 
-Everything installs inside your cloned `silo/` directory (`.env`, `bin/idli`, `.silo/` — all gitignored; nothing installed globally). Prerequisites: Python 3, [uv](https://docs.astral.sh/uv/), a maintainer-issued `silo-team-config.tar.gz`, and *(optional, WhatsApp only)* Docker.
 
 ```bash
 git clone <repo-url> && cd silo
@@ -56,9 +58,8 @@ idli sync drive --in "<Folder Name>" -v
 ```
 
 - **Commands to try next:** follow the [CLI cheatsheet](docs/cheatsheet.md) (`sync --in`, `list`, `summarise`, `ask -v`).
-- **WhatsApp on laptop:** if Docker is running, `./setup.sh` automatically starts the read-only WhatsApp sidecar (`bprashanth/silo-wa-sync:latest`) and prints the browser QR / 8-digit code URL; after pairing, run `idli sync whatsapp --in "<Group>" -v`. Re-run `./setup.sh` anytime to restart it (`--no-whatsapp` to skip).
 - **More setup details & maintainer bundles:** [deployment/team/README.md](deployment/team/README.md).
-- **Non-engineer Signal testing:** [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) (DM → onboarding link → `--in` folder/group picker → Signal confirmation).
+- **Non-engineer Signal testing:** [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) (DM -> onboarding link -> `--in` folder/group picker -> Signal confirmation).
 
 ## Active Testing & Deployment Plans
 
@@ -66,12 +67,12 @@ idli sync drive --in "<Folder Name>" -v
 |---|---|---|
 | Stage 1 — Team CLI | Repo-local laptop setup, scoped `--in` sync, inner CLI loop | [deployment/team/README.md](deployment/team/README.md) |
 | Stage 2 — Alpha testing guide | Engineer CLI checklist + non-engineer Signal onboarding & test queries | [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) |
-| Signal alpha rollout | Multi-user isolation, OAuth PKCE, confirmation codes, acceptance checks | [deployment/alpha/signal.md](deployment/alpha/signal.md) · [status](deployment/alpha/signal.agent.md) |
-| Connectors & onboarding | Read-only WhatsApp sidecar, Signal bridge, onboarding web UI | [bridges/whatsapp](bridges/whatsapp/README.md) · [bridges/signal](bridges/signal/README.md) · [bridges/onboard](bridges/onboard/README.md) |
+| Signal alpha rollout | Multi-user isolation, OAuth PKCE, confirmation codes, acceptance checks | [deployment/alpha/signal.md](deployment/alpha/signal.md); [status](deployment/alpha/signal.agent.md) |
+| Connectors & onboarding | Read-only WhatsApp sidecar, Signal bridge, onboarding web UI | [bridges/whatsapp](bridges/whatsapp/README.md); [bridges/signal](bridges/signal/README.md); [bridges/onboard](bridges/onboard/README.md) |
 
 ## Benchmarks & Regression Testing
 
-Every change should keep unit/contract tests green, avoid regressions on Google dev tasks, and measure retrieval claims on a blind held-out bank (see [benchmarks/README.md](benchmarks/README.md) for banks, runner, and grading rubric):
+Masure retrieval claims on a blind held-out bank (see [benchmarks/README.md](benchmarks/README.md) for banks, runner, and grading rubric):
 
 ```bash
 # Fast unit + contract checks (prose budget, CLI output, WhatsApp search, Signal, onboarding, installer)
@@ -87,8 +88,8 @@ PYTHONPATH=. core/.venv/bin/python -m unittest discover -s deployment/team
 
 ## Docs & Repo Layout
 
-- **Core design & usage:** [docs/README.md](docs/README.md) (reading order) · [docs/cheatsheet.md](docs/cheatsheet.md) · [docs/cli.md](docs/cli.md) · [docs/decisions.md](docs/decisions.md) · [docs/search.md](docs/search.md) · [agent companions](docs/README.agent.md)
-- **Context & evidence:** [narrative/](narrative/) (readable summaries, e.g. [whatsapp-search.md](narrative/whatsapp-search.md)) · [chronology/](chronology/) (dated logs) · [AGENTS.md](AGENTS.md) (placement & workflow rules)
+- **Core design & usage:** [docs/README.md](docs/README.md) (reading order); [docs/cheatsheet.md](docs/cheatsheet.md); [docs/cli.md](docs/cli.md); [docs/decisions.md](docs/decisions.md); [docs/search.md](docs/search.md); [agent companions](docs/README.agent.md)
+- **Context & evidence:** [narrative/](narrative/) (readable summaries, e.g. [whatsapp-search.md](narrative/whatsapp-search.md)); [chronology/](chronology/) (dated logs); [AGENTS.md](AGENTS.md) (placement & workflow rules)
 
 ```text
 core/          CLI and DuckDB record store per sandbox (core/idli, core/lib/, core/tests/)
