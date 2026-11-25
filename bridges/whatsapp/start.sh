@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the local read-only WhatsApp sidecar (silo-wa-sync) inside <repo>/.silo/wa.
+# Start (or reuse if already running) the local read-only WhatsApp sidecar inside <repo>/.silo/wa.
 # Fails cleanly if Docker is not installed or the Docker daemon is not running.
 set -euo pipefail
 
@@ -18,13 +18,19 @@ fi
 
 if ! docker info >/dev/null 2>&1; then
   echo "Error: Docker is installed, but the Docker daemon is not running (or not accessible by this user)." >&2
-  echo "Start Docker Desktop / dockerd and re-run ./bridges/whatsapp/start.sh." >&2
+  echo "Start Docker Desktop / dockerd and re-run ./setup.sh." >&2
   exit 1
 fi
 
 umask 077
 mkdir -p "$STATE_DIR"
 chmod 700 "$STATE_DIR"
+
+if docker ps --format '{{.Names}}' | grep -qx "$NAME"; then
+  PAIR_URL="$(cat "$STATE_DIR/url" 2>/dev/null || echo "http://127.0.0.1:${PORT}")"
+  echo "Read-only WhatsApp bridge already running ($NAME): $PAIR_URL"
+  exit 0
+fi
 
 if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
   echo "Pulling read-only WhatsApp image ($IMAGE)..."

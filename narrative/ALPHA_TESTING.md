@@ -37,11 +37,11 @@ idli sync gcalendar -v
 idli sync drive --in "Strategy Classics" --in "Leads" -v   # omit or add --no-embed if embed route isn't live yet
 ```
 
-**Optional — WhatsApp (read-only, last 14 days, runs locally in Docker):**
+**Optional — WhatsApp (read-only, last 14 days, requires Docker):**
+
+If Docker is running, `./setup.sh` automatically pulls and starts `bprashanth/silo-wa-sync:latest` in `.silo/wa/` and prints the browser QR / 8-digit code URL (re-run `./setup.sh` anytime to restart it if stopped; pass `--no-whatsapp` to skip). After pairing:
 
 ```bash
-./bridges/whatsapp/start.sh        # fails cleanly if Docker isn't installed/running; opens QR / 8-digit code URL
-# After pairing in your browser:
 idli sync whatsapp --in "Jam Buns" --in "Acumen" -v
 ```
 

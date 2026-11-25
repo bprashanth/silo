@@ -44,9 +44,10 @@ idli sync drive --in "Strategy Classics" --in "Leads & Partnerships" -v
 
 **Optional — WhatsApp on your laptop (read-only, last 14 days, requires Docker):**
 
+If Docker is running, `./setup.sh` automatically starts the read-only `bprashanth/silo-wa-sync:latest` container in `.silo/wa/` and prints the browser QR / 8-digit code URL. Re-run `./setup.sh` anytime after a reboot to bring it back up (pass `--no-whatsapp` to skip, or `--whatsapp` to fail fast if Docker is missing):
+
 ```bash
-./bridges/whatsapp/start.sh       # fails fast if Docker isn't installed/running; prints browser QR/code URL
-# After pairing in your browser:
+# After pairing in the browser URL printed by ./setup.sh:
 idli sync whatsapp --in "Jam Buns" --in "Acumen" -v
 ```
 
