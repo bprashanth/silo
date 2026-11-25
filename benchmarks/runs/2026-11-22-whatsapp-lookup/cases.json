@@ -1,0 +1,9 @@
+[
+ {"id":"doc","q":"Find Abhi’s doc on DICE. He said he couldn’t attend.","expect":"Identify the group document and show evidence tying it to the DICE post; qualify an unverified association."},
+ {"id":"website","q":"What was the Rainmatter website V told us about?","expect":"Return the source URL if attribution is unique; otherwise ask which V or group."},
+ {"id":"time","q":"What time is the CC futures call?","expect":"Use the latest applicable exchange and distinguish proposed times from an agreed time."},
+ {"id":"calls","q":"What calls did we want to schedule last week?","expect":"Resolve last week against the stated clock. List only calls supported by dated planning messages, including IndusInd FO if supported."},
+ {"id":"people","q":"Who are in the Insight Out futures group? I mean the list from Vidya.","expect":"Use the posted list with sender and date. Distinguish it from current WhatsApp membership."},
+ {"id":"caption","q":"In my Jam Buns group, find the Young Birders’ Month signup website.","expect":"Exact website from the previously phone-verified caption."},
+ {"id":"links","q":"How many messages in Jam Buns contain a link?","expect":"Count HTTP(S) link-bearing records in the frozen projection; count a message once."}
+]

@@ -1,0 +1,3 @@
+# What counts as an answer from this cache
+
+The 13 stock CLI turns completed. We identified eight positive cases with message-level reference evidence and five controls. Tejasa’s post links a Google Doc containing the review material; the configured Google account received HTTP 404 on a scoped read. Grade the source link separately from a complete list of questions. Nadhi has a genuine November reference. September is outside the captured history. Next compare the same semantic hits with chronological and reply-aware expansion, and judge small scopes locally. [Experiment handoff](../handoff/whatsapp-retrieval.md)

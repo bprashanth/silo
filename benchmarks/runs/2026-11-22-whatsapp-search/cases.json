@@ -1,0 +1,12 @@
+[
+  {"id":"bird", "clock":"live", "question":"Find the link about young birders month in Jam Buns.", "expect":"Return a verified link or state the limits of this group's cached text and previews."},
+  {"id":"typo", "clock":"live", "question":"Can you find the young borders month thing that was shared in Jam Buns?", "expect":"Verify the destination or clarify the term. Similarity alone is insufficient."},
+  {"id":"meeting", "clock":"nov10", "question":"Who should be included in the CC meeting? I had this discussion with Rinj last week.", "expect":"Locate the November 6 exchange, identify the two suggested people, and distinguish a proposal from a confirmed invite list. Ask who Rinj is if unresolved."},
+  {"id":"meeting-repeat", "clock":"nov10", "continue":true, "question":"Who should be included in the CC meeting? I had this discussion with Rinj last week.", "expect":"Observe repeat-question chip and escalation offer."},
+  {"id":"explicit", "clock":"nov10", "question":"In Jam Buns, who did Rinj suggest including in the November 6 meeting discussion?", "expect":"Retrieve the inclusion message, give both proposed names, and qualify their status."},
+  {"id":"receipt", "clock":"nov10", "question":"Did Rinj share a link in Jam Buns on November 6? Give me that URL.", "expect":"Return the exact URL of the qualifying outgoing group post."},
+  {"id":"time", "clock":"nov10", "question":"When did we say we wanted to have the CC meeting?", "expect":"Report a proposed relative week anchored to the original message, without inventing a booked date."},
+  {"id":"unknown", "clock":"nov10", "question":"Which two people did Rynzz want included in the meeting?", "expect":"No verified match for this control alias. Clarify instead of guessing."},
+  {"id":"generic", "clock":"live", "clef":true, "question":"How many captured WhatsApp messages contain a link?", "expect":"Count the distinct link-bearing messages in this snapshot."},
+  {"id":"generic-repeat", "clock":"live", "clef":true, "continue":true, "question":"How many captured WhatsApp messages contain a link?", "expect":"Observe the repeat chip and whether the shell offers remote."}
+]

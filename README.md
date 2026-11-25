@@ -39,85 +39,73 @@ That same power lets it pursue a goal at any cost, even when the cost turns out 
 guarantee privacy. The failproof one is to block network access. That can only be done
 reliably on the server, because the user base's Windows machines vary too much.
 
-## Current State
+## Prerequisites 
 
-Currently it's designed as a private assistant for NGO teams that answers questions about their own
-email, calendar and Drive. The data stays in a local database and a private model picks
-commands and writes short replies.
+Prerequisites to run the stack locally:     
+1. Python 3, [uv](https://docs.astral.sh/uv/)
+2. A maintainer-issued `silo-team-config.tar.gz`
+3. and Docker.
 
-**Start here:** [docs/README.md](docs/README.md) (what to read, in order), then [docs/goals.md](docs/goals.md).
-If you are an agent picking up work, read [docs/handoff.md](docs/handoff.md) first.
+## Quickstart (Team Laptop CLI)
 
-## Layout
+
+```bash
+git clone <repo-url> && cd silo
+./setup.sh --config ~/Downloads/silo-team-config.tar.gz --account you@example.org
+source .env
+idli sync gmail -v
+idli sync drive --in "<Folder Name>" -v
+```
+
+- **Commands to try next:** follow the [CLI cheatsheet](docs/cheatsheet.md) (`sync --in`, `list`, `summarise`, `ask -v`).
+- **More setup details & maintainer bundles:** [deployment/team/README.md](deployment/team/README.md).
+- **Non-engineer Signal testing:** [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) (DM -> onboarding link -> `--in` folder/group picker -> Signal confirmation).
+
+## Active Testing & Deployment Plans
+
+| Track | What it covers | Doc |
+|---|---|---|
+| Stage 1 — Team CLI | Repo-local laptop setup, scoped `--in` sync, inner CLI loop | [deployment/team/README.md](deployment/team/README.md) |
+| Stage 2 — Alpha testing guide | Engineer CLI checklist + non-engineer Signal onboarding & test queries | [narrative/ALPHA_TESTING.md](narrative/ALPHA_TESTING.md) |
+| Signal alpha rollout | Multi-user isolation, OAuth PKCE, confirmation codes, acceptance checks | [deployment/alpha/signal.md](deployment/alpha/signal.md); [status](deployment/alpha/signal.agent.md) |
+| Connectors & onboarding | Read-only WhatsApp sidecar, Signal bridge, onboarding web UI | [bridges/whatsapp](bridges/whatsapp/README.md); [bridges/signal](bridges/signal/README.md); [bridges/onboard](bridges/onboard/README.md) |
+
+## Benchmarks & Regression Testing
+
+Masure retrieval claims on a blind held-out bank (see [benchmarks/README.md](benchmarks/README.md) for banks, runner, and grading rubric):
+
+```bash
+# Fast unit + contract checks (prose budget, CLI output, WhatsApp search, Signal, onboarding, installer)
+(cd core && .venv/bin/python -m unittest discover -s tests)
+PYTHONPATH=. python3 -m unittest discover -s bridges/signal
+PYTHONPATH=. core/.venv/bin/python -m unittest discover -s bridges/onboard
+PYTHONPATH=. core/.venv/bin/python -m unittest discover -s deployment/team
+```
+
+- **Google regression (`tasks_owner_dev.json`):** `core/.venv/bin/python benchmarks/bench.py run --mapper nine_compressed --no-yes --tasks benchmarks/bank/tasks_owner_dev.json --sandbox <COPY> --out /tmp/run.jsonl`
+- **WhatsApp retrieval & blind held-out runs:** [2026-11-24 core run](benchmarks/runs/2026-11-24-whatsapp-core/README.md) and [2026-11-25 v2 blind verification](benchmarks/runs/2026-11-25-whatsapp-core-v2/README.md).
+- **Rule of thumb:** iterate on dev banks, never overfit to one question, and validate claims once on frozen code with a blind grader ([docs/decisions.md](docs/decisions.md)).
+
+## Docs & Repo Layout
+
+- **Core design & usage:** [docs/README.md](docs/README.md) (reading order); [docs/cheatsheet.md](docs/cheatsheet.md); [docs/cli.md](docs/cli.md); [docs/decisions.md](docs/decisions.md); [docs/search.md](docs/search.md); [agent companions](docs/README.agent.md)
+- **Context & evidence:** [narrative/](narrative/) (readable summaries, e.g. [whatsapp-search.md](narrative/whatsapp-search.md)); [chronology/](chronology/) (dated logs); [AGENTS.md](AGENTS.md) (placement & workflow rules)
 
 ```text
-core/          the core: a command-line tool over a DuckDB store per sandbox (core/idli, core/lib/)
-docs/          what the core is and why (goals, commands, decisions, the store, the mapper, models, privacy)
-benchmarks/    how we check it: task banks, the grading rubric, the bench script
-todos/         what's next, and the full running list of bugs and fixes
-chronology/    append-only log, one file per step
-archive/v1/    the earlier Telegram bot version of Silo (tg-bridge, wa-bridge, its benchmarks and notes). Old.
-examples/      frozen livestock call-center examples from v1. Old; a service still runs from here, so it stays put.
+core/          CLI and DuckDB record store per sandbox (core/idli, core/lib/, core/tests/)
+bridges/       channel & source connectors (signal/, whatsapp/, onboard/)
+deployment/    rollout guides & team installer (team/, alpha/, beta/, ga/)
+benchmarks/    question banks (bank/), runner (bench.py), grader rubric, dated runs (runs/)
+docs/          design docs, CLI reference, cheatsheet, and *.agent.md companions
+proposals/     workflows/ for reusable chains; pilots/ for outcomes to benchmark; architecture/
+narrative/     readable summaries of findings and testing guides (ALPHA_TESTING.md, whatsapp-search.md)
+chronology/    timestamped decision and experiment logs
+handoff/       continuation notes for active tracks
+todos/         owner review queue and open bug lists
+archive/v1/    earlier Telegram bot prototype (old)
+examples/      frozen livestock call-center examples from v1 (still running a service)
 ```
-
-## Try it
-
-From the repository root, install the CLI and select your own test account. Keep these
-exports in the shell where you run Idli, using a separate sandbox for each account.
-
-```bash
-cd core
-uv venv -p 3.12 .venv
-uv pip install -p .venv/bin/python -r requirements.txt
-export IDLI_GOOGLE_ACCOUNT='your-test-account@gmail.com'
-export IDLI_SANDBOX="$HOME/idli-sbx/$IDLI_GOOGLE_ACCOUNT"
-export IDLI_GOOGLE_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/silo"
-install -d -m 700 "$IDLI_GOOGLE_CONFIG"
-```
-
-**Google sign-in.** Ask a maintainer for the Google Desktop OAuth client JSON and access
-for your test email. Save it as `$IDLI_GOOGLE_CONFIG/io_oauth_client_gcp.json` with mode
-600. The config directory defaults to `~/.config/idlisseus` if you omit the override.
-On a new device, start consent once from `core/` on a machine with a browser:
-
-```bash
-.venv/bin/python -c 'import os, webbrowser; from lib import google_api as g; g.connect(os.environ["IDLI_GOOGLE_ACCOUNT"], webbrowser.open)'
-```
-
-Select the same account and grant the requested scopes. The helper saves the refresh
-token in `$IDLI_GOOGLE_CONFIG/google-tokens/<lowercase-email>.json`. Sync reuses it.
-
-**DGX access.** Ask a maintainer for the model router HTTPS base URL and a Cloudflare
-Access service token authorized for that router. Create the config directory and save
-the following JSON with the issued values at
-`${IDLI_HOME:-$HOME/idli-insights}/config/muse-access.json` with mode 600:
-
-```json
-{"url":"https://silo.idli.cc","client_id":"<issued client ID>","client_secret":"<issued client secret>"}
-```
-
-Leave `IDLI_9B_URL` and `MUSE_URL` unset for this route. Without a usable token file
-the default mapper tries the DGX-local service at `127.0.0.1:8291`.
-For the default hosted Clef judge and question classifier, request a separate
-OpenRouter API key for test data and set `IDLI_SQL_KEY`. For full Drive embeddings
-from a laptop, ask for a reachable embedding base URL and set `IDLI_EMBED_URL`
-(DGX default port 8293).
-
-```bash
-./idli sync gmail -v
-./idli sync gcalendar -v
-./idli sync drive --no-embed -v  # omit --no-embed with a reachable embedding service
-./idli ask "which files mention the school visit?"
-./idli help
-```
-
-## Tests and question banks
-
-The [benchmark guide](benchmarks/README.md) links the development, owner and
-held-out questions, upstream trials and grading rubric. Historical answers depend
-on the matching test-account snapshot.
 
 ## History
 
-Silo started as a Telegram bot on a 30B model with answer checking (October 2026), now in `archive/v1/`. The core
-was built and measured in the io repo in November 2026 and moved here; see [docs/from-io.md](docs/from-io.md).
+Silo started as a Telegram bot on a 30B model with answer checking (October 2026), now in `archive/v1/`. The core was built and measured in the `io` repo in November 2026 and moved here; see [docs/from-io.md](docs/from-io.md).

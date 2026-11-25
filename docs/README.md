@@ -11,6 +11,6 @@ Read in this order:
 5. [examples.md](examples.md): worked tables and queries for Gmail, Drive and WhatsApp.
 6. [from-io.md](from-io.md): what came from the io repo, and where the evidence is.
 
-For agents: [handoff.md](handoff.md).
+For agents: [handoff.md](../handoff/handoff.md).
 
 `*.md` files are the owner's; `*.claude.md` files are local, gitignored drafts by Claude for the owner to read and fold in.

@@ -1,0 +1,3 @@
+# Putting hybrid retrieval behind the real mapper
+
+The owner asked to measure the commands that ordinary ask turns actually execute. A private bank now includes 12 fresh source-verified lookups, eight previous positive cases and four controls. The three arms use independent copies of the frozen WhatsApp store and the normal CLI subprocess. Two arms expose an automatically prepared hybrid candidate view. The second also tells the mapper how many records the sources contain and which group the probe bound. The mapper is free to ignore the view. Score visible command evidence separately from private candidate recall. [Run harness](../benchmarks/runs/2026-11-23-whatsapp-ask/run.py)

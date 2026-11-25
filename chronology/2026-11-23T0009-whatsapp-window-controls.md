@@ -1,0 +1,3 @@
+# Expanding a weak hit left most source evidence out
+
+Six initial retrieval and judging arms finished. The hit-only, chronological and reply-aware packets each contained the full reference evidence on two of eight positive questions. Four owner-only screenshots from a copied browser profile confirm the Royal Enfield durations, Rinju’s field update and the Nadhi participant note. A group-scoped author and link filter isolates exactly one source for Tej and one for Abhi. We are now testing explicit scope judging and hybrid retrieval, including the risk that the judge discards retrieved evidence. [Resume record](../handoff/whatsapp-retrieval.md)

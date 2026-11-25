@@ -1,0 +1,9 @@
+[
+  {"id":"W01","site":"whatsapp","kind":"find","turns":["There was a link in the Jam Buns group about nature walks. Find it for me."],"expect":"Return a supported URL with group and message evidence, or explain the gap in cached history."},
+  {"id":"W02","site":"whatsapp","kind":"attribution","turns":["Someone said something in CC OGs about Tata Trust. Who was it?"],"expect":"Give the sender of a matching message or qualify missing author or missing evidence."},
+  {"id":"W03","site":"whatsapp","kind":"latest","turns":["What was the last link shared in Jam Buns? Give me the URL."],"expect":"An exact HTTP(S) URL from the most recent captured link-bearing text in that group."},
+  {"id":"W04","site":"whatsapp","kind":"count","turns":["How many WhatsApp groups were active in the past month?"],"expect":"The count of eligible groups in the frozen snapshot."},
+  {"id":"W05","site":"whatsapp","kind":"count","turns":["How many captured text messages in Jam Buns have a link?"],"expect":"Count messages with at least one HTTP(S) URL in that group, once per message."},
+  {"id":"W06","site":"whatsapp","kind":"coverage","turns":["Did anyone in Jam Buns mention the exact phrase violet lighthouse 73?"],"expect":"Report no match in captured text if absent and avoid claiming a complete history."},
+  {"id":"W07","site":"whatsapp","kind":"attribution","turns":["Who shared the most recent link in the Jam Buns WhatsApp group?"],"expect":"Name the author of the newest captured link-bearing text, or say the author is unknown."}
+]
