@@ -310,6 +310,7 @@ def main(argv=None):
     print('  idli sync gmail -v')
     print('  idli sync gcalendar -v')
     print('  idli sync drive --in "<Folder Name>" -v')
+    print('  # Optional WhatsApp (requires Docker): ./bridges/whatsapp/start.sh && idli sync whatsapp --in "<Group>" -v')
     print('  idli ask -v "how many emails did I get last week?"')
     return launcher
 

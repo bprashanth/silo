@@ -8,6 +8,7 @@ STATE_DIR="$ROOT/.silo/wa"
 PORT="${IDLI_WA_PORT:-18766}"
 DAYS="${IDLI_WA_DAYS:-14}"
 NAME="${IDLI_WA_CONTAINER:-silo-wa-local}"
+IMAGE="${IDLI_WA_IMAGE:-bprashanth/silo-wa-sync:latest}"
 
 if ! command -v docker >/dev/null 2>&1; then
   echo "Error: Docker is required for local WhatsApp syncing, but 'docker' was not found on PATH." >&2
@@ -25,9 +26,12 @@ umask 077
 mkdir -p "$STATE_DIR"
 chmod 700 "$STATE_DIR"
 
-if ! docker image inspect silo-wa-sync >/dev/null 2>&1; then
-  echo "Building read-only silo-wa-sync image (first run only)..."
-  docker build -t silo-wa-sync "$ROOT/bridges/whatsapp"
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "Pulling read-only WhatsApp image ($IMAGE)..."
+  if ! docker pull "$IMAGE"; then
+    echo "Pull failed; building local image ($IMAGE)..."
+    docker build -t "$IMAGE" "$ROOT/bridges/whatsapp"
+  fi
 fi
 
 if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
@@ -35,9 +39,10 @@ if docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
 fi
 
 docker run -d --name "$NAME" \
+  --user "$(id -u):$(id -g)" \
   -p "127.0.0.1:${PORT}:18766" \
   -v "$STATE_DIR:/state" \
-  silo-wa-sync --state /state --days "$DAYS" --public-base "http://127.0.0.1:${PORT}" --listen 0.0.0.0:18766 >/dev/null
+  "$IMAGE" --state /state --days "$DAYS" --public-base "http://127.0.0.1:${PORT}" --listen 0.0.0.0:18766 >/dev/null
 
 for _ in $(seq 1 20); do
   if [ -f "$STATE_DIR/url" ]; then

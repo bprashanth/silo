@@ -352,9 +352,10 @@ def sync_whatsapp(con, snapshot_path=None, days=None, only_chats=None, embed_fn=
     so testers can scope sync to specific groups only."""
     path = Path(snapshot_path).expanduser() if snapshot_path else default_whatsapp_snapshot()
     if not path or not path.is_file():
+        checked = f' (checked {path})' if path else ''
         raise ValueError(
-            'No WhatsApp snapshot found. Pass `--from-snapshot PATH`, set IDLI_WHATSAPP_SNAPSHOT, '
-            'or run the read-only whatsmeow bridge (bridges/whatsapp/README.md).'
+            f'No WhatsApp snapshot found{checked}. Run `./bridges/whatsapp/start.sh` first to pair WhatsApp '
+            'and capture snapshot.json, or pass `--from-snapshot PATH`.'
         )
     t0 = time.time()
     snap = json.loads(path.read_text())

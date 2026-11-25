@@ -292,8 +292,8 @@ def parser():
     s.add_argument('--in', '--folder', dest='in_scopes', action='append',
                    help='only sync specific Drive folders or WhatsApp chats/groups (repeatable or comma-separated)')
     s.add_argument('--as', dest='role', default='me')
-    for verb in ('list', 'count'):  # count is list --count; still accepted, not in the menu
-        l = sub.add_parser(verb, help='rows of a resource' if verb == 'list' else argparse.SUPPRESS)
+    for verb in ('list', 'count'):  # count is list --count; still accepted, not shown in --help
+        l = sub.add_parser(verb, **({'help': 'rows of a resource'} if verb == 'list' else {}))
         l.add_argument('resource')
         l.add_argument('--where', action='append', help="filter, e.g. \"direction = 'in' and subject ~ 'visit'\" or \"label.urgent = 'yes'\"")
         l.add_argument('--since', help='today, yesterday, 7d, last week, monday, 2026-11-12')
@@ -320,10 +320,10 @@ def parser():
     g.add_argument('--outline', action='store_true', help="a file's pages, or a sheet's columns with examples")
     g.add_argument('--chars', type=int, default=3000)
     for verb in ('help', 'explain'):  # explain: the old name, still accepted; people say "explain X" for topics
-        e = sub.add_parser(verb, help='fields and examples (the manual page)' if verb == 'help' else argparse.SUPPRESS)
+        e = sub.add_parser(verb, **({'help': 'fields and examples (the manual page)'} if verb == 'help' else {}))
         e.add_argument('resource', nargs='?')
-    for verb in ('describe', 'read'):  # now get file --outline / --text; still accepted, not in the menu
-        d = sub.add_parser(verb, help=argparse.SUPPRESS)
+    for verb in ('describe', 'read'):  # now get file --outline / --text; still accepted, not shown in --help
+        d = sub.add_parser(verb)
         d.add_argument('what', choices=['file', 'sheet'] if verb == 'describe' else ['file'])
         d.add_argument('ref', help='a name (or words from it) or an id')
         if verb == 'read':
