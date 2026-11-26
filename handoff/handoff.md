@@ -36,9 +36,9 @@ Ignore `archive/` and `examples/`: they are the old Telegram version of Silo.
 - Commit as you go; then `bash -ic 'declaude origin/main'` (it rewrites hashes; quote hashes only after it). Don't
   push: the owner reviews and pushes.
 
-## State (2026-11-25)
+## State (2026-11-26)
 
-- Branch `signal_tui_cli`, pushed through `116d8c3` (`52/52` unit & integration tests passing across `core/` (35), `bridges/signal/` (12), `bridges/onboard/` (2), and `deployment/team/` (3); prose budget under limit).
+- Branch `q4_quantization` (branched from `signal_tui_cli` / `main` at `116d8c3`, local-only — owner reviews and pushes; `52/52` unit & integration tests passing across `core/` (35), `bridges/signal/` (12), `bridges/onboard/` (2), and `deployment/team/` (3); prose budget under limit).
 - **WhatsApp + Drive core search hardened (`e1bdee5` → `616d18c`):**
   - `@lid` contact & `@mention` backfill in `bridges/whatsapp/main.go` (numeric senders dropped `64% → 1%`, `0%` in tested work groups).
   - Repeatable `--in` scoping on `idli sync drive` and `idli sync whatsapp`.
@@ -55,7 +55,12 @@ Ignore `archive/` and `examples/`: they are the old Telegram version of Silo.
 - **Jetson 8GB Quantization & Smaller-Model Shootout completed ([2026-11-26 run](../benchmarks/runs/2026-11-26-jetson-quant-shootout/README.md), 435 blind-graded turns across WA `blind-v3`, Mixed Google+WA, Google `owner_dev`, and Google `heldout`):**
   - `Qwen3.5-9B-Q4_K_M` (`5.23 GiB` GPU, `-c 8192 -np 1`, no `mmproj`: **`41/26/20`**, `0` mixed leaks, `14/16` WA ev) and `Qwen3.5-9B-IQ4_XS` (`4.75 GiB` GPU: **`44/23/20`**, `0` mixed leaks, `12/16` WA ev) matched the DGX `Q5_K_M` baseline (`8.39 GiB` GPU: `41/25/21`) with `0` context overflows at `8k` ctx (`peak_prompt_chars = 16,841`).
   - Both 4B models (`Qwen3.5-4B-Q5_K_M`: `24/22/41`, 28 errors; `Gemma-4-E4B-it-Q5_K_M`: `30/22/35`, 27 compose fallbacks) collapsed on CLI mapping and are ruled out.
-  - **Settled edge choice & live DGX swap:** `Qwen3.5-9B-Q4_K_M` (default) or `IQ4_XS` (500 MiB headroom fallback) for headless 8 GB Jetson (`-c 8192 -np 1`, no `mmproj`, embed/rerank offloaded). Narrative + INR hardware frontier chart at [narrative/jetson-8gb-model-sizing.md](../narrative/jetson-8gb-model-sizing.md). Live DGX `idli-9b` behind `silo.idli.cc` swapped to `Qwen3.5-9B-Q4_K_M` (`5,561 MiB`, `-c 16384 -np 2`, no `mmproj`), and idle `idli-muse` (`25,162 MiB`) + `idli-9b-bf16` (`17,987 MiB`) stopped (**45.1 GiB GPU RAM freed**; `idli-embed` + `idli-rerank` kept online and verified `200 OK`).
+  - **Settled edge choice & live DGX swap:** `Qwen3.5-9B-Q4_K_M` (default) or `IQ4_XS` (500 MiB headroom fallback) for headless 8 GB Jetson (`-c 8192 -np 1`, no `mmproj`, embed/rerank offloaded). Narrative + INR hardware frontier chart at [narrative/jetson-8gb-model-sizing.md](../narrative/jetson-8gb-model-sizing.md) and [chronology/2026-11-26T1950-q4-swap-embed-tightening-and-frontier-chart.md](../chronology/2026-11-26T1950-q4-swap-embed-tightening-and-frontier-chart.md).
+  - **Live DGX stack behind `https://silo.idli.cc` (`8.73 GiB` total GPU RAM, down from `57.79 GiB` — `49.1 GiB` freed):**
+    - `idli-9b` (`:8291`): `Qwen3.5-9B-Q4_K_M` (`5,561 MiB`, `-c 16384 -np 2`, no `mmproj`, `-fa on --cache-type-k q8_0 --cache-type-v q8_0`).
+    - `idli-embed` (`:8293`): `Qwen3-Embedding-0.6B-Q8_0` (`2,449 MiB`, tightened to `-fa on -c 4096 -ub 2048 -b 2048 -np 2`; verified `200 OK` on single query, 32-item batch, and 6,000-char max item).
+    - `idli-rerank` (`:8294`): `bge-reranker-v2-m3-Q8_0` (`929 MiB`).
+    - Stopped (not removed): `idli-muse` (`25,162 MiB`) and `idli-9b-bf16` (`17,987 MiB`). Keyword/phrase/Porter stemming (BM25) runs purely in local DuckDB `fts`.
 - **Docs updated:** `README.md` streamlined into Quickstart + index, linked to `docs/cheatsheet.md`, `deployment/team/README.md`, and `narrative/ALPHA_TESTING.md`.
 
 ## Next

@@ -58,4 +58,10 @@ The chart above reveals **two sharp structural facts** — a flat plateau inside
 
 ## Production swap behind `silo.idli.cc`
 
-Following this shootout, the DGX backing `https://silo.idli.cc` was swapped from `Qwen3.5-9B-Q5_K_M` + `mmproj-F16` (`8,591 MiB` / `8.39 GiB`) to **`Qwen3.5-9B-Q4_K_M`** (`5,561 MiB` / `5.43 GiB`, no `mmproj`, `-fa on --cache-type-k q8_0 --cache-type-v q8_0`, 2 concurrent 8k slots via `-c 16384 -np 2`), while idle `idli-muse` (`25,162 MiB`, unused since 20 Nov) and `idli-9b-bf16` (`17,987 MiB`) were stopped — freeing **46,179 MiB (45.1 GiB)** of GPU RAM while keeping `idli-embed` (`6,510 MiB`) and `idli-rerank` (`929 MiB`) online and verified `200 OK` over `https://silo.idli.cc`.
+Following this shootout, the DGX stack backing `https://silo.idli.cc` was shrunk from **57.79 GiB (`59,179 MiB`)** down to **8.73 GiB (`8,939 MiB`)** — freeing **49.1 GiB** of GPU RAM with zero loss in search or planning capability:
+
+- **`idli-9b` (`:8291` → `/v1/chat/completions`):** swapped from `Qwen3.5-9B-Q5_K_M` + `mmproj-F16` (`-c 65536 -np 2`, `8,591 MiB`) to **`Qwen3.5-9B-Q4_K_M`** (`5,561 MiB`, no `mmproj`, `-c 16384 -np 2` = 2 × 8k slots, `-fa on --cache-type-k q8_0 --cache-type-v q8_0`).
+- **`idli-embed` (`:8293` → `/v1/embeddings`):** tightened `Qwen3-Embedding-0.6B-Q8_0` from `-c 8192 -ub 8192 -b 8192 -np 4` (`6,510 MiB`) to **`-fa on -c 4096 -ub 2048 -b 2048 -np 2`** (`2,449 MiB`, `−4.0 GiB`), verified `200 OK` on single queries, 32-item sync batches (`0.80 s`), and `6,000`-char max-cap passages.
+- **`idli-rerank` (`:8294` → `/v1/rerank`):** kept running as **`bge-reranker-v2-m3-Q8_0`** (`929 MiB`).
+- **Keyword, exact phrase & Porter stemming (BM25):** runs deterministically inside each client's local DuckDB `fts` (`0 MiB` GPU; see [docs/search.agent.md](../docs/search.agent.md)).
+- **Stopped (kept for `docker start` if ever needed):** `idli-muse` (`25,162 MiB`, unused since 20 Nov) and `idli-9b-bf16` (`17,987 MiB`, dev/benchmark twin only — never used by default `nine_compressed` or stemming).
