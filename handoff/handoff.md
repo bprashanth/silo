@@ -1,8 +1,8 @@
 # Handoff
 
-Last updated 2026-11-25. Keep this current: whoever ends a session rewrites the "State" and "Next" sections.
+Last updated 2026-11-26. Keep this current: whoever ends a session rewrites the "State" and "Next" sections.
 
-Current docs & evidence: [Alpha testing guide](../narrative/ALPHA_TESTING.md) · [WhatsApp search narrative](../narrative/whatsapp-search.md) · [Core WhatsApp v2 benchmark](../benchmarks/runs/2026-11-25-whatsapp-core-v2/README.md) · [CLI cheatsheet](../docs/cheatsheet.md) · [Team setup](../deployment/team/README.md).
+Current docs & evidence: [Model sizing & hardware cost narrative](../narrative/jetson-8gb-model-sizing.md) · [Alpha testing guide](../narrative/ALPHA_TESTING.md) · [WhatsApp search narrative](../narrative/whatsapp-search.md) · [Core WhatsApp v2 benchmark](../benchmarks/runs/2026-11-25-whatsapp-core-v2/README.md) · [CLI cheatsheet](../docs/cheatsheet.md) · [Team setup](../deployment/team/README.md).
 
 ## What this repo is
 
@@ -55,7 +55,7 @@ Ignore `archive/` and `examples/`: they are the old Telegram version of Silo.
 - **Jetson 8GB Quantization & Smaller-Model Shootout completed ([2026-11-26 run](../benchmarks/runs/2026-11-26-jetson-quant-shootout/README.md), 435 blind-graded turns across WA `blind-v3`, Mixed Google+WA, Google `owner_dev`, and Google `heldout`):**
   - `Qwen3.5-9B-Q4_K_M` (`5.23 GiB` GPU, `-c 8192 -np 1`, no `mmproj`: **`41/26/20`**, `0` mixed leaks, `14/16` WA ev) and `Qwen3.5-9B-IQ4_XS` (`4.75 GiB` GPU: **`44/23/20`**, `0` mixed leaks, `12/16` WA ev) matched the DGX `Q5_K_M` baseline (`8.39 GiB` GPU: `41/25/21`) with `0` context overflows at `8k` ctx (`peak_prompt_chars = 16,841`).
   - Both 4B models (`Qwen3.5-4B-Q5_K_M`: `24/22/41`, 28 errors; `Gemma-4-E4B-it-Q5_K_M`: `30/22/35`, 27 compose fallbacks) collapsed on CLI mapping and are ruled out.
-  - **Settled edge choice:** `Qwen3.5-9B-Q4_K_M` or `IQ4_XS` (headless 8 GB Jetson, `-c 8192 -np 1`, no `mmproj`, embed/rerank offloaded).
+  - **Settled edge choice & live DGX swap:** `Qwen3.5-9B-Q4_K_M` (default) or `IQ4_XS` (500 MiB headroom fallback) for headless 8 GB Jetson (`-c 8192 -np 1`, no `mmproj`, embed/rerank offloaded). Narrative + INR hardware frontier chart at [narrative/jetson-8gb-model-sizing.md](../narrative/jetson-8gb-model-sizing.md). Live DGX `idli-9b` behind `silo.idli.cc` swapped to `Qwen3.5-9B-Q4_K_M` (`5,561 MiB`, `-c 16384 -np 2`, no `mmproj`), and idle `idli-muse` (`25,162 MiB`) + `idli-9b-bf16` (`17,987 MiB`) stopped (**45.1 GiB GPU RAM freed**; `idli-embed` + `idli-rerank` kept online and verified `200 OK`).
 - **Docs updated:** `README.md` streamlined into Quickstart + index, linked to `docs/cheatsheet.md`, `deployment/team/README.md`, and `narrative/ALPHA_TESTING.md`.
 
 ## Next
