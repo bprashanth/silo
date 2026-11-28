@@ -79,7 +79,7 @@ PYTHONPATH=. core/.venv/bin/python -m unittest discover -s deployment/team
 ## Docs and Layout
 
 - **Core design & usage:** [docs/README.md](docs/README.md) (reading order); [docs/cheatsheet.md](docs/cheatsheet.md); [docs/cli.md](docs/cli.md); [docs/decisions.md](docs/decisions.md); [docs/search.md](docs/search.md); [agent companions](docs/README.agent.md)
-- **Context & evidence:** [narrative/](narrative/) (readable summaries, e.g. [whatsapp-search.md](narrative/whatsapp-search.md)); [chronology/](chronology/) (dated logs); [AGENTS.md](AGENTS.md) (placement & workflow rules)
+- **Context & evidence:** [narrative/](narrative/) (readable summaries, e.g. [jetson-8gb-model-sizing.md](narrative/jetson-8gb-model-sizing.md), [whatsapp-search.md](narrative/whatsapp-search.md)); [chronology/](chronology/) (dated logs); [AGENTS.md](AGENTS.md) (placement & workflow rules)
 
 ```text
 core/          CLI and DuckDB record store per sandbox (core/idli, core/lib/, core/tests/)
